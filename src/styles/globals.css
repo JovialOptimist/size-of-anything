@@ -2,7 +2,7 @@
 :root {
     --sidebar-button-size: 80px;
     --sidebar-width: calc(var(--sidebar-button-size) + 20px);
-    --control-panel-width: 300px;
+    --control-panel-width: 400px;
     --icon-fill-size: 60%;
 
     /* Defaults */
@@ -276,6 +276,7 @@ body {
   border: 1px solid #e5e7eb;
   border-radius: 0.25rem;
   font-size: 1rem;
+  margin-right: 0.5rem;
 }
 
 .text-search-button, 
@@ -346,11 +347,31 @@ body {
     transition: background-color 0.2s, border-color 0.2s;
     font-size: 0.95rem;
     color: #222;
+    flex-direction: row;
+    display: flex;
 }
 
 .select-candidate-button:hover {
     background-color: #e2e6ea;
     border-color: #bbb;
+}
+
+.select-candidate-button img {
+    width: 2.5rem;
+    height: 2.5rem;
+    margin-right: 0.75rem;
+    flex-shrink: 0;
+}
+
+.select-candidate-button .candidate-label {
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 0.25rem;
+}
+
+.select-candidate-button .candidate-description {
+    color: #666;
+    font-size: 0.9rem;
 }
 
 .cancel-candidate-button {

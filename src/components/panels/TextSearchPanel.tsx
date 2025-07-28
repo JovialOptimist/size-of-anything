@@ -3,6 +3,7 @@ import React, { useState, useRef } from "react";
 import { useMapStore } from "../../state/mapStore";
 import type { GeoJSONFeature } from "../../state/mapStore";
 import GeoCandidatePicker from "../map/GeoCandidatePicker";
+import { describeOsmObject } from "../utils/describeOsmObject";
 
 const OSM_Type = {
   NODE: "node",
@@ -21,6 +22,8 @@ export default function TextSearchPanel() {
 
   const handleSearch = async () => {
     if (!query.trim()) return;
+    setCandidates([]);
+    setShowPicker(false);
 
     try {
       const possiblePlaces = await fetchCandidates(query);
@@ -41,8 +44,9 @@ export default function TextSearchPanel() {
           },
           properties: {
             name: place.display_name,
-            osmType,
+            osmType: place.type,
             osmId,
+            osmClass: place.class,
             whatIsIt: describeOsmObject(place),
           },
         };
@@ -79,7 +83,19 @@ export default function TextSearchPanel() {
           className="text-search-input"
         />
         <button onClick={handleSearch} className="text-search-button">
-          Search
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke={"white"}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
         </button>
       </div>
 
@@ -168,75 +184,4 @@ function fixMultiPolygon(feature: GeoJSONFeature): GeoJSONFeature {
   }
 
   return feature;
-}
-
-/**
- * Returns a human-readable label for an OSM object returned by Nominatim.
- * @param result A Nominatim result object
- * @returns A string describing what the object is, like "City", "Restaurant", etc.
- */
-export function describeOsmObject(result: any): string {
-  const cls = result.class;
-  const type = result.type;
-  const tags = result.extratags || {};
-  const addresstype = result.addresstype;
-
-  // 1. Handle common known boundary types
-  if (cls === "boundary" && type === "administrative") {
-    if (addresstype === "country") return "Country";
-    if (addresstype === "state") return "State";
-    if (addresstype === "city") return "City";
-    if (addresstype === "county") return "County";
-    if (addresstype === "region") return "Region";
-    if (tags.border_type) return `${capitalize(tags.border_type)} Border`;
-    return "Administrative Boundary";
-  }
-
-  // 2. Handle places
-  if (cls === "place") {
-    return capitalize(type); // e.g. "town", "village"
-  }
-
-  // 3. Landuse, natural, and leisure areas
-  if (cls === "landuse" || cls === "leisure" || cls === "natural") {
-    return capitalize(type);
-  }
-
-  // 4. Buildings and amenities (like schools, restaurants, hospitals)
-  if (cls === "building" || cls === "amenity") {
-    return capitalize(type);
-  }
-
-  // 5. Water bodies
-  if (cls === "waterway" || cls === "water") {
-    return capitalize(type); // e.g., "river", "lake"
-  }
-
-  // 6. Tourism, attractions, historic places
-  if (cls === "tourism" || cls === "historic") {
-    return capitalize(type);
-  }
-
-  // 7. Transportation
-  if (cls === "highway" || cls === "railway" || cls === "aeroway") {
-    return capitalize(type);
-  }
-
-  // 8. Fallback to class/type or name
-  if (cls && type) {
-    return `${capitalize(cls)}: ${capitalize(type)}`;
-  }
-
-  // 9. Fallback to name only
-  if (result.name) return result.name;
-
-  return "Unknown Feature";
-}
-
-/**
- * Capitalizes the first letter of a word.
- */
-function capitalize(word: string | undefined): string {
-  if (!word || typeof word !== "string") return "";
-  return word.charAt(0).toUpperCase() + word.slice(1);
 }

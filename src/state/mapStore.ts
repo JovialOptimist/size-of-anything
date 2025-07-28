@@ -19,6 +19,7 @@ export interface GeoJSONFeature {
     name: string;
     osmType: string;
     osmId: string | null;
+    osmClass: string;
     [key: string]: any;
     whatIsIt: string;
   };
