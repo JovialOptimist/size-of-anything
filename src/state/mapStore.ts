@@ -4,10 +4,11 @@ import { create } from "zustand";
 interface MapArea {
   id: string;
   name: string;
-  coordinates: [number, number][]; // Array of lat, lng pairs
-  type: 'polygon' | 'rectangle' | 'circle';
+  coordinates: [number, number][][] | [number, number][][][]; 
+  type: 'polygon' | 'rectangle' | 'circle' | 'multipolygon';
   properties?: Record<string, any>;
 }
+
 
 interface GeoJSONFeature {
   type: "Feature";
@@ -32,6 +33,7 @@ interface MapState {
   removeArea: (id: string) => void;
   setActiveArea: (id: string | null) => void;
 }
+
 /**
  * Zustand store for managing map areas and active area
  */
@@ -44,9 +46,23 @@ export const useMapStore = create<MapState>((set) => ({
   setIsSelectingArea: (isSelecting) => set({ isSelectingArea: isSelecting }),
   setClickedPosition: (position) => set({ clickedPosition: position }),
   addGeoJSONFromSearch: (feature: GeoJSONFeature) =>
-    set((state) => ({
+  set((state) => {
+    const { type, coordinates } = feature.geometry;
+
+    const newArea: MapArea = {
+      id: `geojson-${state.geojsonAreas.length}`,
+      name: feature.properties?.name || 'Unnamed Area',
+      coordinates: coordinates as any, // trust GeoJSON is well-formed
+      type: type === "MultiPolygon" ? "multipolygon" : "polygon",
+      properties: feature.properties || {},
+    };
+
+    return {
       geojsonAreas: [...state.geojsonAreas, feature],
-    })),
+      areas: [...state.areas, newArea],
+    };
+  }),
+
   addArea: (area) => 
     set((state) => ({ areas: [...state.areas, area] })),
   updateArea: (id, updatedProps) =>

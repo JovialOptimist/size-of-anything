@@ -6,7 +6,7 @@ export default function ControlSidebar() {
   const { activePanel } = usePanel();
 
   // Store sidebar width in state
-  const [width, setWidth] = useState(300); // Default width in px
+  const [width, setWidth] = useState(400); // Default width in px
   const sidebarRef = useRef<HTMLDivElement>(null);
   const isResizing = useRef(false);
 

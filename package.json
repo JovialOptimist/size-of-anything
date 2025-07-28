@@ -1,7 +1,7 @@
 {
   "name": "size-of-anything",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.5.0",
   "type": "module",
   "homepage": "https://jovialoptimist.github.io/size-of-anything",
   "scripts": {

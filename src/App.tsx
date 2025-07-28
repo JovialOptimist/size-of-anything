@@ -4,10 +4,15 @@ import MapView from "./components/map/MapView";
 import ActiveElementDisplay from "./components/map/ActiveElementDisplay";
 import MapControls from "./components/map/MapControls";
 import useUrlSync from "./state/urlSync";
+import { useEffect } from "react";
 
 function App() {
   // Use the URL sync hook to synchronize state with URL
   useUrlSync();
+
+  useEffect(() => {
+    console.log("--- SIZE OF ANYTHING APP STARTED ---");
+  }, []);
 
   return (
     <div className="app-container">

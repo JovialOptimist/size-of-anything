@@ -32,7 +32,7 @@ export default function MapView() {
       }).addTo(map);
 
       // Handle map clicks for area selection
-      map.on('click', (e) => {
+      map.on("click", (e) => {
         if (isSelectingArea) {
           const { lat, lng } = e.latlng;
           setClickedPosition([lat, lng]);
@@ -106,7 +106,7 @@ export default function MapView() {
   }, [geojsonAreas]);
 
   return (
-    <div className={`map-container ${isSelectingArea ? 'selecting-area' : ''}`}>
+    <div className={`map-container ${isSelectingArea ? "selecting-area" : ""}`}>
       <div id="map" ref={mapRef}></div>
     </div>
   );

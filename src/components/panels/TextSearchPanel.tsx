@@ -30,57 +30,47 @@ export default function TextSearchPanel() {
     (state) => state.addGeoJSONFromSearch
   );
 
+  const loadingMessageRef = React.useRef(
+    "Search for a place to display its boundary"
+  );
+  const [loadingMessage, setLoadingMessage] = useState(
+    loadingMessageRef.current
+  );
+
   const handleSearch = async () => {
     if (!query.trim()) return;
 
     try {
       const possiblePlaces = await fetchCandidates(query);
-      const place = possiblePlaces[0];
-      const osmType = place.osm_type;
-      const osmId = place.osm_id;
+      console.log("Possible places:", possiblePlaces);
+      setLoadingMessage("Found " + possiblePlaces.length + " candidates");
 
-      console.log(`Resolved ${query} to ${osmType}(${osmId})`);
-
-      const overpassDataElements = await getRawCoordinates(osmType, osmId);
-      console.log("Overpass data elements:", overpassDataElements);
-
-      let coords = await queryAndDisplayPolygon(overpassDataElements, {
-        osmType,
-        osmId,
+      const geojsons = possiblePlaces.map((place: any) => {
+        const osmType = place.osm_type;
+        const osmId = place.osm_id;
+        const feature: GeoJSONFeature = {
+          type: "Feature" as "Feature",
+          geometry: {
+            type: osmType === OSM_Type.WAY ? "Polygon" : "MultiPolygon",
+            coordinates: place.geojson.coordinates,
+          },
+          properties: {
+            name: place.display_name,
+            osmType,
+            osmId,
+          },
+        };
+        return normalizeGeoJSONGeometry(feature);
       });
 
-      const isSingleRing =
-        Array.isArray(coords) &&
-        coords.length > 0 &&
-        Array.isArray(coords[0]) &&
-        typeof coords[0][0] === "number";
-      let polygonCoords: L.LatLngExpression[] | L.LatLngExpression[][] | null =
-        null;
-      polygonCoords = isSingleRing ? [coords as [number, number][]] : coords;
-
-      if (!polygonCoords || polygonCoords.length === 0) {
-        alert("No valid polygon found for the selected place.");
-        return;
-      }
-
-      // For GeoJSON, coordinates must be [longitude, latitude] format
-      // Leaflet uses [latitude, longitude], so we need to swap them
-      const swappedCoordinates = swapCoordinatesForGeoJSON(polygonCoords);
-
-      const feature: GeoJSONFeature = {
-        type: "Feature" as "Feature",
-        geometry: {
-          type: osmType === OSM_Type.WAY ? "Polygon" : "MultiPolygon",
-          coordinates: swappedCoordinates,
-        },
-        properties: {
-          name: place.display_name,
-          osmType,
-          osmId,
-        },
-      };
+      const feature = geojsons[0]; // this is a full GeoJSONFeature
+      console.log(
+        `Resolved ${query} to ${feature.properties.osmType}(${feature.properties.osmId})`
+      );
+      console.log("Feature to add:", feature);
 
       addGeoJSONFromSearch(feature);
+      setLoadingMessage("Added " + feature.properties.name + " to the map");
     } catch (error) {
       console.error("Search error:", error);
       alert("There was a problem searching.");
@@ -107,6 +97,7 @@ export default function TextSearchPanel() {
       <button onClick={handleSearch} className="text-search-button">
         Search
       </button>
+      <p className="loading-message">{loadingMessage}</p>
     </div>
   );
 }
@@ -121,17 +112,30 @@ export default function TextSearchPanel() {
 async function fetchCandidates(input: string) {
   // Gather candidates from Nominatim
   let nominatimResponse = await fetch(
-    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+    `https://nominatim.openstreetmap.org/search?format=json&polygon_geojson=1&extratags=1&q=${encodeURIComponent(
       input
     )}`
   );
   let nominatimData = await nominatimResponse.json();
   console.log("Nominatim data:", nominatimData);
 
-  // Filter out only ways and relations
+  // Helper to check if a polygon is closed
+  function isClosedPolygon(geojson: any): boolean {
+    if (geojson?.type !== "Polygon") return false;
+    const coords = geojson.coordinates?.[0];
+    if (!coords || coords.length < 4) return false;
+    const first = coords[0];
+    const last = coords[coords.length - 1];
+    return first[0] === last[0] && first[1] === last[1];
+  }
+
+  // Filter for closed ways and valid relations with polygon geometry
   nominatimData = nominatimData.filter(
     (candidate: any) =>
-      candidate.osm_type === "way" || candidate.osm_type === "relation"
+      (candidate.osm_type === "relation" ||
+        (candidate.osm_type === "way" && isClosedPolygon(candidate.geojson))) &&
+      (candidate.geojson?.type === "Polygon" ||
+        candidate.geojson?.type === "MultiPolygon")
   );
 
   // If no candidates found, alert the user
@@ -144,227 +148,23 @@ async function fetchCandidates(input: string) {
   return nominatimData;
 }
 
-// Given an OSM type and ID (which guarantees a unique element),
-// fetch and return the coordinates of that way or relation using Overpass API.
-async function getRawCoordinates(osmType: string, osmId: string | null) {
-  let query = `[out:json]; ${osmType}(${osmId}); (._; >;); out body;`;
-  let response = await fetch(
-    `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`
-  );
-  let coordinates = (await response.json()).elements;
+function normalizeGeoJSONGeometry(feature: GeoJSONFeature): GeoJSONFeature {
+  const { geometry } = feature;
 
-  if (!coordinates || coordinates.length === 0) {
-    alert("Boundary data not found!");
-    return;
-  }
-  return coordinates;
-}
-
-function buildCoords(
-  osmType: OSM_Type,
-  overpassDataElements: any[],
-  osmId: string | null,
-  nodes: { [id: number]: [number, number] },
-  ways: any[]
-): any[] {
-  if (osmType == OSM_Type.WAY) {
-    let wayNodes = overpassDataElements.find(
-      (el: { type: string; id: string | null }) =>
-        el.type === "way" && el.id == osmId
-    )?.nodes;
-
-    if (!wayNodes) {
-      return [];
-    }
-
-    return wayNodes.map((id: number) => nodes[id]);
-  } else if (osmType == OSM_Type.RELATION) {
-    let outerRings = [];
-    let innerRings = [];
-
-    let relation = overpassDataElements.find(
-      (el: { type: string; id: string | null }) =>
-        el.type === "relation" && el.id == osmId
-    );
-    if (!relation) {
-      alert("Relation not found!");
-      return [];
-    }
-
-    let wayMap: { [key: number]: [number, number][] } = {};
-    ways.forEach((way: any) => {
-      wayMap[way.id] = way.nodes.map((id: number) => nodes[id]);
-    });
-
-    let outerWays = relation.members.filter(
-      (m: { type: string; role: string }) =>
-        m.type === "way" && m.role === "outer"
-    );
-    let innerWays = relation.members.filter(
-      (m: { type: string; role: string }) =>
-        m.type === "way" && m.role === "inner"
+  if (geometry.type === "MultiPolygon") {
+    // Fix: if coordinates are 2-deep, wrap each with another array
+    const fixedCoords = (geometry.coordinates as any[]).map(
+      (polygon: any[]) => [polygon]
     );
 
-    function buildRings(ways: any[]) {
-      let rings = [];
-
-      while (ways.length) {
-        let ring = ways.shift();
-        let coords = [...wayMap[ring.ref]];
-        let changed = true;
-
-        while (changed) {
-          changed = false;
-          for (let i = 0; i < ways.length; i++) {
-            let nextCoords = wayMap[ways[i].ref];
-            if (!nextCoords) continue;
-
-            if (
-              coords[coords.length - 1].toString() === nextCoords[0].toString()
-            ) {
-              coords = coords.concat(nextCoords.slice(1));
-              ways.splice(i, 1);
-              changed = true;
-              break;
-            } else if (
-              coords[0].toString() ===
-              nextCoords[nextCoords.length - 1].toString()
-            ) {
-              coords = nextCoords.slice(0, -1).concat(coords);
-              ways.splice(i, 1);
-              changed = true;
-              break;
-            } else if (coords[0].toString() === nextCoords[0].toString()) {
-              coords = nextCoords.reverse().slice(0, -1).concat(coords);
-              ways.splice(i, 1);
-              changed = true;
-              break;
-            } else if (
-              coords[coords.length - 1].toString() ===
-              nextCoords[nextCoords.length - 1].toString()
-            ) {
-              coords = coords.concat(nextCoords.reverse().slice(1));
-              ways.splice(i, 1);
-              changed = true;
-              break;
-            }
-          }
-        }
-
-        rings.push(coords);
-      }
-
-      return rings;
-    }
-
-    outerRings = buildRings(outerWays);
-    innerRings = buildRings(innerWays);
-
-    if (outerRings.length === 0) {
-      alert("No outer boundary found.");
-      return [];
-    }
-
-    return outerRings.map((outer, index) => {
-      let outerRing = outer;
-      let inner: [number, number][][] = [];
-
-      if (index === 0) {
-        inner = innerRings;
-      }
-
-      return [outerRing, ...inner];
-    });
-  } else {
-    console.error("Unsupported OSM type:", osmType);
-    return [];
-  }
-}
-
-function extractFirstValidPolygon(elements: any[]): [number, number][] | null {
-  for (const el of elements) {
-    if (!el.geometry || el.geometry.length < 3) continue;
-
-    const coords = el.geometry.map((p: any) => [p.lat, p.lon]);
-
-    // Ensure the polygon is closed
-    const first = coords[0];
-    const last = coords[coords.length - 1];
-    if (first[0] !== last[0] || first[1] !== last[1]) {
-      coords.push(first);
-    }
-
-    return coords as [number, number][];
+    return {
+      ...feature,
+      geometry: {
+        ...geometry,
+        coordinates: fixedCoords,
+      },
+    };
   }
 
-  return null;
-}
-
-async function queryAndDisplayPolygon(
-  overpassElements: any[],
-  options: {
-    osmType?: OSM_Type;
-    osmId?: string | null;
-  }
-) {
-  let polygonCoords: L.LatLngExpression[] | L.LatLngExpression[][] | null =
-    null;
-
-  if (options.osmType && options.osmId) {
-    const nodes: { [id: number]: [number, number] } = {};
-    const ways: any[] = [];
-
-    for (const el of overpassElements) {
-      if (el.type === "node") nodes[el.id] = [el.lat, el.lon];
-      else if (el.type === "way") ways.push(el);
-    }
-
-    const coords = buildCoords(
-      options.osmType,
-      overpassElements,
-      options.osmId,
-      nodes,
-      ways
-    );
-    if (!coords || coords.length === 0) return null;
-
-    // Normalize to always be [[]] (multi-ring)
-    const isSingleRing =
-      Array.isArray(coords) &&
-      coords.length > 0 &&
-      Array.isArray(coords[0]) &&
-      typeof coords[0][0] === "number";
-    polygonCoords = isSingleRing ? [coords as [number, number][]] : coords;
-  } else {
-    const extracted = extractFirstValidPolygon(overpassElements);
-    if (!extracted) return null;
-    polygonCoords = [extracted];
-  }
-
-  console.log("Polygon coordinates:", polygonCoords);
-
-  return polygonCoords;
-}
-
-/**
- * Converts coordinates from Leaflet format [lat, lng] to GeoJSON format [lng, lat]
- * Works with both simple polygons and multi-polygons
- */
-function swapCoordinatesForGeoJSON(coords: any): any {
-  // Check if we have a simple [lat, lng] pair
-  if (!Array.isArray(coords)) {
-    return coords;
-  }
-
-  if (
-    coords.length === 2 &&
-    typeof coords[0] === "number" &&
-    typeof coords[1] === "number"
-  ) {
-    // This is a single [lat, lng] coordinate pair
-    return [coords[1], coords[0]]; // Swap to [lng, lat]
-  }
-
-  // Otherwise, recursively process the array
-  return coords.map((item) => swapCoordinatesForGeoJSON(item));
+  return feature;
 }
