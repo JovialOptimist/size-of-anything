@@ -9,15 +9,20 @@ interface MapArea {
   properties?: Record<string, any>;
 }
 
-
-interface GeoJSONFeature {
+export interface GeoJSONFeature {
   type: "Feature";
   geometry: {
     type: "Polygon" | "MultiPolygon";
-    coordinates: number[][][] | number[][][][];
+    coordinates: any;
   };
-  properties: Record<string, any>;
-}
+  properties: {
+    name: string;
+    osmType: string;
+    osmId: string | null;
+    [key: string]: any;
+    whatIsIt: string;
+  };
+};
 
 interface MapState {
   areas: MapArea[];
