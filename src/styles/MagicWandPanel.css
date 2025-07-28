@@ -1,0 +1,99 @@
+/* Magic Wand Panel Styles */
+.magic-wand-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.select-area-button {
+  padding: 0.75rem 1rem;
+  background-color: #4287f5;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.select-area-button:hover {
+  background-color: #3b7ae0;
+}
+
+.cancel-button {
+  padding: 0.5rem 0.75rem;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  margin-top: 0.5rem;
+}
+
+.cancel-button:hover {
+  background-color: #d32f2f;
+}
+
+.selecting-message {
+  color: #4287f5;
+  font-weight: 500;
+  font-style: italic;
+}
+
+.nearby-places {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.nearby-places h3 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.places-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+}
+
+.places-list li {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.places-list li:last-child {
+  border-bottom: none;
+}
+
+.places-list li:hover {
+  background-color: rgba(66, 135, 245, 0.1);
+}
+
+.place-name {
+  font-weight: 500;
+  font-size: 1rem;
+}
+
+.place-detail {
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Map cursor styles for area selection */
+.map-container.selecting-area,
+.map-container.selecting-area #map {
+  cursor: crosshair !important;
+}

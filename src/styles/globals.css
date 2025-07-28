@@ -1,0 +1,309 @@
+/* Global variables */
+:root {
+    --sidebar-button-size: 80px;
+    --sidebar-width: calc(var(--sidebar-button-size) + 20px);
+    --control-panel-width: 300px;
+    --icon-fill-size: 60%;
+
+    /* Defaults */
+    --default-bg: #f9fafb;
+    --default-fg: #111827;
+
+    /* Icon sidebar styles */
+    --icon-sidebar-bg: #8fb2e6;
+    --icon-sidebar-button-bg: white;
+    --icon-sidebar-button-hover-bg: #43669e;
+    --icon-sidebar-button-active-bg: #4287f5;
+    --icon-sidebar-button-text-color: #1f2937;
+    --icon-sidebar-button-hover-text-color: white;
+    --icon-sidebar-button-active-text-color: white;
+
+    /* Control sidebar styles */
+    --control-sidebar-bg: linear-gradient(270deg, #dfe7ff, #abc3ff);
+    --control-sidebar-text-color: black;
+
+    /* Map controls and active element display styles */
+    --panel-heading-border-color: #e5e7eb;
+    --map-controls-bg: white;
+
+    --map-controls-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    --active-element-display-bg: white;
+    --active-element-display-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Base styles */
+body {
+    background-color: var(--default-bg);
+    color: var(--default-fg);
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Roboto,
+        Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+/* Layout */
+.app-container {
+    position: relative;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+}
+
+/* Sidebar styles */
+.icon-sidebar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: var(--sidebar-width);
+    height: calc(100vh - 2rem);
+    background-color: var(--icon-sidebar-bg);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    z-index: 1000;
+    box-shadow: outset 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.top-tools,
+.bottom-tools {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.icon-button {
+    width: var(--sidebar-button-size);
+    height: var(--sidebar-button-size);
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    transition: background-color 0.2s, scale 0.2s;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    margin-left: 10px;
+    cursor: pointer;
+}
+
+.icon-button>svg {
+    width: var(--icon-fill-size);
+    height: var(--icon-fill-size);
+    display: block;
+    pointer-events: none;
+}
+
+.icon-button:hover {
+    background-color: var(--icon-sidebar-button-hover-bg);
+    color: var(--icon-sidebar-button-hover-text-color);
+}
+
+.icon-button:not(.active):hover {
+    scale: 1.05;
+}
+
+.icon-button.active {
+    background-color: var(--icon-sidebar-button-active-bg);
+    color: var(--icon-sidebar-button-active-text-color);
+    animation: active-scale 0.2s;
+}
+
+@keyframes active-scale {
+    0% {
+        transform: scale(1);
+    }
+    30% {
+        transform: scale(0.85);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Control sidebar */
+.control-sidebar {
+    position: absolute;
+    top: 0;
+    left: var(--sidebar-width);
+    width: var(--control-panel-width);
+    background: var(--control-sidebar-bg);
+    height: 100vh;
+    min-width: 200px;
+    max-width: 600px;
+    box-shadow: var(--map-controls-shadow);
+    overflow: hidden;
+    /* Prevent content overflow */
+    z-index: 900;
+    transition: transform 0.3s ease-in-out;
+    transform-origin: left center;
+    display: flex;
+    flex-direction: row;
+}
+
+.sidebar-content {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    /* Optional: for inner spacing */
+    text-align: left;
+}
+
+/* Resize handle sits flush to the right edge */
+.resize-handle {
+    width: 6px;
+    cursor: ew-resize;
+    background-color: rgba(255, 255, 255, 0.2);
+    transition: background-color 0.2s;
+}
+
+.resize-handle:hover {
+    background-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Visible state: sidebar is positioned normally */
+.control-sidebar.visible {
+    left: var(--sidebar-width);
+    transform: translateX(0);
+}
+
+/* Hidden state: sidebar is positioned off-screen */
+.control-sidebar.hidden {
+    left: var(--sidebar-width);
+    transform: translateX(-100%);
+    pointer-events: none;
+}
+
+/* Panel content */
+.panel {
+    padding: 1rem;
+    color: var(--control-sidebar-text-color);
+}
+
+.panel h2 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--panel-heading-border-color);
+    color: var(--control-sidebar-text-color);
+}
+
+/* Map styles */
+.map-container, .map-view-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+#map {
+    height: 100%;
+    width: 100%;
+}
+
+/* Optional: override leaflet default font if desired */
+.leaflet-container {
+    font-family: system-ui, sans-serif;
+}
+
+.map-controls {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background-color: var(--icon-sidebar-button-bg);
+    border-radius: 0.5rem;
+    box-shadow: var(--map-controls-shadow);
+    padding: 0.5rem;
+    z-index: 10000;
+    transition: background-color 0.2s, color 0.2s, scale 0.2s;
+    cursor: pointer;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    height: var(--sidebar-button-size);
+    width: var(--sidebar-button-size);
+    align-items: center;
+    justify-content: center;
+    color: var(--icon-sidebar-button-text-color);
+}
+
+.map-controls:active {
+    transition: background-color 0s;
+    background-color: var(--icon-sidebar-button-active-bg);
+    color: var(--icon-sidebar-button-active-text-color);
+    animation: active-scale 0.2s;
+}
+
+.active-element-display {
+    position: absolute;
+    bottom: 1rem;
+    background-color: var(--active-element-display-bg);
+    border-radius: 0.5rem;
+    box-shadow: var(--active-element-display-shadow);
+    padding: 0.75rem;
+    max-width: 32rem;
+    z-index: 800;
+    transition: left 0.3s ease-in-out;
+}
+
+/* When the sidebar is expanded */
+.active-element-display.sidebar-expanded {
+    left: calc(1rem + var(--sidebar-width) + var(--control-panel-width));
+    width: calc(100% - var(--sidebar-width) - var(--control-panel-width) - 2rem);
+}
+
+/* When the sidebar is collapsed */
+.active-element-display.sidebar-collapsed {
+    left: calc(1rem + var(--sidebar-width));
+    width: calc(100% - var(--sidebar-width) - 2rem);
+}
+
+/* Text Search Panel Styles */
+.search-container {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  align-items: center;
+}
+
+.text-search-input {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.25rem;
+  font-size: 1rem;
+}
+
+.text-search-button, 
+.voice-button, 
+.magic-wand-button {
+  padding: 0.5rem 0.75rem;
+  border: none;
+  border-radius: 0.25rem;
+  background-color: var(--icon-sidebar-button-active-bg);
+  color: white;
+  cursor: pointer;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.text-search-button:hover, 
+.voice-button:hover, 
+.magic-wand-button:hover {
+  background-color: var(--icon-sidebar-button-hover-bg);
+}
+
+.query-mode-info {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background-color: rgba(255, 255, 255, 0.7);
+  border-radius: 0.25rem;
+  border-left: 4px solid var(--icon-sidebar-button-active-bg);
+  font-size: 0.9rem;
+}
