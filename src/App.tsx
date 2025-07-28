@@ -9,6 +9,8 @@ function App() {
   // Use the URL sync hook to synchronize state with URL
   useUrlSync();
 
+  alert("HEY LOOK AT THIS I AM A TEST ALERT");
+
   return (
     <div className="app-container">
       {/* Left sidebar with tool icons */}
