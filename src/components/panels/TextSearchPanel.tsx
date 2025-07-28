@@ -30,20 +30,12 @@ export default function TextSearchPanel() {
     (state) => state.addGeoJSONFromSearch
   );
 
-  const loadingMessageRef = React.useRef(
-    "Search for a place to display its boundary"
-  );
-  const [loadingMessage, setLoadingMessage] = useState(
-    loadingMessageRef.current
-  );
-
   const handleSearch = async () => {
     if (!query.trim()) return;
 
     try {
       const possiblePlaces = await fetchCandidates(query);
       console.log("Possible places:", possiblePlaces);
-      setLoadingMessage("Found " + possiblePlaces.length + " candidates");
 
       const geojsons = possiblePlaces.map((place: any) => {
         const osmType = place.osm_type;
@@ -60,17 +52,13 @@ export default function TextSearchPanel() {
             osmId,
           },
         };
-        return normalizeGeoJSONGeometry(feature);
+        return feature;
       });
 
-      const feature = geojsons[0]; // this is a full GeoJSONFeature
-      console.log(
-        `Resolved ${query} to ${feature.properties.osmType}(${feature.properties.osmId})`
-      );
+      const feature = geojsons[0];
       console.log("Feature to add:", feature);
 
       addGeoJSONFromSearch(feature);
-      setLoadingMessage("Added " + feature.properties.name + " to the map");
     } catch (error) {
       console.error("Search error:", error);
       alert("There was a problem searching.");
@@ -97,13 +85,9 @@ export default function TextSearchPanel() {
       <button onClick={handleSearch} className="text-search-button">
         Search
       </button>
-      <p className="loading-message">{loadingMessage}</p>
     </div>
   );
 }
-
-// Supporting utility functions (same as provided in your original post)
-// fetchCandidates, getRawCoordinates, buildCoords, extractFirstValidPolygon, queryAndDisplayPolygon
 
 // Given the name of a place,
 // fetch all possible candidates from Nominatim,
@@ -146,25 +130,4 @@ async function fetchCandidates(input: string) {
 
   // Return the filtered candidates
   return nominatimData;
-}
-
-function normalizeGeoJSONGeometry(feature: GeoJSONFeature): GeoJSONFeature {
-  const { geometry } = feature;
-
-  if (geometry.type === "MultiPolygon") {
-    // Fix: if coordinates are 2-deep, wrap each with another array
-    const fixedCoords = (geometry.coordinates as any[]).map(
-      (polygon: any[]) => [polygon]
-    );
-
-    return {
-      ...feature,
-      geometry: {
-        ...geometry,
-        coordinates: fixedCoords,
-      },
-    };
-  }
-
-  return feature;
 }
