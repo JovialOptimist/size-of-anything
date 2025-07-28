@@ -1,5 +1,4 @@
 import type { GeoJSONFeature } from "../../state/mapStore";
-import { describeOsmObject } from "../utils/describeOsmObject";
 import reactLogo from "../../assets/react.svg";
 
 export default function GeoCandidatePicker({
@@ -62,7 +61,6 @@ function formatCandidateLabel(feature: any): string {
 
   // Use describeOsmObject to say what kind of thing it is
   const type = feature.properties?.whatIsIt || "Unknown feature";
-  const name = feature.properties?.name.split(",")[0];
 
   // Use last 2–3 location parts for context, if available
   const locationParts = parts.slice(-3);
@@ -73,5 +71,6 @@ function formatCandidateLabel(feature: any): string {
 
 // Temporary icon fallback
 export function getOsmIconUrl(osmClass: string, osmType: string): string {
+  console.log("getOsmIconUrl called with:", osmClass, osmType);
   return reactLogo;
 }

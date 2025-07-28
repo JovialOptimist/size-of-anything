@@ -1,5 +1,5 @@
 // src/components/panels/TextSearchPanel.tsx
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { useMapStore } from "../../state/mapStore";
 import type { GeoJSONFeature } from "../../state/mapStore";
 import GeoCandidatePicker from "../map/GeoCandidatePicker";
