@@ -1,0 +1,14 @@
+[build]
+  publish = "dist"
+  command = "npm run build:netlify"
+
+[context.production]
+  environment = { VITE_BASE_PATH = "/" }
+
+[context.deploy-preview]
+  environment = { VITE_BASE_PATH = "/" }
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
