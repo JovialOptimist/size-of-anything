@@ -25,12 +25,20 @@ export interface GeoJSONFeature {
   };
 };
 
+export const OSM_Type = {
+  NODE: "node",
+  WAY: "way",
+  RELATION: "relation",
+} as const;
+type OSM_Type = (typeof OSM_Type)[keyof typeof OSM_Type];
+
 interface MapState {
   areas: MapArea[];
   activeAreaId: string | null;
   geojsonAreas: GeoJSONFeature[];
   isSelectingArea: boolean;
   clickedPosition: [number, number] | null;
+  magicWandMode: boolean;
   setIsSelectingArea: (isSelecting: boolean) => void;
   setClickedPosition: (position: [number, number] | null) => void;
   addGeoJSONFromSearch: (feature: GeoJSONFeature) => void;
@@ -38,6 +46,9 @@ interface MapState {
   updateArea: (id: string, area: Partial<MapArea>) => void;
   removeArea: (id: string) => void;
   setActiveArea: (id: string | null) => void;
+  setMagicWandMode: (enabled: boolean) => void;
+    onMapClick: ((latlng: L.LatLng) => void) | null;
+    setOnMapClick: (handler: ((latlng: L.LatLng) => void) | null) => void;
 }
 
 /**
@@ -49,6 +60,8 @@ export const useMapStore = create<MapState>((set) => ({
   geojsonAreas: [],
   isSelectingArea: false,
   clickedPosition: null,
+    onMapClick: null,
+    magicWandMode: false,
   setIsSelectingArea: (isSelecting) => set({ isSelectingArea: isSelecting }),
   setClickedPosition: (position) => set({ clickedPosition: position }),
   addGeoJSONFromSearch: (feature: GeoJSONFeature) =>
@@ -83,4 +96,9 @@ export const useMapStore = create<MapState>((set) => ({
       activeAreaId: state.activeAreaId === id ? null : state.activeAreaId,
     })),
   setActiveArea: (id) => set({ activeAreaId: id }),
+  setMagicWandMode: (enabled) => {
+  set({ magicWandMode: enabled });
+},
+setOnMapClick: (handler) => set({ onMapClick: handler }),
+
 }));

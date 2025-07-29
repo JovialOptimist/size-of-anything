@@ -37,6 +37,11 @@ export default function MapView() {
           const { lat, lng } = e.latlng;
           setClickedPosition([lat, lng]);
         }
+        // If in magic wand mode, we will handle clicks differently
+        const onMapClick = useMapStore.getState().onMapClick;
+        if (onMapClick) {
+          onMapClick(e.latlng);
+        }
       });
 
       // Store map instance so we can clean up later
