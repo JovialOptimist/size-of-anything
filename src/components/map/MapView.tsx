@@ -85,6 +85,28 @@ export default function MapView() {
 
     // Add each GeoJSON feature to the layer group
     geojsonAreas.forEach((feature) => {
+      let recursiveLength = findRecursiveLength(feature.geometry.coordinates);
+      if (recursiveLength > 5000) {
+        // simplify the geometry if it has too many points
+        console.warn(
+          "Feature has too many points, simplifying geometry:",
+          recursiveLength
+        );
+        // Remove half of the coordinates
+        feature.geometry.coordinates = feature.geometry.coordinates.map(
+          (ring: any) => {
+            if (Array.isArray(ring[0])) {
+              return ring.map((subRing: number[][]) =>
+                subRing.filter((_, index: number) => index % 5 === 0)
+              );
+            } else {
+              return ring.filter(
+                (_: number[], index: number) => index % 5 === 0
+              );
+            }
+          }
+        );
+      }
       const layer = L.geoJSON(feature, {
         style: {
           color: "blue",
@@ -192,4 +214,14 @@ function enablePolygonDragging(geoJsonLayer: L.GeoJSON, map: L.Map | null) {
       });
     }
   });
+}
+
+function findRecursiveLength(coordinates: any[]): number {
+  if (!Array.isArray(coordinates)) return 0;
+  return coordinates.reduce((sum, coord) => {
+    if (Array.isArray(coord)) {
+      return sum + findRecursiveLength(coord);
+    }
+    return sum + 1; // Count the coordinate itself
+  }, 0);
 }
