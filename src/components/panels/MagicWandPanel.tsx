@@ -1,5 +1,5 @@
 // src/components/panels/MagicWandPanel.tsx
-import React, { useState } from "react";
+import { useState } from "react";
 import { useMapStore } from "../../state/mapStore";
 import GeoCandidatePicker from "../map/GeoCandidatePicker";
 import fixMultiPolygon from "../utils/fixMultipolygon";
@@ -22,7 +22,9 @@ export default function MagicWandPanel() {
     const data = await response.json();
     console.log("Reverse geocoding response:", data);
     if (!data || !data.geojson || !data.osm_type || !data.osm_id) {
-      console.log("No valid area found at this location. Missing required data properties.");
+      console.log(
+        "No valid area found at this location. Missing required data properties."
+      );
       alert("No valid area found at this location.");
       return;
     }
