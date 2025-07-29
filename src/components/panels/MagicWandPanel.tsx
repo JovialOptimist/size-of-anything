@@ -21,31 +21,32 @@ export default function MagicWandPanel() {
     const response = await fetch(request);
     const data = await response.json();
     console.log("Reverse geocoding response:", data);
-    if (!data || !data.geojson) {
+    if (!data || !data.geojson || !data.osm_type || !data.osm_id) {
+      console.log("No valid area found at this location. Missing required data properties.");
       alert("No valid area found at this location.");
       return;
     }
 
     // Convert response to GeoJSONFeature[]
-    const geojsons = data.map((place: any) => {
-      const osmType = place.osm_type;
-      const osmId = place.osm_id;
-      const feature: GeoJSONFeature = {
-        type: "Feature" as "Feature",
-        geometry: {
-          type: osmType === OSM_Type.WAY ? "Polygon" : "MultiPolygon",
-          coordinates: place.geojson.coordinates,
-        },
-        properties: {
-          name: place.display_name,
-          osmType: place.type,
-          osmId,
-          osmClass: place.class,
-          whatIsIt: describeOsmObject(place),
-        },
-      };
-      return fixMultiPolygon(feature);
-    });
+    // The Nominatim API returns a single object, not an array
+    const place = data;
+    const osmType = place.osm_type;
+    const osmId = place.osm_id;
+    const feature: GeoJSONFeature = {
+      type: "Feature" as "Feature",
+      geometry: {
+        type: osmType === OSM_Type.WAY ? "Polygon" : "MultiPolygon",
+        coordinates: place.geojson.coordinates,
+      },
+      properties: {
+        name: place.display_name,
+        osmType: place.type,
+        osmId,
+        osmClass: place.class,
+        whatIsIt: describeOsmObject(place),
+      },
+    };
+    const geojsons = [fixMultiPolygon(feature)];
     console.log("GeoJSON features from click:", geojsons);
 
     setCandidates(geojsons);
@@ -55,7 +56,7 @@ export default function MagicWandPanel() {
   const activateWand = () => {
     setShowPicker(false);
     setCandidates([]);
-    setOnMapClick(() => handleClick);
+    setOnMapClick(handleClick); // Direct reference to handleClick, not a function that returns it
     useMapStore.getState().setMagicWandMode(true);
     console.log("Magic Wand activated. Click on the map to select an area.");
   };
