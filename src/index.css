@@ -66,3 +66,19 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+/* Styles for the area markers on the map */
+.area-marker {
+  cursor: grab;
+  transition: transform 0.2s ease;
+}
+
+.area-marker:hover {
+  transform: scale(1.1);
+  filter: brightness(1.2);
+}
+
+.area-marker:active {
+  cursor: grabbing;
+  transform: scale(0.95);
+}
