@@ -231,7 +231,7 @@ export default function MapView() {
               mapInstanceRef.current?.dragging.disable();
             });
 
-            marker.on("drag", function (e) {
+            marker.on("drag", function () {
               // Get the current layer associated with this marker
               const geoJsonLayer = markerToLayerMap.current.get(marker);
               if (!geoJsonLayer) return;
