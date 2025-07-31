@@ -155,22 +155,21 @@ export function enablePolygonDragging(geoJsonLayer: L.GeoJSON, map: L.Map | null
     let dragStart: L.LatLng | null = null;
 
     innerLayer.on("mousedown", async (event: L.LeafletMouseEvent) => {
-      // Set this shape as active when it's clicked
-      const feature = geoJsonLayer.feature;
-      // Type guard: check if feature is a Feature with properties
-      if (feature && "properties" in feature && feature.properties) {
+      // Get the specific feature associated with this inner polygon
+      const feature = (innerLayer as any).feature as GeoJSON.Feature | undefined;
+      if (feature && feature.properties) {
         const featureIndex = feature.properties.index;
+
         if (featureIndex !== undefined) {
-          // Import from the store directly
           const { useMapStore } = await import('../../state/mapStore');
           useMapStore.getState().setActiveArea(`geojson-${featureIndex}`);
-            console.log(`MapView: Active area set to geojson-${featureIndex}`);
+        } else {
+          console.warn("Feature has no index property, cannot set active area.", feature);
         }
-        else {
-            console.warn("Feature has no index property, cannot set active area.");
-        }
+      } else {
+        console.warn("Feature is not valid or has no properties:", feature);
       }
-      
+
       map.dragging.disable();
       dragStart = event.latlng;
 
@@ -206,38 +205,32 @@ export function enablePolygonDragging(geoJsonLayer: L.GeoJSON, map: L.Map | null
         map?.off("mousemove", onMouseMove);
         map?.off("mouseup", onMouseUp);
         map?.dragging.enable();
-        
-        // Get existing feature and polygon layer
-            let pathLayer: L.Polygon | null = null;
-            let feature: GeoJSON.Feature | undefined;
-            geoJsonLayer.eachLayer((layer) => {
-              if (layer instanceof L.Polygon) {
-                pathLayer = layer;
-                if (layer.feature) {
-                  feature = layer.feature as GeoJSON.Feature;
-                }
-              }
-            });
-            
-            if (pathLayer && feature && feature.properties) {
-              const featureIndex = feature.properties.index;
-              
-              if (featureIndex !== undefined) {
-                // Get the current coordinates from the polygon after dragging
-                const currentCoords = (pathLayer as L.Polygon).getLatLngs();                
-                const convertedCoords = convertLatLngsToCoords(currentCoords);
-                
-                // Store the current coordinates in the feature itself
-                if (feature.geometry) {
-                  (feature.geometry as any).currentCoordinates = convertedCoords;
-                }
-                
-                // Update the store with the new coordinates
-                const { useMapStore } = await import('../../state/mapStore');
-                useMapStore.getState().updateCurrentCoordinates(`geojson-${featureIndex}`, convertedCoords);
-              }
-            }
-        
+
+        // Use the same feature associated with the innerLayer
+        const feature = (innerLayer as any).feature as GeoJSON.Feature | undefined;
+
+        if (feature && feature.properties && feature.geometry) {
+          const featureIndex = feature.properties.index;
+
+          if (featureIndex !== undefined) {
+            const currentCoords = innerLayer.getLatLngs();
+            const convertedCoords = convertLatLngsToCoords(currentCoords);
+
+            // Store the updated coordinates in the feature
+            (feature.geometry as any).currentCoordinates = convertedCoords;
+
+            const { useMapStore } = await import('../../state/mapStore');
+            useMapStore.getState().updateCurrentCoordinates(
+              `geojson-${featureIndex}`,
+              convertedCoords
+            );
+          } else {
+            console.warn("MouseUp: Feature has no index, cannot update store.", feature);
+          }
+        } else {
+          console.warn("MouseUp: Invalid feature or geometry missing", feature);
+        }
+
         originalLatLngs = null;
         dragStart = null;
       };
@@ -247,6 +240,7 @@ export function enablePolygonDragging(geoJsonLayer: L.GeoJSON, map: L.Map | null
     });
   });
 }
+
 
 export function calculateAreaInKm2(feature: GeoJSON.Feature): number {
     if (!feature.geometry || !feature.geometry) {
