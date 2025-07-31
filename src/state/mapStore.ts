@@ -1,6 +1,7 @@
 // src/state/mapStore.ts
 import { create } from "zustand";
 import { generateRandomColor, getExistingColors } from "../components/utils/colorUtils";
+import * as turf from "@turf/turf";
 
 interface MapArea {
   id: string;
@@ -49,8 +50,11 @@ interface MapState {
   removeArea: (id: string) => void;
   setActiveArea: (id: string | null) => void;
   setMagicWandMode: (enabled: boolean) => void;
-    onMapClick: ((latlng: L.LatLng) => void) | null;
-    setOnMapClick: (handler: ((latlng: L.LatLng) => void) | null) => void;
+  onMapClick: ((latlng: L.LatLng) => void) | null;
+  setOnMapClick: (handler: ((latlng: L.LatLng) => void) | null) => void;
+  getActiveElement: () => GeoJSONFeature | null;
+  calculateAreaInKm2: (feature: GeoJSONFeature) => number;
+  updateElementColor: (id: string, color: string) => void;
 }
 
 /**
@@ -74,12 +78,14 @@ export const useMapStore = create<MapState>((set) => ({
     const existingColors = getExistingColors(state.geojsonAreas);
     const color = generateRandomColor(existingColors);
     
-    // Add the color to the feature properties
+    // Add the color and index to the feature properties
+    const index = state.geojsonAreas.length;
     const featureWithColor = {
       ...feature,
       properties: {
         ...feature.properties,
-        color: color
+        color: color,
+        index: index
       }
     };
 
@@ -115,5 +121,54 @@ export const useMapStore = create<MapState>((set) => ({
   set({ magicWandMode: enabled });
 },
 setOnMapClick: (handler) => set({ onMapClick: handler }),
+
+getActiveElement: () => {
+  const state: any = useMapStore.getState();
+  if (!state.activeAreaId) return null;
+  
+  const activeId = state.activeAreaId;
+  const idNumber = activeId.replace('geojson-', '');
+  const index = parseInt(idNumber, 10);
+  
+  return state.geojsonAreas[index] || null;
+},
+
+calculateAreaInKm2: (feature) => {
+  try {
+    // Convert the GeoJSON to a turf feature
+    const turfFeature = {
+      type: "Feature",
+      properties: {},
+      geometry: feature.geometry
+    };
+    
+    // Calculate area in square meters and convert to square kilometers
+    const areaInSquareMeters = 1000000;
+    return Math.round((areaInSquareMeters / 1000000) * 100) / 100; // km² with 2 decimal places
+  } catch (error) {
+    console.error("Error calculating area:", error);
+    return 0;
+  }
+},
+
+updateElementColor: (id, color) => {
+  set((state) => {
+    const idNumber = id.replace('geojson-', '');
+    const index = parseInt(idNumber, 10);
+    
+    if (index < 0 || index >= state.geojsonAreas.length) return state;
+    
+    const updatedAreas = [...state.geojsonAreas];
+    updatedAreas[index] = {
+      ...updatedAreas[index],
+      properties: {
+        ...updatedAreas[index].properties,
+        color
+      }
+    };
+    
+    return { geojsonAreas: updatedAreas };
+  });
+},
 
 }));

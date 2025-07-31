@@ -21,9 +21,13 @@ export default function MapView() {
   const markersLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const markerToLayerMap = useRef<Map<L.Marker, L.GeoJSON>>(new Map());
 
-  const geojsonAreas = useMapStore((state) => state.geojsonAreas);
-  const isSelectingArea = useMapStore((state) => state.isSelectingArea);
-  const setClickedPosition = useMapStore((state) => state.setClickedPosition);
+  const geojsonAreas = useMapStore((state: any) => state.geojsonAreas);
+  const isSelectingArea = useMapStore((state: any) => state.isSelectingArea);
+  const setClickedPosition = useMapStore(
+    (state: any) => state.setClickedPosition
+  );
+  const activeAreaId = useMapStore((state: any) => state.activeAreaId);
+  const setActiveArea = useMapStore((state: any) => state.setActiveArea);
 
   const [currentZoomLevel, setCurrentZoomLevel] = useState<number>(13);
 
@@ -60,7 +64,7 @@ export default function MapView() {
     });
 
     markersLayerGroupRef.current = L.layerGroup().addTo(map);
-    
+
     // Expose the layer refs to the window for access from marker utils
     (window as any).markersLayerGroupRef = markersLayerGroupRef;
     (window as any).markerToLayerMap = markerToLayerMap;
@@ -87,7 +91,7 @@ export default function MapView() {
     geoJSONLayerGroupRef.current = group;
 
     const bounds = new L.LatLngBounds([]);
-    geojsonAreas.forEach((feature, idx) => {
+    geojsonAreas.forEach((feature: any, idx: any) => {
       if (!isValidGeometry(feature.geometry.coordinates)) {
         console.warn(
           `MapView: Feature #${idx} has invalid geometry, skipping`,
@@ -96,11 +100,26 @@ export default function MapView() {
       }
 
       const polygonColor = feature.properties?.color || "blue";
+      const isActive = activeAreaId === `geojson-${idx}`;
+
       const layer = L.geoJSON(feature, {
-        style: { color: polygonColor, weight: 2, fillOpacity: 0.4 },
+        style: {
+          color: polygonColor,
+          weight: isActive ? 4 : 2,
+          fillOpacity: isActive ? 0.6 : 0.4,
+          opacity: isActive ? 0.9 : 0.7,
+        },
       }).addTo(group);
 
-      enablePolygonDragging(layer, map);
+      // Add click handler to set active element
+      layer.on("click", () => {
+        setActiveArea(`geojson-${idx}`);
+      });
+
+      // Only enable dragging if this is the active element or there is no active element
+      if (isActive || !activeAreaId) {
+        enablePolygonDragging(layer, map);
+      }
 
       rightClickToRemove(layer, map);
 
@@ -116,7 +135,7 @@ export default function MapView() {
     } else {
       console.warn("MapView: Bounds are not valid, skipping fitBounds");
     }
-  }, [geojsonAreas]);
+  }, [geojsonAreas, activeAreaId]);
 
   function updateMarkers() {
     const map = mapInstanceRef.current;

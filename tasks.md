@@ -7,3 +7,5 @@ Settings Menu
 - Adjust when markers appear (the ratio of polygon size to map size)
 - Dark Mode
 - Delete history
+
+Make a "hide markers" button on the map like a leaflet control.

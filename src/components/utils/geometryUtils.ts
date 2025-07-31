@@ -155,6 +155,20 @@ export function enablePolygonDragging(geoJsonLayer: L.GeoJSON, map: L.Map | null
     let dragStart: L.LatLng | null = null;
 
     innerLayer.on("mousedown", (event: L.LeafletMouseEvent) => {
+      // Set this shape as active when it's clicked
+      const feature = geoJsonLayer.feature;
+      // Type guard: check if feature is a Feature with properties
+      if (feature && "properties" in feature && feature.properties) {
+        const featureIndex = feature.properties.index;
+        if (featureIndex !== undefined) {
+          // Dynamically import the store to avoid circular dependencies
+          import('../../state/mapStore').then(module => {
+            const mapStore = module.useMapStore;
+            mapStore.getState().setActiveArea(`geojson-${featureIndex}`);
+          });
+        }
+      }
+      
       map.dragging.disable();
       dragStart = event.latlng;
 

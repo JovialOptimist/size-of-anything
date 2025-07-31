@@ -1,0 +1,117 @@
+.active-element-panel {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  padding: 15px;
+  width: 250px;
+  max-width: 10vw;
+  z-index: 1000;
+}
+
+.active-element-empty {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  padding: 10px;
+  width: 250px;
+  max-width: 90vw;
+  z-index: 1000;
+  font-style: italic;
+  color: #666;
+}
+
+.active-element-panel h3 {
+  margin-top: 0;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+  margin-bottom: 15px;
+}
+
+.element-info p {
+  margin: 8px 0;
+  font-size: 14px;
+}
+
+.color-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.color-preview {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid #ddd;
+}
+
+.color-change {
+  margin: 15px 0;
+}
+
+.color-input-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.color-picker {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.color-text {
+  flex: 1;
+  padding: 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.color-change button, .remove-element-btn {
+  padding: 6px 10px;
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.remove-element-btn {
+  background-color: #e74c3c;
+  width: 100%;
+  margin-top: 15px;
+  font-size: 14px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .active-element-panel,
+  .active-element-empty {
+    bottom: 60px;
+    right: 10px;
+    width: 200px;
+  }
+}
+
+/* Animation for panel appearance */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.active-element-panel, .active-element-empty {
+  animation: fadeIn 0.3s ease-out;
+}
