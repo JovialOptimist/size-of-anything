@@ -222,18 +222,7 @@ export function enablePolygonDragging(geoJsonLayer: L.GeoJSON, map: L.Map | null
               
               if (featureIndex !== undefined) {
                 // Get the current coordinates from the polygon after dragging
-                const currentCoords = (pathLayer as L.Polygon).getLatLngs();
-                
-                // Convert Leaflet LatLngs to GeoJSON coordinates format
-                const convertLatLngsToCoords = (latLngs: any): any => {
-                  if (latLngs[0] instanceof L.LatLng) {
-                    return [latLngs.map((ll: L.LatLng) => [ll.lng, ll.lat])];
-                  } else if (Array.isArray(latLngs[0])) {
-                    return latLngs.map((ring: any) => convertLatLngsToCoords(ring)[0]);
-                  }
-                  return JSON.parse(JSON.stringify(latLngs));
-                };
-                
+                const currentCoords = (pathLayer as L.Polygon).getLatLngs();                
                 const convertedCoords = convertLatLngsToCoords(currentCoords);
                 
                 // Store the current coordinates in the feature itself
@@ -272,3 +261,15 @@ export function calculateAreaInKm2(feature: GeoJSON.Feature): number {
         return 0;
     }
 }
+
+export const convertLatLngsToCoords = (latLngs: any): any => {
+  if (!Array.isArray(latLngs) || latLngs.length === 0) return [];
+
+  if (latLngs[0] instanceof L.LatLng) {
+    // Ring of LatLngs (e.g. outer ring or hole)
+    return latLngs.map((ll: L.LatLng) => [ll.lng, ll.lat]);
+  }
+
+  // If the first element is an array, recurse into it
+  return latLngs.map((subArray: any) => convertLatLngsToCoords(subArray));
+};

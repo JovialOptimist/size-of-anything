@@ -1,5 +1,6 @@
 import L from "leaflet";
 import { transformPolygonCoordinates } from "./geometryUtils";
+import { convertLatLngsToCoords } from "./geometryUtils";
 
 const markerSize = 2;
 
@@ -73,16 +74,6 @@ export function attachMarkerDragHandlers(
       if (featureIndex !== undefined) {
         // Get the current coordinates from the polygon after dragging
         const currentCoords = (pathLayer as L.Polygon).getLatLngs();
-        
-        // Convert Leaflet LatLngs to GeoJSON coordinates format
-        const convertLatLngsToCoords = (latLngs: any): any => {
-          if (latLngs[0] instanceof L.LatLng) {
-            return [latLngs.map((ll: L.LatLng) => [ll.lng, ll.lat])];
-          } else if (Array.isArray(latLngs[0])) {
-            return latLngs.map((ring: any) => convertLatLngsToCoords(ring)[0]);
-          }
-          return JSON.parse(JSON.stringify(latLngs));
-        };
         
         const convertedCoords = convertLatLngsToCoords(currentCoords);
         

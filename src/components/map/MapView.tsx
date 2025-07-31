@@ -120,7 +120,7 @@ export default function MapView() {
       const isActive = activeAreaId === `geojson-${idx}`;
 
       // Clone the feature to avoid modifying the original
-      let featureToRender = JSON.parse(JSON.stringify(feature));
+      let featureToRender: GeoJSONFeature = JSON.parse(JSON.stringify(feature));
 
       // Use currentCoordinates if available, otherwise use original coordinates
       if (featureToRender.geometry.currentCoordinates) {
@@ -153,20 +153,21 @@ export default function MapView() {
       // Go find the newest shape
       const newShape = geojsonAreas[geojsonAreas.length - 1];
       // Create a temporary GeoJSON layer to get bounds
-      const tempLayer = L.geoJSON(newShape);
+      const tempLayer = L.geoJSON(newShape.geometry);
       const bounds = tempLayer.getBounds();
       if (bounds.isValid()) {
-        console.log(
-          `MapView: Fitting bounds because new shape added (${geojsonAreas.length} vs old total of ${numShapesRef.current})`
-        );
-        map.fitBounds(bounds, { padding: [20, 20] });
+        //console.log(`MapView: Fitting bounds because new shape added (${geojsonAreas.length} vs old total of ${numShapesRef.current})`);
+        map.fitBounds(bounds, {
+          paddingTopLeft: [420, 20],
+          paddingBottomRight: [20, 20],
+        });
       } else {
         console.warn("MapView: Bounds are not valid, skipping fitBounds");
       }
     } else if (geojsonAreas.length < numShapesRef.current) {
-      console.log("MapView: A shape has been removed, not fitting bounds");
+      //console.log("MapView: A shape has been removed, not fitting bounds");
     } else {
-      console.log("MapView: No new shapes, not fitting bounds");
+      //console.log("MapView: No new shapes, not fitting bounds");
     }
     numShapesRef.current = geojsonAreas.length;
   }, [geojsonAreas, activeAreaId]);
