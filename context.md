@@ -1,0 +1,1 @@
+The Size of Anything allows users to compare teh sizes of different areas on a map. For example, the user can type "Disneyland", and the resulting area in OpenStreetMap will be returned to be displayed on the map. Then, that area can be relocated when the user drags their mouse.
