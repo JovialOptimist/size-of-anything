@@ -137,7 +137,8 @@ getActiveElement: () => {
   const idNumber = activeId.replace('geojson-', '');
   const index = parseInt(idNumber, 10);
   
-  return state.geojsonAreas[index] || null;
+  // Find the element by its index property rather than assuming array position matches
+  return state.geojsonAreas.find((feature: GeoJSONFeature) => feature.properties.index === index) || null;
 },
 
 updateElementColor: (id, color) => {
@@ -145,13 +146,18 @@ updateElementColor: (id, color) => {
     const idNumber = id.replace('geojson-', '');
     const index = parseInt(idNumber, 10);
     
-    if (index < 0 || index >= state.geojsonAreas.length) return state;
+    // Find the element by index property instead of array position
+    const featureIndex = state.geojsonAreas.findIndex(
+      feature => feature.properties.index === index
+    );
+    
+    if (featureIndex < 0) return state;
     
     const updatedAreas = [...state.geojsonAreas];
-    updatedAreas[index] = {
-      ...updatedAreas[index],
+    updatedAreas[featureIndex] = {
+      ...updatedAreas[featureIndex],
       properties: {
-        ...updatedAreas[index].properties,
+        ...updatedAreas[featureIndex].properties,
         color
       }
     };
@@ -165,13 +171,18 @@ updateCurrentCoordinates: (id, coordinates) => {
     const idNumber = id.replace('geojson-', '');
     const index = parseInt(idNumber, 10);
     
-    if (index < 0 || index >= state.geojsonAreas.length) return state;
+    // Find the element by index property instead of array position
+    const featureIndex = state.geojsonAreas.findIndex(
+      feature => feature.properties.index === index
+    );
+    
+    if (featureIndex < 0) return state;
     
     const updatedAreas = [...state.geojsonAreas];
-    updatedAreas[index] = {
-      ...updatedAreas[index],
+    updatedAreas[featureIndex] = {
+      ...updatedAreas[featureIndex],
       geometry: {
-        ...updatedAreas[index].geometry,
+        ...updatedAreas[featureIndex].geometry,
         currentCoordinates: coordinates
       }
     };
