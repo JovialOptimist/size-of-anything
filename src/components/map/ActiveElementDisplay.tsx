@@ -8,11 +8,6 @@ import "../../styles/ActiveElementDisplay.css";
  */
 const ActiveElementDisplay: React.FC = () => {
   const { activePanel } = usePanel();
-  // Import or define the type for your map store state
-  // import { MapStoreState } from "../../state/mapStore";
-  // or define it here if not exported:
-  // type MapStoreState = { activeAreaId: string; getActiveElement: () => any; calculateAreaInKm2: (el: any) => number; updateElementColor: (id: string, color: string) => void; removeArea: (id: string) => void; ... };
-
   const activeAreaId = useMapStore((state: any) => state.activeAreaId);
   const getActiveElement = useMapStore((state: any) => state.getActiveElement);
   const calculateAreaInKm2 = useMapStore(
@@ -32,11 +27,7 @@ const ActiveElementDisplay: React.FC = () => {
   const activeElement = getActiveElement();
 
   if (!activeElement || !activeAreaId) {
-    return (
-      <div className={`${displayClass} active-element-empty`}>
-        <p>No element selected. Click on a shape to activate it.</p>
-      </div>
-    );
+    return <div className={`active-element-empty`}></div>;
   }
 
   const areaSize = calculateAreaInKm2(activeElement);

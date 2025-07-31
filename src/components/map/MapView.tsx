@@ -22,6 +22,7 @@ export default function MapView() {
   const markersLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const markerToLayerMap = useRef<Map<L.Marker, L.GeoJSON>>(new Map());
   const wasLayerClickedRef = useRef(false);
+  const numShapesRef = useRef(0);
 
   const geojsonAreas: GeoJSONFeature[] = useMapStore(
     (state: MapState) => state.geojsonAreas
@@ -107,7 +108,6 @@ export default function MapView() {
     const group = L.layerGroup().addTo(map);
     geoJSONLayerGroupRef.current = group;
 
-    const bounds = new L.LatLngBounds([]);
     geojsonAreas.forEach((feature: GeoJSONFeature) => {
       const idx = feature.properties?.index;
       if (!isValidGeometry(feature.geometry.coordinates)) {
@@ -119,13 +119,14 @@ export default function MapView() {
 
       const polygonColor = feature.properties?.color || "blue";
       const isActive = activeAreaId === `geojson-${idx}`;
-      
+
       // Clone the feature to avoid modifying the original
       let featureToRender = JSON.parse(JSON.stringify(feature));
-      
+
       // Use currentCoordinates if available, otherwise use original coordinates
       if (featureToRender.geometry.currentCoordinates) {
-        featureToRender.geometry.coordinates = featureToRender.geometry.currentCoordinates;
+        featureToRender.geometry.coordinates =
+          featureToRender.geometry.currentCoordinates;
       }
 
       const layer = L.geoJSON(featureToRender, {
@@ -149,19 +150,28 @@ export default function MapView() {
       }
 
       rightClickToRemove(layer, map);
-
-      try {
-        bounds.extend(layer.getBounds());
-      } catch (err) {
-        console.warn("MapView: Invalid bounds on feature", idx, err);
-      }
     });
 
-    if (bounds.isValid()) {
-      map.fitBounds(bounds, { padding: [20, 20] });
+    if (geojsonAreas.length > numShapesRef.current) {
+      // Go find the newest shape
+      const newShape = geojsonAreas[geojsonAreas.length - 1];
+      // Create a temporary GeoJSON layer to get bounds
+      const tempLayer = L.geoJSON(newShape);
+      const bounds = tempLayer.getBounds();
+      if (bounds.isValid()) {
+        console.log(
+          `MapView: Fitting bounds because new shape added (${geojsonAreas.length} vs old total of ${numShapesRef.current})`
+        );
+        map.fitBounds(bounds, { padding: [20, 20] });
+      } else {
+        console.warn("MapView: Bounds are not valid, skipping fitBounds");
+      }
+    } else if (geojsonAreas.length < numShapesRef.current) {
+      console.log("MapView: A shape has been removed, not fitting bounds");
     } else {
-      console.warn("MapView: Bounds are not valid, skipping fitBounds");
+      console.log("MapView: No new shapes, not fitting bounds");
     }
+    numShapesRef.current = geojsonAreas.length;
   }, [geojsonAreas, activeAreaId]);
 
   function updateMarkers() {

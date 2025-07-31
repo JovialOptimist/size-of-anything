@@ -410,3 +410,7 @@ body {
     display: flex;
     flex-direction: row;
 }
+
+.active-element-empty {
+    display: none;
+}
