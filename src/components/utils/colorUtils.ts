@@ -1,5 +1,5 @@
 // src/components/utils/colorUtils.ts
-import type { GeoJSONFeature } from "../../state/mapStore";
+import type { GeoJSONFeature } from "../../state/mapStoreTypes";
 
 /**
  * Generate a random color in HSL space with constraints to ensure it's visually pleasant

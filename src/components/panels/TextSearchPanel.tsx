@@ -1,8 +1,8 @@
 // src/components/panels/TextSearchPanel.tsx
 import React, { useState } from "react";
 import { useMapStore } from "../../state/mapStore";
-import { OSM_Type } from "../../state/mapStore";
-import type { GeoJSONFeature } from "../../state/mapStore";
+import { OSM_Type } from "../../state/mapStoreTypes";
+import type { GeoJSONFeature } from "../../state/mapStoreTypes";
 import GeoCandidatePicker from "../map/GeoCandidatePicker";
 import { describeOsmObject } from "../utils/describeOsmObject";
 import fixMultiPolygon from "../utils/fixMultipolygon";

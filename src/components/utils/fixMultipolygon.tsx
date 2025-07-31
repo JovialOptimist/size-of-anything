@@ -1,4 +1,4 @@
-import type { GeoJSONFeature } from "../../state/mapStore";
+import type { GeoJSONFeature } from "../../state/mapStoreTypes";
 
 function fixMultiPolygon(feature: GeoJSONFeature): GeoJSONFeature {
   const geom = feature.geometry;

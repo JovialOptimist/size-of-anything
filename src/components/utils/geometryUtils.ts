@@ -154,18 +154,16 @@ export function enablePolygonDragging(geoJsonLayer: L.GeoJSON, map: L.Map | null
     let originalLatLngs: any = null;
     let dragStart: L.LatLng | null = null;
 
-    innerLayer.on("mousedown", (event: L.LeafletMouseEvent) => {
+    innerLayer.on("mousedown", async (event: L.LeafletMouseEvent) => {
       // Set this shape as active when it's clicked
       const feature = geoJsonLayer.feature;
       // Type guard: check if feature is a Feature with properties
       if (feature && "properties" in feature && feature.properties) {
         const featureIndex = feature.properties.index;
         if (featureIndex !== undefined) {
-          // Dynamically import the store to avoid circular dependencies
-          import('../../state/mapStore').then(module => {
-            const mapStore = module.useMapStore;
-            mapStore.getState().setActiveArea(`geojson-${featureIndex}`);
-          });
+          // Import from the store directly
+          const { useMapStore } = await import('../../state/mapStore');
+          useMapStore.getState().setActiveArea(`geojson-${featureIndex}`);
         }
       }
       
@@ -200,7 +198,7 @@ export function enablePolygonDragging(geoJsonLayer: L.GeoJSON, map: L.Map | null
         }
       };
 
-      const onMouseUp = () => {
+      const onMouseUp = async () => {
         map?.off("mousemove", onMouseMove);
         map?.off("mouseup", onMouseUp);
         map?.dragging.enable();
@@ -231,10 +229,8 @@ export function enablePolygonDragging(geoJsonLayer: L.GeoJSON, map: L.Map | null
                 }
                 
                 // Update the store with the new coordinates
-                import('../../state/mapStore').then(module => {
-                  const mapStore = module.useMapStore;
-                  mapStore.getState().updateCurrentCoordinates(`geojson-${featureIndex}`, convertedCoords);
-                });
+                const { useMapStore } = await import('../../state/mapStore');
+                useMapStore.getState().updateCurrentCoordinates(`geojson-${featureIndex}`, convertedCoords);
               }
             }
         

@@ -4,8 +4,8 @@ import { useMapStore } from "../../state/mapStore";
 import GeoCandidatePicker from "../map/GeoCandidatePicker";
 import fixMultiPolygon from "../utils/fixMultipolygon";
 import { describeOsmObject } from "../utils/describeOsmObject";
-import type { GeoJSONFeature } from "../../state/mapStore";
-import { OSM_Type } from "../../state/mapStore";
+import type { GeoJSONFeature } from "../../state/mapStoreTypes";
+import { OSM_Type } from "../../state/mapStoreTypes";
 
 export default function MagicWandPanel() {
   const [candidates, setCandidates] = useState<GeoJSONFeature[]>([]);

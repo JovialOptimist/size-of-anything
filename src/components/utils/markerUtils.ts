@@ -53,7 +53,7 @@ export function attachMarkerDragHandlers(
     dragStart = current;
   });
 
-  marker.on("dragend", () => {
+  marker.on("dragend", async () => {
     map.dragging.enable();
     
     // Get existing feature and polygon layer
@@ -83,10 +83,8 @@ export function attachMarkerDragHandlers(
         }
         
         // Update the store with the new coordinates
-        import('../../state/mapStore').then(module => {
-          const mapStore = module.useMapStore;
-          mapStore.getState().updateCurrentCoordinates(`geojson-${featureIndex}`, convertedCoords);
-        });
+        const { useMapStore } = await import('../../state/mapStore');
+        useMapStore.getState().updateCurrentCoordinates(`geojson-${featureIndex}`, convertedCoords);
       }
     }
   });

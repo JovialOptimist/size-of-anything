@@ -1,4 +1,4 @@
-import type { GeoJSONFeature } from "../../state/mapStore";
+import type { GeoJSONFeature } from "../../state/mapStoreTypes";
 import reactLogo from "../../assets/react.svg";
 
 export default function GeoCandidatePicker({

@@ -10,7 +10,7 @@ import {
   isValidGeometry,
 } from "../utils/geometryUtils";
 import { createMarker, attachMarkerDragHandlers } from "../utils/markerUtils";
-import type { GeoJSONFeature, MapState } from "../../state/mapStore";
+import type { GeoJSONFeature, MapState } from "../../state/mapStoreTypes";
 
 const POLYGON_SIZE_THRESHOLD_PERCENT = 0.05; //TODO: Make this configurable
 
