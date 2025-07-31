@@ -1,5 +1,6 @@
 // src/state/mapStore.ts
 import { create } from "zustand";
+import { generateRandomColor, getExistingColors } from "../components/utils/colorUtils";
 
 interface MapArea {
   id: string;
@@ -20,6 +21,7 @@ export interface GeoJSONFeature {
     osmType: string;
     osmId: string | null;
     osmClass: string;
+    color?: string; // Add color property
     [key: string]: any;
     whatIsIt: string;
   };
@@ -67,17 +69,30 @@ export const useMapStore = create<MapState>((set) => ({
   addGeoJSONFromSearch: (feature: GeoJSONFeature) =>
   set((state) => {
     const { type, coordinates } = feature.geometry;
+    
+    // Generate a unique color for this feature
+    const existingColors = getExistingColors(state.geojsonAreas);
+    const color = generateRandomColor(existingColors);
+    
+    // Add the color to the feature properties
+    const featureWithColor = {
+      ...feature,
+      properties: {
+        ...feature.properties,
+        color: color
+      }
+    };
 
     const newArea: MapArea = {
       id: `geojson-${state.geojsonAreas.length}`,
       name: feature.properties?.name || 'Unnamed Area',
       coordinates: coordinates as any, // trust GeoJSON is well-formed
       type: type === "MultiPolygon" ? "multipolygon" : "polygon",
-      properties: feature.properties || {},
+      properties: featureWithColor.properties,
     };
 
     return {
-      geojsonAreas: [...state.geojsonAreas, feature],
+      geojsonAreas: [...state.geojsonAreas, featureWithColor],
       areas: [...state.areas, newArea],
     };
   }),

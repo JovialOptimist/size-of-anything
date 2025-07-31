@@ -60,6 +60,10 @@ export default function MapView() {
     });
 
     markersLayerGroupRef.current = L.layerGroup().addTo(map);
+    
+    // Expose the layer refs to the window for access from marker utils
+    (window as any).markersLayerGroupRef = markersLayerGroupRef;
+    (window as any).markerToLayerMap = markerToLayerMap;
 
     return () => {
       map.off();
@@ -91,8 +95,9 @@ export default function MapView() {
         );
       }
 
+      const polygonColor = feature.properties?.color || "blue";
       const layer = L.geoJSON(feature, {
-        style: { color: "blue", weight: 2, fillOpacity: 0.4 },
+        style: { color: polygonColor, weight: 2, fillOpacity: 0.4 },
       }).addTo(group);
 
       enablePolygonDragging(layer, map);
@@ -131,7 +136,10 @@ export default function MapView() {
         if (
           shouldShowMarkerForPolygon(poly, map, POLYGON_SIZE_THRESHOLD_PERCENT)
         ) {
-          const marker = createMarker(findCenterForMarker(poly));
+          // Get the color from the GeoJSON properties
+          const feature = layer.feature as any;
+          const polygonColor = feature?.properties?.color || "blue";
+          const marker = createMarker(findCenterForMarker(poly), polygonColor);
           marker.addTo(markerLayerGroup);
           markerToLayerMap.current.set(marker, layer);
           attachMarkerDragHandlers(marker, layer, map);

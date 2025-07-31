@@ -3,7 +3,7 @@ import { transformPolygonCoordinates } from "./geometryUtils";
 
 const markerSize = 2;
 
-export function createMarker(center: L.LatLng): L.Marker {
+export function createMarker(center: L.LatLng, color: string = "blue"): L.Marker {
     const width = 18 * markerSize;
     const height = 24 * markerSize;
 
@@ -13,8 +13,8 @@ export function createMarker(center: L.LatLng): L.Marker {
     icon: L.divIcon({
       className: "area-marker",
       html: `<svg width="${width}" height="${height}" viewBox="0 0 18 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <ellipse cx="9" cy="8" rx="7" ry="7" fill="blue" stroke="white" stroke-width="2"/>
-        <path d="M9 23C9 23 16 13.5 16 8C16 3.58172 12.4183 0 8 0C3.58172 0 0 3.58172 0 8C0 13.5 9 23 9 23Z" fill="blue" stroke="white" stroke-width="2"/>
+        <ellipse cx="9" cy="8" rx="7" ry="7" fill="${color}" stroke="white" stroke-width="2"/>
+        <path d="M9 23C9 23 16 13.5 16 8C16 3.58172 12.4183 0 8 0C3.58172 0 0 3.58172 0 8C0 13.5 9 23 9 23Z" fill="${color}" stroke="white" stroke-width="2"/>
         <circle cx="8" cy="8" r="3" fill="white"/>
       </svg>`,
       iconSize: [width, height],
