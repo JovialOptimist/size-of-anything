@@ -12,7 +12,7 @@ export default function GeoCandidatePicker({
 }) {
   return (
     <div className="geo-candidate-picker">
-      <h3>Select an area</h3>
+      <h3>Choose an area:</h3>
       <ul className="candidate-list">
         {candidates.map((feature, index) => {
           const name = feature.properties?.name || `Candidate ${index + 1}`;

@@ -10,6 +10,7 @@ const ActiveElementDisplay: React.FC = () => {
   const { activePanel } = usePanel();
   const activeAreaId = useMapStore((state: any) => state.activeAreaId);
   const getActiveElement = useMapStore((state: any) => state.getActiveElement);
+  const setActiveArea = useMapStore((state: any) => state.setActiveArea);
   const updateElementColor = useMapStore(
     (state: any) => state.updateElementColor
   );
@@ -20,6 +21,7 @@ const ActiveElementDisplay: React.FC = () => {
   const currentColor = activeElement?.properties?.color || "#1f77b4";
   const [selectedColor, setSelectedColor] = useState(currentColor);
   const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
+  const duplicateArea = useMapStore((state: any) => state.duplicateArea);
 
   const colorPickerRef = useRef<HTMLDivElement>(null);
 
@@ -49,7 +51,19 @@ const ActiveElementDisplay: React.FC = () => {
     return <div className={`active-element-empty`}></div>;
   }
 
-  const areaSize = calculateAreaInKm2(activeElement).toFixed(2);
+  const areaSizeNum = calculateAreaInKm2(activeElement);
+  // Format with million suffix
+  const formatNumberWithCommas = (num: number) =>
+    num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+  const areaSize =
+    areaSizeNum >= 1e6
+      ? formatNumberWithCommas(Number((areaSizeNum / 1e6).toFixed(2))) +
+        " million km²"
+      : areaSizeNum >= 1e3
+      ? formatNumberWithCommas(Number(areaSizeNum.toFixed(0))) + " km²"
+      : areaSizeNum.toFixed(2) + " km²";
+
   const elementName = activeElement.properties?.name || "Unnamed Area";
   const elementType =
     activeElement.properties?.whatIsIt ||
@@ -71,8 +85,7 @@ const ActiveElementDisplay: React.FC = () => {
 
   const handleDuplicate = () => {
     if (activeAreaId) {
-      console.log(`Duplicating area with ID: ${activeAreaId}`);
-      // Implement duplication logic here
+      duplicateArea(activeAreaId);
     }
   };
 
@@ -87,10 +100,7 @@ const ActiveElementDisplay: React.FC = () => {
       <div className="element-info">
         <div className="element-header">
           <h3>{elementName.split(",")[0]}</h3>
-          <button
-            className="close-button"
-            onClick={() => usePanel.setState({ activePanel: null })}
-          >
+          <button className="close-button" onClick={() => setActiveArea(null)}>
             &times;
           </button>
         </div>
@@ -138,7 +148,7 @@ const ActiveElementDisplay: React.FC = () => {
           </i>
         </p>
         <p>
-          <strong>Area:</strong> {areaSize} km²
+          <strong>Area:</strong> {areaSize}
         </p>
 
         <div className="button-group">

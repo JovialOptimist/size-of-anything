@@ -6,6 +6,7 @@ import type { GeoJSONFeature } from "../../state/mapStoreTypes";
 import GeoCandidatePicker from "../map/GeoCandidatePicker";
 import { describeOsmObject } from "../utils/describeOsmObject";
 import fixMultiPolygon from "../utils/fixMultipolygon";
+import reactLogo from "../../assets/react.svg";
 
 export default function TextSearchPanel() {
   const [query, setQuery] = useState("");
@@ -107,6 +108,31 @@ export default function TextSearchPanel() {
             setCandidates([]);
           }}
         />
+      )}
+
+      {!showPicker && candidates.length === 0 && (
+        <div className="geo-candidate-picker">
+          <h3>Search for anything!</h3>
+          <ul className="candidate-list">
+            <div className="candidate-item">
+              <button className="select-candidate-button">
+                <img
+                  src={reactLogo}
+                  alt=""
+                  className="candidate-icon"
+                  width={20}
+                  height={20}
+                />
+                <div className="candidate-text">
+                  <div className="candidate-label">Results</div>
+                  <div className="candidate-description">
+                    Results will appear here.
+                  </div>
+                </div>
+              </button>
+            </div>
+          </ul>
+        </div>
       )}
     </div>
   );
