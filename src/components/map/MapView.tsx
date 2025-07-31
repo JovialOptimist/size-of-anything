@@ -65,6 +65,7 @@ export default function MapView() {
       // If no layer was clicked, clear the active area
       if (!wasLayerClickedRef.current) {
         setActiveArea(null);
+        console.log("No layer clicked, clearing active area");
       }
 
       // Reset for next click
@@ -141,6 +142,9 @@ export default function MapView() {
       layer.on("click", () => {
         wasLayerClickedRef.current = true; // Mark that a layer was clicked
         setActiveArea(`geojson-${idx}`);
+        console.log(
+          `MapView: Layer clicked, setting active area to geojson-${idx}`
+        );
       });
 
       // Only enable dragging if this is the active element or there is no active element

@@ -37,6 +37,7 @@ export const useUrlSync = () => {
     const areaParam = params.get('area');
     if (areaParam && areas.some(area => area.id === areaParam)) {
       setActiveArea(areaParam);
+      console.log(`useUrlSync: Active area set to ${areaParam}`);
     }
   }, []);
 

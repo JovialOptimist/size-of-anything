@@ -164,6 +164,10 @@ export function enablePolygonDragging(geoJsonLayer: L.GeoJSON, map: L.Map | null
           // Import from the store directly
           const { useMapStore } = await import('../../state/mapStore');
           useMapStore.getState().setActiveArea(`geojson-${featureIndex}`);
+            console.log(`MapView: Active area set to geojson-${featureIndex}`);
+        }
+        else {
+            console.warn("Feature has no index property, cannot set active area.");
         }
       }
       
