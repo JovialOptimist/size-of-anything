@@ -10,4 +10,4 @@ Settings Menu
 
 Make a "hide markers" button on the map like a leaflet control.
 
-Weird bug : after a shape is deleted, some other shapes can't be moved. Also their active element display never appears.
+Implement an easter egg: searching "anything" finds a completely random OSM object

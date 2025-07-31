@@ -194,9 +194,8 @@ export default function MapView() {
         if (
           shouldShowMarkerForPolygon(poly, map, POLYGON_SIZE_THRESHOLD_PERCENT)
         ) {
-          // Get the color from the GeoJSON properties
-          const feature = layer.feature as any;
-          const polygonColor = feature?.properties?.color || "blue";
+          // Get the color directly from the polygon's style options
+          const polygonColor = poly.options.color || "blue";
           const marker = createMarker(findCenterForMarker(poly), polygonColor);
           marker.addTo(markerLayerGroup);
           markerToLayerMap.current.set(marker, layer);
