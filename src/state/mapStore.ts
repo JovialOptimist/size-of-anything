@@ -1,7 +1,6 @@
 // src/state/mapStore.ts
 import { create } from "zustand";
 import { generateRandomColor, getExistingColors } from "../components/utils/colorUtils";
-import * as turf from "@turf/turf";
 
 interface MapArea {
   id: string;
@@ -54,7 +53,6 @@ export interface MapState {
   onMapClick: ((latlng: L.LatLng) => void) | null;
   setOnMapClick: (handler: ((latlng: L.LatLng) => void) | null) => void;
   getActiveElement: () => GeoJSONFeature | null;
-  calculateAreaInKm2: (feature: GeoJSONFeature) => number;
   updateElementColor: (id: string, color: string) => void;
   updateCurrentCoordinates: (id: string, coordinates: any) => void;
 }
@@ -103,6 +101,8 @@ export const useMapStore = create<MapState>((set) => ({
       properties: featureWithColor.properties,
     };
 
+    set({ activeAreaId: newArea.id });
+
     return {
       geojsonAreas: [...state.geojsonAreas, featureWithColor],
       areas: [...state.areas, newArea],
@@ -121,6 +121,7 @@ export const useMapStore = create<MapState>((set) => ({
     set((state) => ({
       areas: state.areas.filter((area) => area.id !== id),
       activeAreaId: state.activeAreaId === id ? null : state.activeAreaId,
+        geojsonAreas: state.geojsonAreas.filter((feature) => feature.properties.index !== parseInt(id.replace('geojson-', '')))
     })),
   setActiveArea: (id) => set({ activeAreaId: id }),
   setMagicWandMode: (enabled) => {
@@ -137,24 +138,6 @@ getActiveElement: () => {
   const index = parseInt(idNumber, 10);
   
   return state.geojsonAreas[index] || null;
-},
-
-calculateAreaInKm2: (feature) => {
-  try {
-    // Convert the GeoJSON to a turf feature
-    const turfFeature = {
-      type: "Feature",
-      properties: {},
-      geometry: feature.geometry
-    };
-    
-    // Calculate area in square meters and convert to square kilometers
-    const areaInSquareMeters = 1000000;
-    return Math.round((areaInSquareMeters / 1000000) * 100) / 100; // km² with 2 decimal places
-  } catch (error) {
-    console.error("Error calculating area:", error);
-    return 0;
-  }
 },
 
 updateElementColor: (id, color) => {

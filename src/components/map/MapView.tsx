@@ -5,7 +5,6 @@ import "leaflet/dist/leaflet.css";
 import { useMapStore } from "../../state/mapStore";
 import {
   enablePolygonDragging,
-  rightClickToRemove,
   shouldShowMarkerForPolygon,
   findCenterForMarker,
   isValidGeometry,
@@ -148,8 +147,6 @@ export default function MapView() {
       if (isActive || !activeAreaId) {
         enablePolygonDragging(layer, map);
       }
-
-      rightClickToRemove(layer, map);
     });
 
     if (geojsonAreas.length > numShapesRef.current) {

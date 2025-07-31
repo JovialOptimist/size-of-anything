@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { usePanel } from "../../state/panelStore";
 import { useMapStore } from "../../state/mapStore";
 import "../../styles/ActiveElementDisplay.css";
+import { calculateAreaInKm2 } from "../utils/geometryUtils";
 
 /**
  * Displays information about the active element on the map
@@ -10,9 +11,6 @@ const ActiveElementDisplay: React.FC = () => {
   const { activePanel } = usePanel();
   const activeAreaId = useMapStore((state: any) => state.activeAreaId);
   const getActiveElement = useMapStore((state: any) => state.getActiveElement);
-  const calculateAreaInKm2 = useMapStore(
-    (state: any) => state.calculateAreaInKm2
-  );
   const updateElementColor = useMapStore(
     (state: any) => state.updateElementColor
   );
@@ -30,7 +28,7 @@ const ActiveElementDisplay: React.FC = () => {
     return <div className={`active-element-empty`}></div>;
   }
 
-  const areaSize = calculateAreaInKm2(activeElement);
+  const areaSize = calculateAreaInKm2(activeElement).toFixed(2);
   const currentColor = activeElement.properties?.color || "blue";
   const elementName = activeElement.properties?.name || "Unnamed Area";
   const elementType =
@@ -85,7 +83,7 @@ const ActiveElementDisplay: React.FC = () => {
           <span>{currentColor}</span>
         </div>
 
-        {/* <div className="color-change">
+        <div className="color-change">
           <div className="color-input-group">
             <input
               type="color"
@@ -102,7 +100,7 @@ const ActiveElementDisplay: React.FC = () => {
             />
           </div>
           <button onClick={applyColorChange}>Change Color</button>
-        </div> */}
+        </div>
 
         <button className="remove-element-btn" onClick={handleRemove}>
           Remove from Map

@@ -259,41 +259,16 @@ export function enablePolygonDragging(geoJsonLayer: L.GeoJSON, map: L.Map | null
   });
 }
 
-
-// Convert Leaflet LatLngs to GeoJSON coordinates format
-function convertLeafletCoordsToGeoJSON(latLngs: any): any {
-  // Handle simple polygon
-  if (latLngs[0] instanceof L.LatLng) {
-    return [latLngs.map((ll: L.LatLng) => [ll.lng, ll.lat])];
-  }
-  
-  // Handle polygon with holes
-  if (Array.isArray(latLngs[0]) && latLngs[0][0] instanceof L.LatLng) {
-    return latLngs.map((ring: L.LatLng[]) => 
-      ring.map((ll: L.LatLng) => [ll.lng, ll.lat])
-    );
-  }
-  
-  // Handle multipolygon
-  if (Array.isArray(latLngs[0]) && Array.isArray(latLngs[0][0]) && latLngs[0][0][0] instanceof L.LatLng) {
-    return latLngs.map((polygon: L.LatLng[][]) => 
-      polygon.map((ring: L.LatLng[]) => 
-        ring.map((ll: L.LatLng) => [ll.lng, ll.lat])
-      )
-    );
-  }
-  
-  // Fallback - try to convert as best as possible
-  return JSON.parse(JSON.stringify(latLngs));
-}
-
-export function rightClickToRemove(geoJsonLayer: L.GeoJSON, map: L.Map | null) {
-  if (!map) return;
-
-  geoJsonLayer.eachLayer((layer) => {
-    layer.on("contextmenu", (event) => {
-      event.originalEvent.preventDefault();
-      geoJsonLayer.removeLayer(layer);
-    });
-  });
+export function calculateAreaInKm2(feature: GeoJSON.Feature): number {
+    if (!feature.geometry || !feature.geometry) {
+        console.warn("Feature has no geometry or coordinates:", feature);
+        return 0;
+    }
+    try {
+        const area = turf.area(feature);
+        return area / 1e6; // Convert to square kilometers
+    } catch (error) {
+        console.error("Error calculating area for feature:", feature, error);
+        return 0;
+    }
 }
