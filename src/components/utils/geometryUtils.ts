@@ -205,35 +205,49 @@ export function enablePolygonDragging(geoJsonLayer: L.GeoJSON, map: L.Map | null
         map?.off("mouseup", onMouseUp);
         map?.dragging.enable();
         
-        // Get the current coordinates from the layer after dragging
-        const currentCoords = (innerLayer as L.Polygon).getLatLngs();
-        
-        // Convert Leaflet LatLngs to GeoJSON coordinates format
-        const convertedCoords = convertLeafletCoordsToGeoJSON(currentCoords);
-        
-        // Get feature and save current coordinates
-        const feature = geoJsonLayer.feature;
-        if (
-          feature &&
-          typeof feature === "object" &&
-          "properties" in feature &&
-          feature.properties
-        ) {
-          const featureIndex = feature.properties.index;
-          
-          if (featureIndex !== undefined) {
-            // Store the current coordinates in the feature's properties
-            if (feature.properties) {
-              feature.properties.currentCoordinates = convertedCoords;
-            }
-            
-            // Update the store with the new coordinates
-            import('../../state/mapStore').then(module => {
-              const mapStore = module.useMapStore;
-              mapStore.getState().updateCurrentCoordinates(`geojson-${featureIndex}`, convertedCoords);
+        // Get existing feature and polygon layer
+            let pathLayer: L.Polygon | null = null;
+            let feature: GeoJSON.Feature | undefined;
+            geoJsonLayer.eachLayer((layer) => {
+              if (layer instanceof L.Polygon) {
+                pathLayer = layer;
+                if (layer.feature) {
+                  feature = layer.feature as GeoJSON.Feature;
+                }
+              }
             });
-          }
-        }
+            
+            if (pathLayer && feature && feature.properties) {
+              const featureIndex = feature.properties.index;
+              
+              if (featureIndex !== undefined) {
+                // Get the current coordinates from the polygon after dragging
+                const currentCoords = (pathLayer as L.Polygon).getLatLngs();
+                
+                // Convert Leaflet LatLngs to GeoJSON coordinates format
+                const convertLatLngsToCoords = (latLngs: any): any => {
+                  if (latLngs[0] instanceof L.LatLng) {
+                    return [latLngs.map((ll: L.LatLng) => [ll.lng, ll.lat])];
+                  } else if (Array.isArray(latLngs[0])) {
+                    return latLngs.map((ring: any) => convertLatLngsToCoords(ring)[0]);
+                  }
+                  return JSON.parse(JSON.stringify(latLngs));
+                };
+                
+                const convertedCoords = convertLatLngsToCoords(currentCoords);
+                
+                // Store the current coordinates in the feature itself
+                if (feature.geometry) {
+                  (feature.geometry as any).currentCoordinates = convertedCoords;
+                }
+                
+                // Update the store with the new coordinates
+                import('../../state/mapStore').then(module => {
+                  const mapStore = module.useMapStore;
+                  mapStore.getState().updateCurrentCoordinates(`geojson-${featureIndex}`, convertedCoords);
+                });
+              }
+            }
         
         originalLatLngs = null;
         dragStart = null;
