@@ -16,6 +16,7 @@ export interface GeoJSONFeature {
   geometry: {
     type: "Polygon" | "MultiPolygon";
     coordinates: any;
+    currentCoordinates?: any; // Store the current coordinates after dragging
   };
   properties: {
     name: string;
@@ -35,7 +36,7 @@ export const OSM_Type = {
 } as const;
 type OSM_Type = (typeof OSM_Type)[keyof typeof OSM_Type];
 
-interface MapState {
+export interface MapState {
   areas: MapArea[];
   activeAreaId: string | null;
   geojsonAreas: GeoJSONFeature[];
@@ -55,6 +56,7 @@ interface MapState {
   getActiveElement: () => GeoJSONFeature | null;
   calculateAreaInKm2: (feature: GeoJSONFeature) => number;
   updateElementColor: (id: string, color: string) => void;
+  updateCurrentCoordinates: (id: string, coordinates: any) => void;
 }
 
 /**
@@ -78,10 +80,14 @@ export const useMapStore = create<MapState>((set) => ({
     const existingColors = getExistingColors(state.geojsonAreas);
     const color = generateRandomColor(existingColors);
     
-    // Add the color and index to the feature properties
+    // Add the color, index and initialize current coordinates
     const index = state.geojsonAreas.length;
     const featureWithColor = {
       ...feature,
+      geometry: {
+        ...feature.geometry,
+        currentCoordinates: JSON.parse(JSON.stringify(feature.geometry.coordinates)) // Deep clone
+      },
       properties: {
         ...feature.properties,
         color: color,
@@ -164,6 +170,26 @@ updateElementColor: (id, color) => {
       properties: {
         ...updatedAreas[index].properties,
         color
+      }
+    };
+    
+    return { geojsonAreas: updatedAreas };
+  });
+},
+
+updateCurrentCoordinates: (id, coordinates) => {
+  set((state) => {
+    const idNumber = id.replace('geojson-', '');
+    const index = parseInt(idNumber, 10);
+    
+    if (index < 0 || index >= state.geojsonAreas.length) return state;
+    
+    const updatedAreas = [...state.geojsonAreas];
+    updatedAreas[index] = {
+      ...updatedAreas[index],
+      geometry: {
+        ...updatedAreas[index].geometry,
+        currentCoordinates: coordinates
       }
     };
     

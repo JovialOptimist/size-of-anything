@@ -11,6 +11,7 @@ import {
   isValidGeometry,
 } from "../utils/geometryUtils";
 import { createMarker, attachMarkerDragHandlers } from "../utils/markerUtils";
+import type { GeoJSONFeature, MapState } from "../../state/mapStore";
 
 const POLYGON_SIZE_THRESHOLD_PERCENT = 0.05; //TODO: Make this configurable
 
@@ -20,14 +21,22 @@ export default function MapView() {
   const geoJSONLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const markersLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const markerToLayerMap = useRef<Map<L.Marker, L.GeoJSON>>(new Map());
+  const wasLayerClickedRef = useRef(false);
 
-  const geojsonAreas = useMapStore((state: any) => state.geojsonAreas);
-  const isSelectingArea = useMapStore((state: any) => state.isSelectingArea);
-  const setClickedPosition = useMapStore(
-    (state: any) => state.setClickedPosition
+  const geojsonAreas: GeoJSONFeature[] = useMapStore(
+    (state: MapState) => state.geojsonAreas
   );
-  const activeAreaId = useMapStore((state: any) => state.activeAreaId);
-  const setActiveArea = useMapStore((state: any) => state.setActiveArea);
+  const isSelectingArea: boolean = useMapStore(
+    (state: MapState) => state.isSelectingArea
+  );
+  const setClickedPosition: (position: [number, number] | null) => void =
+    useMapStore((state: MapState) => state.setClickedPosition);
+  const activeAreaId: string | null = useMapStore(
+    (state: MapState) => state.activeAreaId
+  );
+  const setActiveArea: (id: string | null) => void = useMapStore(
+    (state: MapState) => state.setActiveArea
+  );
 
   const [currentZoomLevel, setCurrentZoomLevel] = useState<number>(13);
 
@@ -52,6 +61,14 @@ export default function MapView() {
       }
       const onMapClick = useMapStore.getState().onMapClick;
       if (onMapClick) onMapClick(e.latlng);
+
+      // If no layer was clicked, clear the active area
+      if (!wasLayerClickedRef.current) {
+        setActiveArea(null);
+      }
+
+      // Reset for next click
+      wasLayerClickedRef.current = false;
     });
 
     map.on("zoomend", () => {
@@ -91,7 +108,8 @@ export default function MapView() {
     geoJSONLayerGroupRef.current = group;
 
     const bounds = new L.LatLngBounds([]);
-    geojsonAreas.forEach((feature: any, idx: any) => {
+    geojsonAreas.forEach((feature: GeoJSONFeature) => {
+      const idx = feature.properties?.index;
       if (!isValidGeometry(feature.geometry.coordinates)) {
         console.warn(
           `MapView: Feature #${idx} has invalid geometry, skipping`,
@@ -101,8 +119,16 @@ export default function MapView() {
 
       const polygonColor = feature.properties?.color || "blue";
       const isActive = activeAreaId === `geojson-${idx}`;
+      
+      // Clone the feature to avoid modifying the original
+      let featureToRender = JSON.parse(JSON.stringify(feature));
+      
+      // Use currentCoordinates if available, otherwise use original coordinates
+      if (featureToRender.geometry.currentCoordinates) {
+        featureToRender.geometry.coordinates = featureToRender.geometry.currentCoordinates;
+      }
 
-      const layer = L.geoJSON(feature, {
+      const layer = L.geoJSON(featureToRender, {
         style: {
           color: polygonColor,
           weight: isActive ? 4 : 2,
@@ -113,6 +139,7 @@ export default function MapView() {
 
       // Add click handler to set active element
       layer.on("click", () => {
+        wasLayerClickedRef.current = true; // Mark that a layer was clicked
         setActiveArea(`geojson-${idx}`);
       });
 

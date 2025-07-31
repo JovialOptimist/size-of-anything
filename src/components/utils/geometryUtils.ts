@@ -204,6 +204,37 @@ export function enablePolygonDragging(geoJsonLayer: L.GeoJSON, map: L.Map | null
         map?.off("mousemove", onMouseMove);
         map?.off("mouseup", onMouseUp);
         map?.dragging.enable();
+        
+        // Get the current coordinates from the layer after dragging
+        const currentCoords = (innerLayer as L.Polygon).getLatLngs();
+        
+        // Convert Leaflet LatLngs to GeoJSON coordinates format
+        const convertedCoords = convertLeafletCoordsToGeoJSON(currentCoords);
+        
+        // Get feature and save current coordinates
+        const feature = geoJsonLayer.feature;
+        if (
+          feature &&
+          typeof feature === "object" &&
+          "properties" in feature &&
+          feature.properties
+        ) {
+          const featureIndex = feature.properties.index;
+          
+          if (featureIndex !== undefined) {
+            // Store the current coordinates in the feature's properties
+            if (feature.properties) {
+              feature.properties.currentCoordinates = convertedCoords;
+            }
+            
+            // Update the store with the new coordinates
+            import('../../state/mapStore').then(module => {
+              const mapStore = module.useMapStore;
+              mapStore.getState().updateCurrentCoordinates(`geojson-${featureIndex}`, convertedCoords);
+            });
+          }
+        }
+        
         originalLatLngs = null;
         dragStart = null;
       };
@@ -214,6 +245,33 @@ export function enablePolygonDragging(geoJsonLayer: L.GeoJSON, map: L.Map | null
   });
 }
 
+
+// Convert Leaflet LatLngs to GeoJSON coordinates format
+function convertLeafletCoordsToGeoJSON(latLngs: any): any {
+  // Handle simple polygon
+  if (latLngs[0] instanceof L.LatLng) {
+    return [latLngs.map((ll: L.LatLng) => [ll.lng, ll.lat])];
+  }
+  
+  // Handle polygon with holes
+  if (Array.isArray(latLngs[0]) && latLngs[0][0] instanceof L.LatLng) {
+    return latLngs.map((ring: L.LatLng[]) => 
+      ring.map((ll: L.LatLng) => [ll.lng, ll.lat])
+    );
+  }
+  
+  // Handle multipolygon
+  if (Array.isArray(latLngs[0]) && Array.isArray(latLngs[0][0]) && latLngs[0][0][0] instanceof L.LatLng) {
+    return latLngs.map((polygon: L.LatLng[][]) => 
+      polygon.map((ring: L.LatLng[]) => 
+        ring.map((ll: L.LatLng) => [ll.lng, ll.lat])
+      )
+    );
+  }
+  
+  // Fallback - try to convert as best as possible
+  return JSON.parse(JSON.stringify(latLngs));
+}
 
 export function rightClickToRemove(geoJsonLayer: L.GeoJSON, map: L.Map | null) {
   if (!map) return;
