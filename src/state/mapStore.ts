@@ -1,6 +1,6 @@
 // src/state/mapStore.ts
 import { create } from "zustand";
-import { generateRandomColor, getExistingColors } from "../components/utils/colorUtils";
+import { generateRandomColor } from "../components/utils/colorUtils";
 import type { 
   MapArea,
   GeoJSONFeature,
@@ -25,8 +25,7 @@ export const useMapStore = create<MapState>((set) => ({
     const { type, coordinates } = feature.geometry;
     
     // Generate a unique color for this feature
-    const existingColors = getExistingColors(state.geojsonAreas);
-    const color = generateRandomColor(existingColors);
+    const color = generateRandomColor();
     
     // Add the color, index and initialize current coordinates
     const index = state.geojsonAreas.length;

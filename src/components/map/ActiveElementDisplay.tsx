@@ -1,12 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { usePanel } from "../../state/panelStore";
 import { useMapStore } from "../../state/mapStore";
 import "../../styles/ActiveElementDisplay.css";
 import { calculateAreaInKm2 } from "../utils/geometryUtils";
+import { getExistingColors } from "../utils/colorUtils";
+import { getContinent } from "../utils/countryHelper"; // Assuming this function exists
 
-/**
- * Displays information about the active element on the map
- */
 const ActiveElementDisplay: React.FC = () => {
   const { activePanel } = usePanel();
   const activeAreaId = useMapStore((state: any) => state.activeAreaId);
@@ -15,41 +14,65 @@ const ActiveElementDisplay: React.FC = () => {
     (state: any) => state.updateElementColor
   );
   const removeArea = useMapStore((state: any) => state.removeArea);
+  const presetColors = getExistingColors();
 
-  const [colorInput, setColorInput] = useState("");
+  const activeElement = getActiveElement();
+  const currentColor = activeElement?.properties?.color || "#1f77b4";
+  const [selectedColor, setSelectedColor] = useState(currentColor);
+  const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
+
+  const colorPickerRef = useRef<HTMLDivElement>(null);
+
+  // Close popup if clicking outside of it
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        colorPickerRef.current &&
+        !colorPickerRef.current.contains(e.target as Node)
+      ) {
+        setIsColorPickerOpen(false);
+      }
+    }
+    if (isColorPickerOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isColorPickerOpen]);
 
   const displayClass = activePanel
     ? "active-element-display sidebar-expanded"
     : "active-element-display sidebar-collapsed";
-
-  const activeElement = getActiveElement();
 
   if (!activeElement || !activeAreaId) {
     return <div className={`active-element-empty`}></div>;
   }
 
   const areaSize = calculateAreaInKm2(activeElement).toFixed(2);
-  const currentColor = activeElement.properties?.color || "blue";
   const elementName = activeElement.properties?.name || "Unnamed Area";
   const elementType =
     activeElement.properties?.whatIsIt ||
     activeElement.properties?.osmClass ||
     "Unknown";
 
-  const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newColor = e.target.value;
-    setColorInput(newColor);
-
-    // If using the color picker, apply the change immediately
-    if (e.target.type === "color" && activeAreaId) {
-      updateElementColor(activeAreaId, newColor);
-    }
+  const handleColorSelect = (color: string) => {
+    setSelectedColor(color);
+    updateElementColor(activeAreaId, color);
+    setIsColorPickerOpen(false); // close after selection
   };
 
-  const applyColorChange = () => {
-    if (colorInput && activeAreaId) {
-      updateElementColor(activeAreaId, colorInput);
-      setColorInput("");
+  const handleCustomColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const color = e.target.value;
+    setSelectedColor(color);
+    updateElementColor(activeAreaId, color);
+    setIsColorPickerOpen(false);
+  };
+
+  const handleDuplicate = () => {
+    if (activeAreaId) {
+      console.log(`Duplicating area with ID: ${activeAreaId}`);
+      // Implement duplication logic here
     }
   };
 
@@ -62,49 +85,69 @@ const ActiveElementDisplay: React.FC = () => {
   return (
     <div className={`${displayClass} active-element-panel`}>
       <div className="element-info">
-        <p>
-          <strong>{elementName.split(",")[0]}</strong>
-        </p>
+        <div className="element-header">
+          <h3>{elementName.split(",")[0]}</h3>
+          <button
+            className="close-button"
+            onClick={() => usePanel.setState({ activePanel: null })}
+          >
+            &times;
+          </button>
+        </div>
+
+        {isColorPickerOpen && (
+          <div className="color-picker-popup" ref={colorPickerRef}>
+            <div className="color-picker-buttons">
+              {presetColors.map((color) => (
+                <button
+                  key={color}
+                  className="color-button"
+                  style={{
+                    backgroundColor: color,
+                    border:
+                      selectedColor === color
+                        ? "3px solid black"
+                        : "1px solid #ccc",
+                  }}
+                  onClick={() => handleColorSelect(color)}
+                />
+              ))}
+              <label className="custom-color-label">
+                <input
+                  type="color"
+                  value={selectedColor}
+                  onChange={handleCustomColorChange}
+                  className="custom-color-input"
+                />
+              </label>
+            </div>
+          </div>
+        )}
+
         <p>
           <i>
-            {elementType} in {elementName.split(",")[1]}
+            {elementType.replace("_", " ")} in{" "}
+            {(elementType.toLowerCase() !== "country"
+              ? elementName
+                  .split(",")
+                  .slice(1)
+                  .filter(Boolean)
+                  .slice(-5)
+                  .join(", ")
+              : getContinent(elementName.split(",")[0])) || "Unknown"}
           </i>
         </p>
         <p>
           <strong>Area:</strong> {areaSize} km²
         </p>
 
-        <div className="color-display">
-          <strong>Color:</strong>
-          <div
-            className="color-preview"
-            style={{ backgroundColor: currentColor }}
-          ></div>
-          <span>{currentColor}</span>
+        <div className="button-group">
+          <button onClick={handleDuplicate}>Duplicate</button>
+          <button onClick={() => setIsColorPickerOpen((prev) => !prev)}>
+            Change Color
+          </button>
+          <button onClick={handleRemove}>Remove</button>
         </div>
-
-        <div className="color-change">
-          <div className="color-input-group">
-            <input
-              type="color"
-              value={colorInput || currentColor}
-              onChange={handleColorChange}
-              className="color-picker"
-            />
-            <input
-              type="text"
-              placeholder="Enter color name or hex"
-              value={colorInput}
-              onChange={handleColorChange}
-              className="color-text"
-            />
-          </div>
-          <button onClick={applyColorChange}>Change Color</button>
-        </div>
-
-        <button className="remove-element-btn" onClick={handleRemove}>
-          Remove from Map
-        </button>
       </div>
     </div>
   );
