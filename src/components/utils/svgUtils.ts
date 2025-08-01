@@ -52,7 +52,7 @@ export function combinePaths(paths: string[]): string {
 export function extractViewBox(svgString: string): { width: number, height: number } | null {
   const viewBoxMatch = svgString.match(/viewBox=["']([^"']+)["']/);
   if (viewBoxMatch && viewBoxMatch[1]) {
-    const [x, y, width, height] = viewBoxMatch[1].split(/\s+/).map(Number);
+    const [, , width, height] = viewBoxMatch[1].split(/\s+/).map(Number);
     return { width, height };
   }
   return null;
