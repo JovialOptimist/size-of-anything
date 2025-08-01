@@ -62,6 +62,8 @@ const ActiveElementDisplay: React.FC = () => {
         " million km²"
       : areaSizeNum >= 1e3
       ? formatNumberWithCommas(Number(areaSizeNum.toFixed(0))) + " km²"
+      : areaSizeNum < 0.1
+      ? (areaSizeNum * 1e6).toFixed(0) + " m²"
       : areaSizeNum.toFixed(2) + " km²";
 
   const elementName = activeElement.properties?.name || "Unnamed Area";

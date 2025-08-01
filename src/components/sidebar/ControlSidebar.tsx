@@ -1,4 +1,4 @@
-import { act, useRef } from "react";
+import { useRef } from "react";
 import PanelController from "./PanelController";
 import { usePanel } from "../../state/panelStore";
 
@@ -18,7 +18,7 @@ export default function ControlSidebar() {
     : "control-sidebar hidden";
 
   return (
-    <div className={sidebarClass} ref={sidebarRef} style={{ width: `400px` }}>
+    <div className={sidebarClass} ref={sidebarRef}>
       <div className="sidebar-content">
         {activePanel && (
           <PanelController
@@ -37,8 +37,10 @@ export default function ControlSidebar() {
         )}
       </div>
 
-      <div className="resize-handle" onClick={handleCollapse}>
-        <span className="resize-icon">&#11104;</span>
+      <div className="resize-container">
+        <div className="resize-handle" onClick={handleCollapse}>
+          <span className="resize-icon">&#11104;</span>
+        </div>
       </div>
     </div>
   );

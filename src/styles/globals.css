@@ -153,14 +153,32 @@ body {
     text-align: left;
 }
 
+.resize-container {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    pointer-events: none;
+    vertical-align: middle;
+    margin: 0 auto;
+    padding: 0px;
+}
+
 /* Resize handle sits flush to the right edge */
 .resize-handle {
-    width: 16px;
-    min-width: 16px;
-    max-width: 16px;
+    top: 0;
+    right: 0;
+    width: 20px;
+    min-width: 20px;
+    max-width: 20px;
     background-color: rgba(255, 255, 255, 0.6);
     transition: background-color 0.2s;
-    height: 50px;
+    height: 100px;
     border-top-left-radius: 10px;
     border-bottom-left-radius: 10px;
     align-items: center;
@@ -171,6 +189,8 @@ body {
     cursor: pointer;
     align-content: center;
     display: flex;
+    z-index: 2;
+    pointer-events: auto;
 }
 
 .resize-handle:hover {
