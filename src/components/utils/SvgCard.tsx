@@ -30,7 +30,7 @@ const SvgCard: React.FC<SvgCardProps> = ({
   description,
   widthInMeters = 100, // Default width if not specified
   heightInMeters = 100, // Default height if not specified
-  samplePoints = 100, // Default number of sample points
+  samplePoints = 1000, // Default number of sample points
 }) => {
   const currentMapCenter = useMapStore((state) => state.currentMapCenter);
 

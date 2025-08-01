@@ -2,6 +2,7 @@ import React from "react";
 import SpecialShape from "../utils/SpecialShape";
 import blueWhaleSvg from "../../assets/bluewhale.svg";
 import boeingPlane from "../../assets/boeing-737.svg";
+import minecraftChunk from "../../assets/minecraft-chunk.svg"; // Assuming you have this SVG
 
 /**
  * Panel for Special features
@@ -25,6 +26,14 @@ const SpecialPanel: React.FC = () => {
       description: "Popular commercial aircraft",
       widthInMeters: 34.3,
       heightInMeters: 39.37,
+    },
+    {
+      id: "minecraft-chunk",
+      svgUrl: minecraftChunk,
+      name: "Minecraft Chunk",
+      description: "A 16x16 block area in Minecraft",
+      widthInMeters: 16,
+      heightInMeters: 16,
     },
     // Add more special shapes here as needed
     // Example:

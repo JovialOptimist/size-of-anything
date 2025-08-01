@@ -12,7 +12,7 @@ import {
 import { createMarker, attachMarkerDragHandlers } from "../utils/markerUtils";
 import type { GeoJSONFeature, MapState } from "../../state/mapStoreTypes";
 
-const POLYGON_SIZE_THRESHOLD_PERCENT = 0.05; //TODO: Make this configurable
+const POLYGON_SIZE_THRESHOLD_PERCENT = 0.01; //TODO: Make this configurable
 
 export default function MapView() {
   const mapRef = useRef<HTMLDivElement>(null);
