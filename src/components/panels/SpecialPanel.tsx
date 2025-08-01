@@ -1,121 +1,42 @@
-import React, { useMemo } from "react";
-import { svgPathProperties } from "svg-path-properties";
-import Card from "../utils/Card";
-import type { GeoJSONFeature } from "../../state/mapStoreTypes";
-import { useMapStore } from "../../state/mapStore";
-
-function svgPathToGeoJSONFeature(
-  svgPath: string,
-  widthInMeters: number,
-  heightInMeters: number,
-  centerLatLng: [number, number], // [lng, lat] in degrees
-  samplePoints: number = 100,
-  featureDisplayName = "Custom Shape",
-  whatIsIt = "Converted from SVG"
-): GeoJSONFeature {
-  console.error(
-    `svgPathToGeoJSONFeature: Converting SVG path to GeoJSON with ${samplePoints} sample points`
-  );
-  console.error(
-    `Called with params: ${JSON.stringify({
-      svgPath,
-      widthInMeters,
-      heightInMeters,
-      centerLatLng,
-      samplePoints,
-      featureDisplayName,
-      whatIsIt,
-    })}`
-  );
-  const [centerLng, centerLat] = centerLatLng;
-
-  const props = new svgPathProperties(svgPath);
-  const totalLength = props.getTotalLength();
-
-  // Step 1: Sample points along the SVG path
-  const rawPoints = Array.from({ length: samplePoints }, (_, i) =>
-    props.getPointAtLength((i / (samplePoints - 1)) * totalLength)
-  );
-
-  // Step 2: Get bounding box dimensions of the raw SVG path
-  const minX = Math.min(...rawPoints.map((p) => p.x));
-  const maxX = Math.max(...rawPoints.map((p) => p.x));
-  const minY = Math.min(...rawPoints.map((p) => p.y));
-  const maxY = Math.max(...rawPoints.map((p) => p.y));
-  const bboxWidth = maxX - minX;
-  const bboxHeight = maxY - minY;
-
-  // Step 3: Normalize and scale to meters
-  const scaledToMeters: [number, number][] = rawPoints.map((p) => {
-    const x = ((p.x - minX) / bboxWidth - 0.5) * widthInMeters; // center at 0
-    const y = ((p.y - minY) / bboxHeight - 0.5) * heightInMeters;
-    return [x, y]; // in meters
-  });
-
-  // Step 4: Convert meters to lat/lng degrees
-  const metersToLatLng = ([mx, my]: [number, number]): [number, number] => {
-    const latOffset = my / 111_320; // meters per degree latitude
-    const lngOffset = mx / (111_320 * Math.cos((centerLat * Math.PI) / 180));
-    return [centerLng + lngOffset, centerLat + latOffset];
-  };
-
-  const geoPoints = scaledToMeters.map(metersToLatLng);
-
-  // Step 5: Ensure polygon is closed
-  const closedGeoPoints =
-    JSON.stringify(geoPoints[0]) ===
-    JSON.stringify(geoPoints[geoPoints.length - 1])
-      ? geoPoints
-      : [...geoPoints, geoPoints[0]];
-
-  // Step 6: Return GeoJSON Feature
-  return {
-    type: "Feature",
-    geometry: {
-      type: "Polygon",
-      coordinates: [closedGeoPoints],
-    },
-    properties: {
-      name: featureDisplayName,
-      whatIsIt,
-      osmType: "custom",
-      osmId: `svg-${Math.random().toString(36).slice(2)}`,
-      osmClass: "svg-shape",
-    },
-  };
-}
-
-const flipCoordinates = (coordinates: [number, number]): [number, number] => {
-  return [coordinates[1], coordinates[0]];
-};
-
-/**
- * Predefined notable areas with their GeoJSON data
- */
-const blueWhalePath = "";
+import React from "react";
+import SpecialShape from "../utils/SpecialShape";
+import blueWhaleSvg from "../../assets/bluewhale.svg";
+import boeingPlane from "../../assets/boeing-737.svg";
 
 /**
  * Panel for Special features
  * Contains predefined notable areas that users can add to the map
  */
 const SpecialPanel: React.FC = () => {
-  const currentMapCenter = useMapStore((state) => state.currentMapCenter);
-
-  // Only generate special areas when the panel is rendered and map center is available
-  const specialAreas = useMemo(() => {
-    if (!currentMapCenter) return [];
-    return [
-      svgPathToGeoJSONFeature(
-        blueWhalePath,
-        8.7,
-        28.5,
-        flipCoordinates(currentMapCenter),
-        100,
-        "Blue Whale",
-        "Largest animal on Earth"
-      ),
-    ];
-  }, [currentMapCenter]);
+  // Define the special shapes we want to display
+  const specialShapes = [
+    {
+      id: "blue-whale",
+      svgUrl: blueWhaleSvg,
+      name: "Blue Whale",
+      description: "Largest animal on Earth",
+      widthInMeters: 10,
+      heightInMeters: 28.5,
+    },
+    {
+      id: "boeing-737",
+      svgUrl: boeingPlane,
+      name: "Boeing 737",
+      description: "Popular commercial aircraft",
+      widthInMeters: 34.3,
+      heightInMeters: 39.37,
+    },
+    // Add more special shapes here as needed
+    // Example:
+    // {
+    //   id: "elephant",
+    //   svgUrl: elephantSvg,
+    //   name: "African Elephant",
+    //   description: "Largest land animal",
+    //   widthInMeters: 10.5,
+    //   heightInMeters: 6.2,
+    // },
+  ];
 
   return (
     <div className="panel special-panel">
@@ -126,8 +47,15 @@ const SpecialPanel: React.FC = () => {
       </div>
 
       <div className="special-areas-list">
-        {specialAreas.map((area, index) => (
-          <Card key={`special-${index}`} feature={area} />
+        {specialShapes.map((shape) => (
+          <SpecialShape
+            key={shape.id}
+            svgUrl={shape.svgUrl}
+            name={shape.name}
+            description={shape.description}
+            widthInMeters={shape.widthInMeters}
+            heightInMeters={shape.heightInMeters}
+          />
         ))}
       </div>
 
