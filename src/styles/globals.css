@@ -155,24 +155,40 @@ body {
 
 /* Resize handle sits flush to the right edge */
 .resize-handle {
-    width: 6px;
-    cursor: ew-resize;
-    background-color: rgba(255, 255, 255, 0.2);
+    width: 16px;
+    min-width: 16px;
+    max-width: 16px;
+    background-color: rgba(255, 255, 255, 0.6);
     transition: background-color 0.2s;
+    height: 50px;
+    border-top-left-radius: 10px;
+    border-bottom-left-radius: 10px;
+    align-items: center;
+    justify-content: center;
+    /* Vertically center using margin auto */
+    margin-top: auto;
+    margin-bottom: auto;
+    cursor: pointer;
+    align-content: center;
+    display: flex;
 }
 
 .resize-handle:hover {
-    background-color: rgba(255, 255, 255, 0.4);
+    background-color: rgba(255, 255, 255, 1);
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
 }
 
 /* Visible state: sidebar is positioned normally */
 .control-sidebar.visible {
+    display: flex;
     left: var(--sidebar-width);
     transform: translateX(0);
 }
 
 /* Hidden state: sidebar is positioned off-screen */
 .control-sidebar.hidden {
+    display: flex;
     left: var(--sidebar-width);
     transform: translateX(-100%);
     pointer-events: none;

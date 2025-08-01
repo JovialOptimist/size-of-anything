@@ -6,3 +6,4 @@ export { default as HistoryIcon } from './HistoryIcon';
 export { default as HelpIcon } from './HelpIcon';
 export { default as DonateIcon } from './DonateIcon';
 export { default as SettingsIcon } from './SettingsIcon';
+export { default as PuzzlePieceIcon } from './PuzzlePieceIcon';

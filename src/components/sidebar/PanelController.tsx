@@ -5,11 +5,13 @@ import HistoryPanel from "../panels/HistoryPanel";
 import HelpPanel from "../panels/HelpPanel";
 import DonatePanel from "../panels/DonatePanel";
 import SettingsPanel from "../panels/SettingsPanel";
+import SpecialPanel from "../panels/SpecialPanel";
 
 const PANEL_COMPONENTS = {
   "text-search": TextSearchPanel,
   "magic-wand": MagicWandPanel,
   "custom-area": CustomAreaPanel,
+  special: SpecialPanel,
   history: HistoryPanel,
   help: HelpPanel,
   donate: DonatePanel,

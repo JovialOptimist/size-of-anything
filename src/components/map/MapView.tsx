@@ -133,7 +133,7 @@ export default function MapView() {
         style: {
           color: polygonColor,
           weight: isActive ? 4 : 2,
-          fillOpacity: isActive ? 0.6 : 0.4,
+          fillOpacity: 0.4,
           opacity: isActive ? 0.9 : 0.7,
         },
       }).addTo(group);

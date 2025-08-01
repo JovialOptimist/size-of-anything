@@ -2,7 +2,7 @@ import L from "leaflet";
 import { transformPolygonCoordinates } from "./geometryUtils";
 import { convertLatLngsToCoords } from "./geometryUtils";
 
-const markerSize = 2;
+const markerSize = 1.5;
 
 export function createMarker(center: L.LatLng, color: string = "blue"): L.Marker {
     const width = 18 * markerSize;
