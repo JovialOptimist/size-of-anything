@@ -155,6 +155,19 @@ export function enablePolygonDragging(geoJsonLayer: L.GeoJSON, map: L.Map | null
     let dragStart: L.LatLng | null = null;
 
     innerLayer.on("mousedown", async (event: L.LeafletMouseEvent) => {
+        const feature = (innerLayer as any).feature as GeoJSON.Feature | undefined;
+      if (feature && feature.properties) {
+        const featureIndex = feature.properties.index;
+
+        if (featureIndex !== undefined) {
+          const { useMapStore } = await import('../../state/mapStore');
+          useMapStore.getState().setActiveArea(`geojson-${featureIndex}`);
+        } else {
+          console.warn("Feature has no index property, cannot set active area.", feature);
+        }
+      } else {
+        console.warn("Feature is not valid or has no properties:", feature);
+      }
   map.dragging.disable();
   dragStart = event.latlng;
   const latLngs = innerLayer.getLatLngs();

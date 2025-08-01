@@ -56,6 +56,8 @@ export default function MapView() {
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/">OSM</a> contributors',
+      maxNativeZoom: 19,
+      maxZoom: 22,
     }).addTo(map);
 
     map.on("click", (e) => {
