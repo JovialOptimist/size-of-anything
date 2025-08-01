@@ -31,6 +31,28 @@ export function attachMarkerDragHandlers(
 ) {
   let dragStart: L.LatLng;
 
+  // Add click handler to make the shape active when its marker is clicked
+  marker.on("click", async (e) => {
+    // Stop the event propagation to prevent it from triggering the map's click handler
+    L.DomEvent.stopPropagation(e);
+    
+    // Access the feature to get its index
+    let feature: GeoJSON.Feature | undefined;
+    geoJsonLayer.eachLayer((layer) => {
+      if (layer instanceof L.Polygon && layer.feature) {
+        feature = layer.feature as GeoJSON.Feature;
+      }
+    });
+    
+    if (feature && feature.properties && feature.properties.index !== undefined) {
+      const featureIndex = feature.properties.index;
+      // Set active area - we don't need to set wasLayerClickedRef since we're stopping propagation
+      const { useMapStore } = await import('../../state/mapStore');
+      useMapStore.getState().setActiveArea(`geojson-${featureIndex}`);
+      console.log(`MarkerUtils: Marker clicked, setting active area to geojson-${featureIndex}`);
+    }
+  });
+
   marker.on("dragstart", (e) => {
     dragStart = e.target.getLatLng();
     map.dragging.disable();

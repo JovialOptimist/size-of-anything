@@ -20,7 +20,6 @@ export default function MapView() {
   const geoJSONLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const markersLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const markerToLayerMap = useRef<Map<L.Marker, L.GeoJSON>>(new Map());
-  const wasLayerClickedRef = useRef(false);
   const numShapesRef = useRef(0);
 
   const geojsonAreas: GeoJSONFeature[] = useMapStore(
@@ -66,14 +65,10 @@ export default function MapView() {
       const onMapClick = useMapStore.getState().onMapClick;
       if (onMapClick) onMapClick(e.latlng);
 
-      // If no layer was clicked, clear the active area
-      if (!wasLayerClickedRef.current) {
-        setActiveArea(null);
-        console.log("No layer clicked, clearing active area");
-      }
-
-      // Reset for next click
-      wasLayerClickedRef.current = false;
+      // When user clicks the map background (not a layer or marker),
+      // the event will reach here since we stop propagation on layers and markers
+      setActiveArea(null);
+      console.log("Map background clicked, clearing active area");
     });
 
     map.on("zoomend", () => {
@@ -158,8 +153,8 @@ export default function MapView() {
       }).addTo(group);
 
       // Add click handler to set active element
-      layer.on("click", () => {
-        wasLayerClickedRef.current = true; // Mark that a layer was clicked
+      layer.on("click", (e) => {
+        L.DomEvent.stopPropagation(e);
         setActiveArea(`geojson-${idx}`);
         console.log(
           `MapView: Layer clicked, setting active area to geojson-${idx}`
