@@ -1,133 +1,122 @@
-import React from "react";
+import React, { useMemo } from "react";
+import { svgPathProperties } from "svg-path-properties";
 import Card from "../utils/Card";
 import type { GeoJSONFeature } from "../../state/mapStoreTypes";
+import { useMapStore } from "../../state/mapStore";
+
+function svgPathToGeoJSONFeature(
+  svgPath: string,
+  widthInMeters: number,
+  heightInMeters: number,
+  centerLatLng: [number, number], // [lng, lat] in degrees
+  samplePoints: number = 100,
+  featureDisplayName = "Custom Shape",
+  whatIsIt = "Converted from SVG"
+): GeoJSONFeature {
+  console.error(
+    `svgPathToGeoJSONFeature: Converting SVG path to GeoJSON with ${samplePoints} sample points`
+  );
+  console.error(
+    `Called with params: ${JSON.stringify({
+      svgPath,
+      widthInMeters,
+      heightInMeters,
+      centerLatLng,
+      samplePoints,
+      featureDisplayName,
+      whatIsIt,
+    })}`
+  );
+  const [centerLng, centerLat] = centerLatLng;
+
+  const props = new svgPathProperties(svgPath);
+  const totalLength = props.getTotalLength();
+
+  // Step 1: Sample points along the SVG path
+  const rawPoints = Array.from({ length: samplePoints }, (_, i) =>
+    props.getPointAtLength((i / (samplePoints - 1)) * totalLength)
+  );
+
+  // Step 2: Get bounding box dimensions of the raw SVG path
+  const minX = Math.min(...rawPoints.map((p) => p.x));
+  const maxX = Math.max(...rawPoints.map((p) => p.x));
+  const minY = Math.min(...rawPoints.map((p) => p.y));
+  const maxY = Math.max(...rawPoints.map((p) => p.y));
+  const bboxWidth = maxX - minX;
+  const bboxHeight = maxY - minY;
+
+  // Step 3: Normalize and scale to meters
+  const scaledToMeters: [number, number][] = rawPoints.map((p) => {
+    const x = ((p.x - minX) / bboxWidth - 0.5) * widthInMeters; // center at 0
+    const y = ((p.y - minY) / bboxHeight - 0.5) * heightInMeters;
+    return [x, y]; // in meters
+  });
+
+  // Step 4: Convert meters to lat/lng degrees
+  const metersToLatLng = ([mx, my]: [number, number]): [number, number] => {
+    const latOffset = my / 111_320; // meters per degree latitude
+    const lngOffset = mx / (111_320 * Math.cos((centerLat * Math.PI) / 180));
+    return [centerLng + lngOffset, centerLat + latOffset];
+  };
+
+  const geoPoints = scaledToMeters.map(metersToLatLng);
+
+  // Step 5: Ensure polygon is closed
+  const closedGeoPoints =
+    JSON.stringify(geoPoints[0]) ===
+    JSON.stringify(geoPoints[geoPoints.length - 1])
+      ? geoPoints
+      : [...geoPoints, geoPoints[0]];
+
+  // Step 6: Return GeoJSON Feature
+  return {
+    type: "Feature",
+    geometry: {
+      type: "Polygon",
+      coordinates: [closedGeoPoints],
+    },
+    properties: {
+      name: featureDisplayName,
+      whatIsIt,
+      osmType: "custom",
+      osmId: `svg-${Math.random().toString(36).slice(2)}`,
+      osmClass: "svg-shape",
+    },
+  };
+}
+
+const flipCoordinates = (coordinates: [number, number]): [number, number] => {
+  return [coordinates[1], coordinates[0]];
+};
 
 /**
  * Predefined notable areas with their GeoJSON data
  */
-const SPECIAL_AREAS: GeoJSONFeature[] = [
-  // Disneyland
-  {
-    type: "Feature",
-    geometry: {
-      type: "Polygon",
-      coordinates: [
-        [
-          [-117.9244, 33.8121],
-          [-117.9244, 33.8153],
-          [-117.9158, 33.8153],
-          [-117.9158, 33.8121],
-          [-117.9244, 33.8121],
-        ],
-      ],
-    },
-    properties: {
-      name: "Disneyland Park",
-      osmType: "relation",
-      osmId: "2832548",
-      osmClass: "tourism",
-      whatIsIt: "Famous theme park in California",
-    },
-  },
-  // Eiffel Tower
-  {
-    type: "Feature",
-    geometry: {
-      type: "Polygon",
-      coordinates: [
-        [
-          [2.2936, 48.858],
-          [2.2936, 48.8587],
-          [2.295, 48.8587],
-          [2.295, 48.858],
-          [2.2936, 48.858],
-        ],
-      ],
-    },
-    properties: {
-      name: "Eiffel Tower",
-      osmType: "relation",
-      osmId: "5013364",
-      osmClass: "tourism",
-      whatIsIt: "Iconic landmark in Paris, France",
-    },
-  },
-  // Central Park
-  {
-    type: "Feature",
-    geometry: {
-      type: "Polygon",
-      coordinates: [
-        [
-          [-73.9812, 40.7642],
-          [-73.9812, 40.8003],
-          [-73.9495, 40.8003],
-          [-73.9495, 40.7642],
-          [-73.9812, 40.7642],
-        ],
-      ],
-    },
-    properties: {
-      name: "Central Park",
-      osmType: "relation",
-      osmId: "82287",
-      osmClass: "leisure",
-      whatIsIt: "Urban park in Manhattan, New York City",
-    },
-  },
-  // Great Pyramid of Giza
-  {
-    type: "Feature",
-    geometry: {
-      type: "Polygon",
-      coordinates: [
-        [
-          [31.1342, 29.9792],
-          [31.1342, 29.9798],
-          [31.1348, 29.9798],
-          [31.1348, 29.9792],
-          [31.1342, 29.9792],
-        ],
-      ],
-    },
-    properties: {
-      name: "Great Pyramid of Giza",
-      osmType: "way",
-      osmId: "5465617",
-      osmClass: "historic",
-      whatIsIt: "Ancient Egyptian pyramid and wonder of the world",
-    },
-  },
-  // Taj Mahal
-  {
-    type: "Feature",
-    geometry: {
-      type: "Polygon",
-      coordinates: [
-        [
-          [78.0419, 27.1745],
-          [78.0419, 27.1751],
-          [78.0425, 27.1751],
-          [78.0425, 27.1745],
-          [78.0419, 27.1745],
-        ],
-      ],
-    },
-    properties: {
-      name: "Taj Mahal",
-      osmType: "relation",
-      osmId: "2997734",
-      osmClass: "historic",
-      whatIsIt: "Marble mausoleum in Agra, India",
-    },
-  },
-];
+const blueWhalePath = "";
 
 /**
  * Panel for Special features
  * Contains predefined notable areas that users can add to the map
  */
 const SpecialPanel: React.FC = () => {
+  const currentMapCenter = useMapStore((state) => state.currentMapCenter);
+
+  // Only generate special areas when the panel is rendered and map center is available
+  const specialAreas = useMemo(() => {
+    if (!currentMapCenter) return [];
+    return [
+      svgPathToGeoJSONFeature(
+        blueWhalePath,
+        8.7,
+        28.5,
+        flipCoordinates(currentMapCenter),
+        100,
+        "Blue Whale",
+        "Largest animal on Earth"
+      ),
+    ];
+  }, [currentMapCenter]);
+
   return (
     <div className="panel special-panel">
       <h2>Special Places</h2>
@@ -137,7 +126,7 @@ const SpecialPanel: React.FC = () => {
       </div>
 
       <div className="special-areas-list">
-        {SPECIAL_AREAS.map((area, index) => (
+        {specialAreas.map((area, index) => (
           <Card key={`special-${index}`} feature={area} />
         ))}
       </div>

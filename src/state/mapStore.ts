@@ -18,6 +18,7 @@ export const useMapStore = create<MapState>((set) => ({
   clickedPosition: null,
     onMapClick: null,
     magicWandMode: false,
+    currentMapCenter: [0, 0],
   setIsSelectingArea: (isSelecting) => set({ isSelectingArea: isSelecting }),
   setClickedPosition: (position) => set({ clickedPosition: position }),
   addGeoJSONFromSearch: (feature: GeoJSONFeature) =>
@@ -72,47 +73,49 @@ export const useMapStore = create<MapState>((set) => ({
       activeAreaId: state.activeAreaId === id ? null : state.activeAreaId,
         geojsonAreas: state.geojsonAreas.filter((feature) => feature.properties.index !== parseInt(id.replace('geojson-', '')))
     })),
-    duplicateArea: (id: string) =>
-    set((state) => {
-      const areaToDuplicate = state.areas.find((area) => area.id === id);
-      if (!areaToDuplicate) return state;
+duplicateArea: (id: string) =>
+set((state) => {
+    const areaToDuplicate = state.areas.find((area) => area.id === id);
+    if (!areaToDuplicate) return state;
 
-      // Duplicate the corresponding GeoJSONFeature
-      const idNumber = id.replace('geojson-', '');
-      const index = parseInt(idNumber, 10);
-      const featureToDuplicate = state.geojsonAreas.find(
-        (feature) => feature.properties.index === index
-      );
-      if (!featureToDuplicate) return state;
+    // Duplicate the corresponding GeoJSONFeature
+    const idNumber = id.replace('geojson-', '');
+    const index = parseInt(idNumber, 10);
+    const featureToDuplicate = state.geojsonAreas.find(
+    (feature) => feature.properties.index === index
+    );
+    if (!featureToDuplicate) return state;
 
-      const newIndex = state.geojsonAreas.length;
-      const newFeature = {
-        ...featureToDuplicate,
-        properties: {
-          ...featureToDuplicate.properties,
-          index: newIndex,
-          color: generateRandomColor(),
-        },
-      };
+    const newIndex = state.geojsonAreas.length;
+    const newFeature = {
+    ...featureToDuplicate,
+    properties: {
+        ...featureToDuplicate.properties,
+        index: newIndex,
+        color: generateRandomColor(),
+    },
+    };
 
-      const newArea = {
-        ...areaToDuplicate,
-        id: `geojson-${newIndex}`,
-        properties: newFeature.properties,
-      };
+    const newArea = {
+    ...areaToDuplicate,
+    id: `geojson-${newIndex}`,
+    properties: newFeature.properties,
+    };
 
-      set({ activeAreaId: newArea.id });
+    set({ activeAreaId: newArea.id });
 
-      return {
-        areas: [...state.areas, newArea],
-        geojsonAreas: [...state.geojsonAreas, newFeature],
-      };
-    }),
+    return {
+    areas: [...state.areas, newArea],
+    geojsonAreas: [...state.geojsonAreas, newFeature],
+    };
+}),
   setActiveArea: (id) => set({ activeAreaId: id }),
   setMagicWandMode: (enabled) => {
   set({ magicWandMode: enabled });
 },
 setOnMapClick: (handler) => set({ onMapClick: handler }),
+
+setCurrentMapCenter: (center: [number, number]) => set({ currentMapCenter: center }),
 
 getActiveElement: () => {
   const state: any = useMapStore.getState();

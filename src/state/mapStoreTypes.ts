@@ -41,6 +41,7 @@ export interface MapState {
   isSelectingArea: boolean;
   clickedPosition: [number, number] | null;
   magicWandMode: boolean;
+  currentMapCenter: [number, number];
   setIsSelectingArea: (isSelecting: boolean) => void;
   setClickedPosition: (position: [number, number] | null) => void;
   addGeoJSONFromSearch: (feature: GeoJSONFeature) => void;
@@ -48,6 +49,7 @@ export interface MapState {
   updateArea: (id: string, area: Partial<MapArea>) => void;
   removeArea: (id: string) => void;
   setActiveArea: (id: string | null) => void;
+  setCurrentMapCenter: (center: [number, number]) => void;
   setMagicWandMode: (enabled: boolean) => void;
   onMapClick: ((latlng: L.LatLng) => void) | null;
   setOnMapClick: (handler: ((latlng: L.LatLng) => void) | null) => void;

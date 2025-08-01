@@ -37,6 +37,9 @@ export default function MapView() {
   const setActiveArea: (id: string | null) => void = useMapStore(
     (state: MapState) => state.setActiveArea
   );
+  const setCurrentMapCenter: (center: [number, number]) => void = useMapStore(
+    (state: MapState) => state.setCurrentMapCenter
+  );
 
   const [currentZoomLevel, setCurrentZoomLevel] = useState<number>(13);
 
@@ -46,6 +49,7 @@ export default function MapView() {
     const map = L.map(mapRef.current, {
       zoomControl: false,
     }).setView([47.615, -122.035], 13);
+    setCurrentMapCenter([47.615, -122.035]);
     mapInstanceRef.current = map;
 
     L.control.zoom({ position: "bottomright" }).addTo(map);
@@ -74,11 +78,26 @@ export default function MapView() {
 
     map.on("zoomend", () => {
       setCurrentZoomLevel(map.getZoom());
+
+      const center = map.getBounds().pad(0.1).getCenter(); // Add some padding to the bounds
+      console.log(
+        `MapView: Zoom changed to ${map.getZoom()}, center at [${center.lat}, ${
+          center.lng
+        }]`
+      );
+      setCurrentMapCenter([center.lat, center.lng]);
       updateMarkers();
     });
 
     map.on("moveend", () => {
       if (map.getZoom() === currentZoomLevel) updateMarkers();
+      const center = map.getBounds().pad(0.1).getCenter(); // Add some padding to the bounds
+      console.log(
+        `MapView: Zoom changed to ${map.getZoom()}, center at [${center.lat}, ${
+          center.lng
+        }]`
+      );
+      setCurrentMapCenter([center.lat, center.lng]);
     });
 
     markersLayerGroupRef.current = L.layerGroup().addTo(map);
