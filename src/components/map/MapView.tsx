@@ -162,9 +162,7 @@ export default function MapView() {
       });
 
       // Only enable dragging if this is the active element or there is no active element
-      if (isActive || !activeAreaId) {
-        enablePolygonDragging(layer, map);
-      }
+      enablePolygonDragging(layer, map);
     });
 
     if (geojsonAreas.length > numShapesRef.current) {

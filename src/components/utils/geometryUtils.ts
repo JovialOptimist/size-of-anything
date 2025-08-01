@@ -155,89 +155,63 @@ export function enablePolygonDragging(geoJsonLayer: L.GeoJSON, map: L.Map | null
     let dragStart: L.LatLng | null = null;
 
     innerLayer.on("mousedown", async (event: L.LeafletMouseEvent) => {
-      // Get the specific feature associated with this inner polygon
-      const feature = (innerLayer as any).feature as GeoJSON.Feature | undefined;
-      if (feature && feature.properties) {
-        const featureIndex = feature.properties.index;
+  map.dragging.disable();
+  dragStart = event.latlng;
+  const latLngs = innerLayer.getLatLngs();
+  originalLatLngs = JSON.parse(JSON.stringify(latLngs));
 
-        if (featureIndex !== undefined) {
-          const { useMapStore } = await import('../../state/mapStore');
-          useMapStore.getState().setActiveArea(`geojson-${featureIndex}`);
-        } else {
-          console.warn("Feature has no index property, cannot set active area.", feature);
-        }
-      } else {
-        console.warn("Feature is not valid or has no properties:", feature);
-      }
+  // Start dragging immediately
+  const onMouseMove = (e: L.LeafletMouseEvent) => {
+    if (!dragStart || !originalLatLngs) return;
 
-      map.dragging.disable();
-      dragStart = event.latlng;
+    const latDiff = e.latlng.lat - dragStart.lat;
+    const lngDiff = e.latlng.lng - dragStart.lng;
+    const transformed = transformPolygonCoordinates(originalLatLngs, latDiff, lngDiff);
+    (innerLayer as L.Polygon).setLatLngs(transformed);
 
-      // Deep clone coordinates
-      const latLngs = innerLayer.getLatLngs();
-      originalLatLngs = JSON.parse(JSON.stringify(latLngs));
-
-      const onMouseMove = (e: L.LeafletMouseEvent) => {
-        if (!dragStart || !originalLatLngs) return;
-
-        const latDiff = e.latlng.lat - dragStart.lat;
-        const lngDiff = e.latlng.lng - dragStart.lng;
-
-        const transformed = transformPolygonCoordinates(originalLatLngs, latDiff, lngDiff);
-        (innerLayer as L.Polygon).setLatLngs(transformed);
-
-        // Update marker if one is associated with this polygon
-        const markersGroup = (window as any).markersLayerGroupRef?.current;
-        const markerMap = (window as any).markerToLayerMap?.current;
-
-        if (markersGroup && markerMap) {
-          markerMap.forEach((layer: L.GeoJSON, marker: L.Marker) => {
-            layer.eachLayer((l) => {
-              if (l === innerLayer) {
-                marker.setLatLng(findCenterForMarker(innerLayer));
-              }
-            });
-          });
-        }
-      };
-
-      const onMouseUp = async () => {
-        map?.off("mousemove", onMouseMove);
-        map?.off("mouseup", onMouseUp);
-        map?.dragging.enable();
-
-        // Use the same feature associated with the innerLayer
-        const feature = (innerLayer as any).feature as GeoJSON.Feature | undefined;
-
-        if (feature && feature.properties && feature.geometry) {
-          const featureIndex = feature.properties.index;
-
-          if (featureIndex !== undefined) {
-            const currentCoords = innerLayer.getLatLngs();
-            const convertedCoords = convertLatLngsToCoords(currentCoords);
-
-            // Store the updated coordinates in the feature
-            (feature.geometry as any).currentCoordinates = convertedCoords;
-
-            const { useMapStore } = await import('../../state/mapStore');
-            useMapStore.getState().updateCurrentCoordinates(
-              `geojson-${featureIndex}`,
-              convertedCoords
-            );
-          } else {
-            console.warn("MouseUp: Feature has no index, cannot update store.", feature);
+    const markersGroup = (window as any).markersLayerGroupRef?.current;
+    const markerMap = (window as any).markerToLayerMap?.current;
+    if (markersGroup && markerMap) {
+      markerMap.forEach((layer: L.GeoJSON, marker: L.Marker) => {
+        layer.eachLayer((l) => {
+          if (l === innerLayer) {
+            marker.setLatLng(findCenterForMarker(innerLayer));
           }
-        } else {
-          console.warn("MouseUp: Invalid feature or geometry missing", feature);
-        }
+        });
+      });
+    }
+  };
 
-        originalLatLngs = null;
-        dragStart = null;
-      };
+  const onMouseUp = async () => {
+    map?.off("mousemove", onMouseMove);
+    map?.off("mouseup", onMouseUp);
+    map?.dragging.enable();
 
-      map.on("mousemove", onMouseMove);
-      map.on("mouseup", onMouseUp);
-    });
+    const feature = (innerLayer as any).feature as GeoJSON.Feature | undefined;
+    if (feature && feature.properties && feature.geometry) {
+      const featureIndex = feature.properties.index;
+      if (featureIndex !== undefined) {
+        const currentCoords = innerLayer.getLatLngs();
+        const convertedCoords = convertLatLngsToCoords(currentCoords);
+        (feature.geometry as any).currentCoordinates = convertedCoords;
+
+        const { useMapStore } = await import('../../state/mapStore');
+        const store = useMapStore.getState();
+        store.updateCurrentCoordinates(`geojson-${featureIndex}`, convertedCoords);
+
+        // Activate area *after* drag completes (optional)
+        store.setActiveArea(`geojson-${featureIndex}`);
+      }
+    }
+
+    originalLatLngs = null;
+    dragStart = null;
+  };
+
+  map.on("mousemove", onMouseMove);
+  map.on("mouseup", onMouseUp);
+});
+
   });
 }
 
