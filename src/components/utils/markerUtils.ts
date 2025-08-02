@@ -29,80 +29,98 @@ export function attachMarkerDragHandlers(
   geoJsonLayer: L.GeoJSON,
   map: L.Map
 ) {
-  let dragStart: L.LatLng;
+  let dragStartLatLng: L.LatLng;
+  let originalPolygonCoords: any = null;
+  let hasMoved = false;
+  const moveThreshold = 3; // Pixels to consider a drag vs a click
+  let activePolygon: L.Polygon | null = null;
+
+  // Find the associated polygon for this marker
+  const findAssociatedPolygon = (): L.Polygon | null => {
+    let result: L.Polygon | null = null;
+    geoJsonLayer.eachLayer((layer) => {
+      if (layer instanceof L.Polygon) {
+        result = layer;
+      }
+    });
+    return result;
+  };
 
   // Add click handler to make the shape active when its marker is clicked
   marker.on("click", async (e) => {
     // Stop the event propagation to prevent it from triggering the map's click handler
     L.DomEvent.stopPropagation(e);
     
-    // Access the feature to get its index
-    let feature: GeoJSON.Feature | undefined;
-    geoJsonLayer.eachLayer((layer) => {
-      if (layer instanceof L.Polygon && layer.feature) {
-        feature = layer.feature as GeoJSON.Feature;
+    if (!hasMoved) {
+      // Access the feature to get its index
+      let feature: GeoJSON.Feature | undefined;
+      geoJsonLayer.eachLayer((layer) => {
+        if (layer instanceof L.Polygon && layer.feature) {
+          feature = layer.feature as GeoJSON.Feature;
+        }
+      });
+      
+      if (feature && feature.properties && feature.properties.index !== undefined) {
+        const featureIndex = feature.properties.index;
+        // Set active area - we don't need to set wasLayerClickedRef since we're stopping propagation
+        const { useMapStore } = await import('../../state/mapStore');
+        useMapStore.getState().setActiveArea(`geojson-${featureIndex}`);
+        console.log(`MarkerUtils: Marker clicked, setting active area to geojson-${featureIndex}`);
       }
-    });
-    
-    if (feature && feature.properties && feature.properties.index !== undefined) {
-      const featureIndex = feature.properties.index;
-      // Set active area - we don't need to set wasLayerClickedRef since we're stopping propagation
-      const { useMapStore } = await import('../../state/mapStore');
-      useMapStore.getState().setActiveArea(`geojson-${featureIndex}`);
-      console.log(`MarkerUtils: Marker clicked, setting active area to geojson-${featureIndex}`);
     }
   });
 
   marker.on("dragstart", (e) => {
-    dragStart = e.target.getLatLng();
+    hasMoved = false;
+    dragStartLatLng = e.target.getLatLng().clone(); // Clone to ensure we have a separate instance
     map.dragging.disable();
+    
+    // Find and store the associated polygon
+    activePolygon = findAssociatedPolygon();
+    if (activePolygon) {
+      // Store original coordinates for reference during drag
+      originalPolygonCoords = JSON.parse(JSON.stringify(activePolygon.getLatLngs()));
+    }
   });
 
   marker.on("drag", (e) => {
-    const current = marker.getLatLng();
-    const latDiff = current.lat - dragStart.lat;
-    const lngDiff = current.lng - dragStart.lng;
-
-    geoJsonLayer.eachLayer((layer) => {
-      if (layer instanceof L.Polygon) {
-        const originalCoords = layer.getLatLngs();
-        const transformed = transformPolygonCoordinates(originalCoords, latDiff, lngDiff);
-        layer.setLatLngs(transformed);
-      }
-    });
+    // Calculate pixel distance to determine if this is a drag
+    const startPoint = map.latLngToContainerPoint(dragStartLatLng);
+    const currentPoint = map.latLngToContainerPoint(marker.getLatLng());
+    const pixelDistance = startPoint.distanceTo(currentPoint);
     
-    // Update dragStart for the next move
-    dragStart = current;
+    if (pixelDistance > moveThreshold) {
+      hasMoved = true;
+    }
+    
+    if (!originalPolygonCoords || !activePolygon) return;
+    
+    const current = marker.getLatLng();
+    const latDiff = current.lat - dragStartLatLng.lat;
+    const lngDiff = current.lng - dragStartLatLng.lng;
+    
+    // Apply transformation to original coordinates to ensure accurate movement
+    const transformed = transformPolygonCoordinates(originalPolygonCoords, latDiff, lngDiff);
+    activePolygon.setLatLngs(transformed);
   });
 
   marker.on("dragend", async () => {
     map.dragging.enable();
     
-    // Get existing feature and polygon layer
-    let pathLayer: L.Polygon | null = null;
-    let feature: GeoJSON.Feature | undefined;
-    geoJsonLayer.eachLayer((layer) => {
-      if (layer instanceof L.Polygon) {
-        pathLayer = layer;
-        if (layer.feature) {
-          feature = layer.feature as GeoJSON.Feature;
-        }
-      }
-    });
+    if (!activePolygon) return;
     
-    if (pathLayer && feature && feature.properties) {
+    // Get feature from the active polygon
+    const feature = activePolygon.feature as GeoJSON.Feature | undefined;
+    if (feature && feature.properties && feature.geometry) {
       const featureIndex = feature.properties.index;
       
       if (featureIndex !== undefined) {
-        // Get the current coordinates from the polygon after dragging
-        const currentCoords = (pathLayer as L.Polygon).getLatLngs();
-        
+        // Get the final coordinates from the polygon
+        const currentCoords = activePolygon.getLatLngs();
         const convertedCoords = convertLatLngsToCoords(currentCoords);
         
         // Store the current coordinates in the feature itself
-        if (feature.geometry) {
-          (feature.geometry as any).currentCoordinates = convertedCoords;
-        }
+        (feature.geometry as any).currentCoordinates = convertedCoords;
         
         // Update the store with the new coordinates
         const { useMapStore } = await import('../../state/mapStore');
@@ -112,5 +130,9 @@ export function attachMarkerDragHandlers(
         // This keeps the behavior consistent with polygon dragging
       }
     }
+    
+    // Clean up
+    originalPolygonCoords = null;
+    activePolygon = null;
   });
 }

@@ -123,25 +123,43 @@ export function transformPolygonCoordinates(
   latDiff: number,
   lngDiff: number
 ): any {
-  const startLat = latLngs[0]?.[0]?.lat ?? 0;
-  const newLat = startLat + latDiff;
-  const scale = Math.cos((startLat * Math.PI) / 180) / Math.cos((newLat * Math.PI) / 180);
+  if (!latLngs || !Array.isArray(latLngs) || latLngs.length === 0) {
+    console.warn("Invalid latLngs provided to transformPolygonCoordinates", latLngs);
+    return latLngs;
+  }
 
-  const shiftRing = (ring: L.LatLng[]) => {
-    const centerLng = ring.reduce((sum, pt) => sum + pt.lng, 0) / ring.length;
-    return ring.map(pt =>
-      L.latLng(
-        pt.lat + latDiff,
-        centerLng + ((pt.lng - centerLng) * scale + lngDiff)
-      )
-    );
-  };
+  try {
+    const startLat = latLngs[0]?.[0]?.lat ?? 0;
+    const newLat = startLat + latDiff;
+    // Account for longitude distortion at different latitudes
+    const scale = Math.cos((startLat * Math.PI) / 180) / Math.cos((newLat * Math.PI) / 180);
 
-  return latLngs.map((ring: any) =>
-    Array.isArray(ring[0])
-      ? ring.map((sub: any) => shiftRing(sub))
-      : shiftRing(ring)
-  );
+    const shiftRing = (ring: L.LatLng[]) => {
+      if (!Array.isArray(ring) || ring.length === 0) return ring;
+      
+      const centerLng = ring.reduce((sum, pt) => sum + (pt.lng || 0), 0) / ring.length;
+      return ring.map(pt => {
+        if (!pt || typeof pt.lat === 'undefined' || typeof pt.lng === 'undefined') {
+          console.warn("Invalid point in ring", pt);
+          return pt;
+        }
+        return L.latLng(
+          pt.lat + latDiff,
+          centerLng + ((pt.lng - centerLng) * scale + lngDiff)
+        );
+      });
+    };
+
+    return latLngs.map((ring: any) => {
+      if (!Array.isArray(ring)) return ring;
+      return Array.isArray(ring[0]) && ring[0] !== null
+        ? ring.map((sub: any) => shiftRing(sub))
+        : shiftRing(ring);
+    });
+  } catch (error) {
+    console.error("Error in transformPolygonCoordinates:", error);
+    return latLngs; // Return original on error to prevent crashes
+  }
 }
 
 // Enable click-and-drag on a polygon layer to move it interactively
@@ -152,26 +170,50 @@ export function enablePolygonDragging(geoJsonLayer: L.GeoJSON, map: L.Map | null
     if (!(innerLayer instanceof L.Polygon)) return;
 
     let originalLatLngs: any = null;
-    let dragStart: L.LatLng | null = null;
-    let isDragging = false;
+    let dragStartLatLng: L.LatLng | null = null;
     let hasMoved = false;
     const moveThreshold = 3; // Pixels to consider a drag vs a click
+    let associatedMarker: L.Marker | null = null;
+
+    // Function to find the marker associated with this layer
+    const findAssociatedMarker = (): L.Marker | null => {
+      const markersGroup = (window as any).markersLayerGroupRef?.current;
+      const markerMap = (window as any).markerToLayerMap?.current;
+      if (!markersGroup || !markerMap) return null;
+
+      let result: L.Marker | null = null;
+      markerMap.forEach((layer: L.GeoJSON, marker: L.Marker) => {
+        layer.eachLayer((l) => {
+          if (l === innerLayer) {
+            result = marker;
+          }
+        });
+      });
+      return result;
+    };
 
     innerLayer.on("mousedown", async (event: L.LeafletMouseEvent) => {
       L.DomEvent.stopPropagation(event);
       map.dragging.disable();
-      dragStart = event.latlng;
+      
+      // Store the exact starting position
+      dragStartLatLng = event.latlng.clone(); // Clone to ensure we have a separate instance
+      
+      // Store the original shape coordinates
       const latLngs = innerLayer.getLatLngs();
       originalLatLngs = JSON.parse(JSON.stringify(latLngs));
-      isDragging = true;
+      
+      // Find the associated marker
+      associatedMarker = findAssociatedMarker();
+      
       hasMoved = false;
       
       // Start dragging immediately
       const onMouseMove = (e: L.LeafletMouseEvent) => {
-        if (!dragStart || !originalLatLngs) return;
+        if (!dragStartLatLng || !originalLatLngs) return;
 
         // Calculate pixel distance to determine if this is a drag
-        const startPoint = map.latLngToContainerPoint(dragStart);
+        const startPoint = map.latLngToContainerPoint(dragStartLatLng);
         const currentPoint = map.latLngToContainerPoint(e.latlng);
         const pixelDistance = startPoint.distanceTo(currentPoint);
         
@@ -179,32 +221,28 @@ export function enablePolygonDragging(geoJsonLayer: L.GeoJSON, map: L.Map | null
           hasMoved = true;
         }
         
-        // Move the shape with the mouse
-        const latDiff = e.latlng.lat - dragStart.lat;
-        const lngDiff = e.latlng.lng - dragStart.lng;
+        // Move the shape with the mouse - calculate total displacement from start
+        const latDiff = e.latlng.lat - dragStartLatLng.lat;
+        const lngDiff = e.latlng.lng - dragStartLatLng.lng;
         const transformed = transformPolygonCoordinates(originalLatLngs, latDiff, lngDiff);
+        
+        // Update the polygon position
         (innerLayer as L.Polygon).setLatLngs(transformed);
 
-        // Update associated marker position
-        const markersGroup = (window as any).markersLayerGroupRef?.current;
-        const markerMap = (window as any).markerToLayerMap?.current;
-        if (markersGroup && markerMap) {
-          markerMap.forEach((layer: L.GeoJSON, marker: L.Marker) => {
-            layer.eachLayer((l) => {
-              if (l === innerLayer) {
-                marker.setLatLng(findCenterForMarker(innerLayer));
-              }
-            });
-          });
+        // Update associated marker position immediately
+        if (associatedMarker) {
+          const newMarkerPosition = findCenterForMarker(innerLayer as L.Polygon);
+          associatedMarker.setLatLng(newMarkerPosition);
         }
       };
 
       const onMouseUp = async () => {
+        // Clean up event listeners
         map?.off("mousemove", onMouseMove);
         map?.off("mouseup", onMouseUp);
         map?.dragging.enable();
-        isDragging = false;
 
+        // Update the feature and store with the final position
         const feature = (innerLayer as any).feature as GeoJSON.Feature | undefined;
         if (feature && feature.properties && feature.geometry) {
           const featureIndex = feature.properties.index;
@@ -225,10 +263,13 @@ export function enablePolygonDragging(geoJsonLayer: L.GeoJSON, map: L.Map | null
           }
         }
 
+        // Clean up references
         originalLatLngs = null;
-        dragStart = null;
+        dragStartLatLng = null;
+        associatedMarker = null;
       };
 
+      // Add event listeners to the map for move and up events
       map.on("mousemove", onMouseMove);
       map.on("mouseup", onMouseUp);
     });

@@ -206,9 +206,18 @@ export default function MapView() {
         ) {
           // Get the color directly from the polygon's style options
           const polygonColor = poly.options.color || "blue";
-          const marker = createMarker(findCenterForMarker(poly), polygonColor);
+          
+          // Get the exact center of the polygon for the marker
+          const markerPosition = findCenterForMarker(poly);
+          
+          // Create the marker at the exact polygon center
+          const marker = createMarker(markerPosition, polygonColor);
           marker.addTo(markerLayerGroup);
+          
+          // Store the association between marker and layer
           markerToLayerMap.current.set(marker, layer);
+          
+          // Attach drag handlers to the marker
           attachMarkerDragHandlers(marker, layer, map);
         }
       });
@@ -217,7 +226,7 @@ export default function MapView() {
 
   useEffect(() => {
     if (mapInstanceRef.current) updateMarkers();
-  }, [geojsonAreas]);
+  }, [geojsonAreas, activeAreaId]);
 
   return (
     <div className={`map-container ${isSelectingArea ? "selecting-area" : ""}`}>
