@@ -16,7 +16,6 @@ export default function GeoCandidatePicker({
   const setHoveredCandidate = useMapStore((state) => state.setHoveredCandidate);
   return (
     <div className="geo-candidate-picker">
-      <h3>Choose an area:</h3>
       <ul className="candidate-list">
         {candidates.map((feature, index) => {
           const name = feature.properties?.name || `Candidate ${index + 1}`;
@@ -36,7 +35,9 @@ export default function GeoCandidatePicker({
                   if (showOnHover) {
                     // Set the hovered candidate to highlight it on the map
                     setHoveredCandidate(feature);
-                    console.log(`Hovering over candidate: ${feature.properties.name}`);
+                    console.log(
+                      `Hovering over candidate: ${feature.properties.name}`
+                    );
                   }
                 }}
                 onMouseLeave={() => {

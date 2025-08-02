@@ -49,10 +49,9 @@ const SpecialPanel: React.FC = () => {
 
   return (
     <div className="panel special-panel">
-      <h2>Special Places</h2>
+      <h2>Special Shapes</h2>
       <div className="panel-description">
-        Notable landmarks and interesting places from around the world. Click on
-        any card to add it to your map.
+        Notable shapes and areas that you've unlocked so far.
       </div>
 
       <div className="special-areas-list">
@@ -67,9 +66,11 @@ const SpecialPanel: React.FC = () => {
           />
         ))}
       </div>
-
-      <div className="special-note">
-        <p>More special places coming soon!</p>
+      <div className="custom-area-info">
+        <p>
+          The special area will be placed at the center of your current map
+          view.
+        </p>
       </div>
     </div>
   );

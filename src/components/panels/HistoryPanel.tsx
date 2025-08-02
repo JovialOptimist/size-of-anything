@@ -15,7 +15,7 @@ const HistoryPanel: React.FC = () => {
     <div className="panel history-panel">
       <h2>History</h2>
       <div className="panel-description">
-        Previously viewed areas. Click to re-add to the map.
+        Previously created areas and shapes.
       </div>
 
       {historyItems.length > 0 ? (

@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './styles/globals.css'
 import './styles/Card.css'
 import './styles/darkModeOverrides.css'
+import './styles/CustomAreaPanel.css'
 import App from './App.tsx'
 
 createRoot(document.getElementById('root')!).render(

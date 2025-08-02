@@ -1,14 +1,159 @@
-import React from "react";
+import React, { useState } from "react";
+import { useMapStore } from "../../state/mapStore";
+import type { GeoJSONFeature } from "../../state/mapStoreTypes";
 
 /**
  * Panel for custom area functionality
+ * Allows users to create square areas of specific sizes
  */
 const CustomAreaPanel: React.FC = () => {
+  const [areaValue, setAreaValue] = useState<string>("1");
+  const [areaUnit, setAreaUnit] = useState<string>("km2");
+  const currentMapCenter = useMapStore((state) => state.currentMapCenter);
+  const addGeoJSONFromSearch = useMapStore(
+    (state) => state.addGeoJSONFromSearch
+  );
+
+  // Define conversion factors to square meters
+  const unitConversions: Record<string, number> = {
+    m2: 1,
+    km2: 1000000,
+    acres: 4046.86,
+    hectares: 10000,
+    miles2: 2589988,
+  };
+
+  // Unit labels for display
+  const unitLabels: Record<string, string> = {
+    m2: "m²",
+    km2: "km²",
+    acres: "acres",
+    hectares: "hectares",
+    miles2: "miles²",
+  };
+
+  /**
+   * Creates a square GeoJSON feature centered at the current map center
+   */
+  const generateCustomArea = () => {
+    if (!currentMapCenter) return;
+
+    // Parse area value and convert to square meters
+    const numericValue = parseFloat(areaValue);
+    if (isNaN(numericValue) || numericValue <= 0) {
+      alert("Please enter a valid positive number");
+      return;
+    }
+
+    const areaInSquareMeters = numericValue * unitConversions[areaUnit];
+
+    // Calculate the side length of the square (in meters)
+    const sideLength = Math.sqrt(areaInSquareMeters);
+
+    // Create a square centered at the current map center
+    const feature = createSquareFeature(
+      currentMapCenter,
+      sideLength,
+      `${areaValue} ${unitLabels[areaUnit]} Square`
+    );
+
+    // Add the feature to the map
+    if (feature) {
+      addGeoJSONFromSearch(feature);
+    }
+  };
+
+  /**
+   * Creates a square GeoJSON feature centered at the given coordinates
+   * @param center The center coordinates [lat, lng]
+   * @param sideLength The side length in meters
+   * @param name The name for the feature
+   */
+  const createSquareFeature = (
+    center: [number, number],
+    sideLength: number,
+    name: string
+  ): GeoJSONFeature => {
+    const [centerLat, centerLng] = center;
+
+    // Calculate lat/lng offsets (approximate)
+    // 111,320 meters = 1 degree latitude
+    // 111,320 * cos(latitude) meters = 1 degree longitude
+    const latOffset = sideLength / (2 * 111320);
+    const lngOffset =
+      sideLength / (2 * 111320 * Math.cos((centerLat * Math.PI) / 180));
+
+    // Calculate the four corners of the square
+    const coordinates = [
+      [centerLng - lngOffset, centerLat - latOffset], // SW
+      [centerLng + lngOffset, centerLat - latOffset], // SE
+      [centerLng + lngOffset, centerLat + latOffset], // NE
+      [centerLng - lngOffset, centerLat + latOffset], // NW
+      [centerLng - lngOffset, centerLat - latOffset], // Close the polygon
+    ];
+
+    // Create the GeoJSON feature
+    return {
+      type: "Feature",
+      geometry: {
+        type: "Polygon",
+        coordinates: [coordinates],
+      },
+      properties: {
+        name,
+        whatIsIt: `Custom ${areaUnit} square`,
+        osmType: "custom",
+        osmId: null,
+        customId: `custom-square-${Math.random().toString(36).slice(2)}`,
+        osmClass: "custom-shape",
+      },
+    };
+  };
+
   return (
     <div className="panel custom-area-panel">
       <h2>Custom Area</h2>
-      {/* Custom area controls and options will go here */}
-      <button className="select-area-button">Select Area</button>
+      <div className="panel-description">
+        Create a square representing a certain size.
+      </div>
+
+      <div className="custom-area-form">
+        <div className="form-group">
+          <div className="input-with-unit">
+            <input
+              id="area-value"
+              type="number"
+              min="0.001"
+              step="0.001"
+              value={areaValue}
+              onChange={(e) => setAreaValue(e.target.value)}
+              className="area-input"
+            />
+
+            <select
+              value={areaUnit}
+              onChange={(e) => setAreaUnit(e.target.value)}
+              className="unit-select"
+            >
+              <option value="acres">acres</option>
+              <option value="hectares">hectares</option>
+              <option value="km2">km²</option>
+              <option value="m2">m²</option>
+              <option value="miles2">miles²</option>
+            </select>
+          </div>
+        </div>
+
+        <button className="generate-area-button" onClick={generateCustomArea}>
+          Generate
+        </button>
+      </div>
+
+      <div className="custom-area-info">
+        <p>
+          The square area will be placed at the center of your current map view.
+        </p>
+      </div>
     </div>
   );
 };

@@ -52,77 +52,96 @@ export default function MagicWandPanel() {
       console.log("Overpass API response:", data);
 
       // Filter out valid candidates (ways and relations only)
-      const candidates = data.elements.filter((element: any) => 
-        (element.type === "way" || element.type === "relation") && element.tags
+      const candidates = data.elements.filter(
+        (element: any) =>
+          (element.type === "way" || element.type === "relation") &&
+          element.tags
       );
-      
+
       // If no candidates found, return empty array
       if (candidates.length === 0) {
         return [];
       }
-      
+
       // Step 2: Use Nominatim to get proper GeoJSON for each candidate
       const nominatimIds = candidates.map((element: any) => {
         const prefix = element.type === "way" ? "W" : "R";
         return `${prefix}${element.id}`;
       });
-      
+
       // Split into batches of 50 as Nominatim has a limit
       const batchSize = 50;
       const batches = [];
-      
+
       for (let i = 0; i < nominatimIds.length; i += batchSize) {
         batches.push(nominatimIds.slice(i, i + batchSize));
       }
-      
+
       // Process each batch and combine results
       const features: GeoJSONFeature[] = [];
-      
+
       for (const batch of batches) {
-        const nominatimUrl = `https://nominatim.openstreetmap.org/lookup?osm_ids=${batch.join(",")}&format=json&polygon_geojson=1&extratags=1`;
-        
+        const nominatimUrl = `https://nominatim.openstreetmap.org/lookup?osm_ids=${batch.join(
+          ","
+        )}&format=json&polygon_geojson=1&extratags=1`;
+
         const nominatimResponse = await fetch(nominatimUrl);
-        
+
         if (!nominatimResponse.ok) {
-          console.warn(`Nominatim API error for batch: ${nominatimResponse.statusText}`);
+          console.warn(
+            `Nominatim API error for batch: ${nominatimResponse.statusText}`
+          );
           continue;
         }
-        
+
         const nominatimData = await nominatimResponse.json();
         console.log("Nominatim data:", nominatimData);
-        
+
         // Process each Nominatim result into a GeoJSON feature
-        const batchFeatures = nominatimData.filter((place: any) => 
-          // Ensure it has valid GeoJSON
-          place.geojson && 
-          (place.geojson.type === "Polygon" || place.geojson.type === "MultiPolygon")
-        ).map((place: any) => {
-          // Create a GeoJSON feature similar to TextSearchPanel
-          const feature: GeoJSONFeature = {
-            type: "Feature" as "Feature",
-            geometry: {
-              type: place.geojson.type === "Polygon" ? "Polygon" : "MultiPolygon",
-              coordinates: place.geojson.coordinates,
-            },
-            properties: {
-              name: place.display_name,
-              osmType: place.osm_type,
-              osmId: place.osm_id.toString(),
-              osmClass: place.class,
-              whatIsIt: describeOsmObject(place),
-              // Determine if this is nearby or containing (similar logic as before)
-              source: place.address && (place.address.city || place.address.county || place.address.state) ? "containing" : "nearby",
-              adminLevel: place.extratags?.admin_level ? parseInt(place.extratags.admin_level, 10) : 0,
-              tags: place.extratags || {},
-            },
-          };
-          
-          return fixMultiPolygon(feature);
-        });
-        
+        const batchFeatures = nominatimData
+          .filter(
+            (place: any) =>
+              // Ensure it has valid GeoJSON
+              place.geojson &&
+              (place.geojson.type === "Polygon" ||
+                place.geojson.type === "MultiPolygon")
+          )
+          .map((place: any) => {
+            // Create a GeoJSON feature similar to TextSearchPanel
+            const feature: GeoJSONFeature = {
+              type: "Feature" as "Feature",
+              geometry: {
+                type:
+                  place.geojson.type === "Polygon" ? "Polygon" : "MultiPolygon",
+                coordinates: place.geojson.coordinates,
+              },
+              properties: {
+                name: place.display_name,
+                osmType: place.osm_type,
+                osmId: place.osm_id.toString(),
+                osmClass: place.class,
+                whatIsIt: describeOsmObject(place),
+                // Determine if this is nearby or containing (similar logic as before)
+                source:
+                  place.address &&
+                  (place.address.city ||
+                    place.address.county ||
+                    place.address.state)
+                    ? "containing"
+                    : "nearby",
+                adminLevel: place.extratags?.admin_level
+                  ? parseInt(place.extratags.admin_level, 10)
+                  : 0,
+                tags: place.extratags || {},
+              },
+            };
+
+            return fixMultiPolygon(feature);
+          });
+
         features.push(...batchFeatures);
       }
-      
+
       return features;
     } catch (error) {
       console.error("Error fetching features:", error);
@@ -195,7 +214,9 @@ export default function MagicWandPanel() {
       const organizedFeatures = organizeFeatures(features);
 
       if (organizedFeatures.length === 0) {
-        setError("No recognizable areas found at this location. Try clicking on or near a building, park, or other defined area.");
+        setError(
+          "No recognizable areas found at this location. Try clicking on or near a building, park, or other defined area."
+        );
         setIsLoading(false);
         return;
       }
@@ -236,23 +257,26 @@ export default function MagicWandPanel() {
   return (
     <div className="panel magic-wand-panel">
       <h2>Magic Wand</h2>
-      <p>Click "Activate", then click the map to find areas.</p>
-
-      <div className="button-group">
-        <button
-          className="primary-button"
-          onClick={activateWand}
-          disabled={isLoading}
-        >
-          Activate Magic Wand
-        </button>
-        <button
-          className="secondary-button"
-          onClick={deactivateWand}
-          disabled={isLoading}
-        >
-          Cancel
-        </button>
+      <div className="panel-description">
+        Find anything by clicking a location on the map.
+      </div>
+      <div className="magic-wand-controls">
+        <div className="button-group">
+          <button
+            className="primary-button"
+            onClick={activateWand}
+            disabled={isLoading}
+          >
+            Activate
+          </button>
+          <button
+            className="secondary-button"
+            onClick={deactivateWand}
+            disabled={isLoading}
+          >
+            Cancel
+          </button>
+        </div>
       </div>
 
       {isLoading && (
@@ -278,6 +302,13 @@ export default function MagicWandPanel() {
           onCancel={deactivateWand}
         />
       )}
+
+      <div className="custom-area-info">
+        <p>
+          Some larger areas may not show up in the list - click on one of its
+          corners to select it.
+        </p>
+      </div>
     </div>
   );
 }

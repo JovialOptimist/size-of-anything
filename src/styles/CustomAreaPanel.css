@@ -1,0 +1,68 @@
+.custom-area-form {
+  margin: 20px 0;
+  padding: 15px;
+  background-color: var(--active-element-display-bg);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.custom-area-form .form-group {
+  margin-bottom: 15px;
+}
+
+.custom-area-form label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.input-with-unit {
+  display: flex;
+  align-items: center;
+}
+
+.area-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--panel-heading-border-color);
+  border-radius: 4px;
+  font-size: 16px;
+  margin-right: 1rem;
+  width: 100%;
+}
+
+.unit-select {
+  padding: 8px 12px;
+  border: 1px solid var(--panel-heading-border-color);
+  border-radius: 4px;
+  font-size: 16px;
+  background-color: var(--input-bg);
+  color: var(--text-color);
+}
+
+.generate-area-button {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  background-color: var(--primary-color, #3498db);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: 10px;
+}
+
+.generate-area-button:hover {
+  background-color: var(--primary-hover, #2980b9);
+}
+
+.custom-area-info {
+  margin-top: 15px;
+  padding: 10px;
+  background-color: var(--info-bg, rgba(52, 152, 219, 0.1));
+  border-left: 4px solid var(--primary-color, #3498db);
+  border-radius: 4px;
+  font-size: 0.9em;
+}
