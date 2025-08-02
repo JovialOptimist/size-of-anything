@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import "../../styles/mapDarkMode.css";
 import { useMapStore } from "../../state/mapStore";
 import {
   enablePolygonDragging,

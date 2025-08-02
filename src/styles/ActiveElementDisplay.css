@@ -2,9 +2,10 @@
   position: absolute;
   bottom: 20px;
   right: 20px;
-  background-color: white;
+  background-color: var(--active-element-display-bg);
+  color: var(--default-fg);
   border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--active-element-display-shadow);
   padding: 15px;
   width: 100px;
   max-width: 400px;
@@ -14,23 +15,25 @@
   position: absolute;
   bottom: 20px;
   right: 20px;
-  background-color: rgba(255, 255, 255, 0.8);
+  background-color: var(--active-element-display-bg);
   border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--active-element-display-shadow);
   padding: 10px;
   width: 250px;
   max-width: 90vw;
   z-index: 1000;
   font-style: italic;
-  color: #666;
+  color: var(--control-sidebar-text-color);
+  opacity: 0.7;
 }
 
 .active-element-panel h3 {
   margin-top: 0;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--panel-heading-border-color);
   padding-bottom: 3px;
   margin-bottom: 5px;
-    font-size: 30px;
+  font-size: 30px;
+  color: var(--control-sidebar-text-color);
 }
 
 .element-header {
@@ -75,6 +78,7 @@
 .element-info p {
   margin: 8px 0;
   font-size: 14px;
+  color: var(--control-sidebar-text-color);
 }
 
 .color-display {
@@ -88,7 +92,7 @@
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  border: 1px solid #ddd;
+  border: 1px solid var(--panel-heading-border-color);
 }
 
 .color-change {
@@ -114,8 +118,10 @@
 .color-text {
   flex: 1;
   padding: 6px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--panel-heading-border-color);
   border-radius: 4px;
+  background-color: var(--active-element-display-bg);
+  color: var(--control-sidebar-text-color);
 }
 
 .color-change button, .remove-element-btn {
@@ -196,12 +202,12 @@
     top: 50px;
     /* adjust as needed depending on layout */
     right: 20px;
-    background: white;
-    border: 1px solid #ccc;
+    background: var(--active-element-display-bg);
+    border: 1px solid var(--panel-heading-border-color);
     border-radius: 8px;
     padding: 10px;
     z-index: 1000;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--active-element-display-shadow);
 }
 
 .color-picker-buttons {

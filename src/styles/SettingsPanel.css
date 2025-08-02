@@ -1,0 +1,19 @@
+/* Settings Panel Specific Styles */
+.settings-panel {
+  padding: 1rem;
+  max-width: 100%;
+}
+
+/* Additional settings for responsive layout */
+@media (max-width: 768px) {
+  .settings-option {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
+  .radio-options {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

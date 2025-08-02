@@ -1,0 +1,109 @@
+/* Dark mode overrides for specific components */
+
+/* ActiveElementDisplay.css overrides */
+.dark-mode .custom-color-label {
+  border-color: var(--panel-heading-border-color);
+}
+
+.dark-mode .color-text {
+  background-color: #333;
+  color: var(--control-sidebar-text-color);
+  border-color: var(--panel-heading-border-color);
+}
+
+/* Card.css overrides */
+.dark-mode .area-card {
+  background-color: #2d2d2d;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .area-card-title {
+  color: #e5e7eb;
+}
+
+.dark-mode .area-card-description {
+  color: #a0aec0;
+}
+
+.dark-mode .panel-description {
+  color: #a0aec0;
+}
+
+.dark-mode .empty-history-message,
+.dark-mode .special-note {
+  background-color: #333;
+  color: #a0aec0;
+}
+
+/* MagicWandPanel.css overrides */
+.dark-mode .magic-wand-panel .secondary-button {
+  background-color: #3a3a3a;
+  color: #e5e7eb;
+  border-color: #555;
+}
+
+.dark-mode .magic-wand-panel .secondary-button:hover {
+  background-color: #444;
+}
+
+.dark-mode .magic-wand-panel .loading-indicator p {
+  color: #a0aec0;
+}
+
+.dark-mode .geo-candidate-picker .group-title {
+  color: #a0aec0;
+  border-color: var(--panel-heading-border-color);
+}
+
+.dark-mode .places-list {
+  border-color: var(--panel-heading-border-color);
+}
+
+.dark-mode .places-list li {
+  border-color: var(--panel-heading-border-color);
+}
+
+.dark-mode .places-list li:hover {
+  background-color: rgba(66, 135, 245, 0.2);
+}
+
+.dark-mode .place-detail {
+  color: #a0aec0;
+}
+
+/* Form inputs and buttons in dark mode */
+.dark-mode input[type="text"],
+.dark-mode input[type="number"],
+.dark-mode input[type="email"],
+.dark-mode textarea,
+.dark-mode select {
+  background-color: #333;
+  color: #e5e7eb;
+  border-color: #555;
+}
+
+.dark-mode input[type="text"]:focus,
+.dark-mode input[type="number"]:focus,
+.dark-mode input[type="email"]:focus,
+.dark-mode textarea:focus,
+.dark-mode select:focus {
+  border-color: var(--icon-sidebar-button-active-bg);
+  outline: none;
+}
+
+.dark-mode .text-search-input {
+  background-color: #333;
+  color: #e5e7eb;
+  border-color: #555;
+}
+
+/* Color picker in dark mode */
+.dark-mode .color-picker-popup {
+  background-color: #333;
+  border-color: #555;
+}
+
+/* Make sure SVGs and icons have proper color in dark mode */
+.dark-mode svg:not([fill]) {
+  fill: currentColor;
+}

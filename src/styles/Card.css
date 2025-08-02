@@ -1,8 +1,8 @@
 /* Card component styling */
 .area-card {
-  background-color: #ffffff;
+  background-color: var(--active-element-display-bg);
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--active-element-display-shadow);
   margin-bottom: 12px;
   padding: 12px;
   cursor: pointer;

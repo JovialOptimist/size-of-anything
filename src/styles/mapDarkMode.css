@@ -1,0 +1,56 @@
+/* Map Dark Mode Styles */
+
+/* Leaflet dark mode adjustments */
+.dark-mode .leaflet-container {
+  background: #242424;
+}
+
+.dark-mode .leaflet-control-zoom {
+  background-color: #333;
+  border-color: #444;
+}
+
+.dark-mode .leaflet-control-zoom a {
+  color: #eee;
+  background-color: #333;
+  border-color: #444;
+}
+
+.dark-mode .leaflet-control-zoom a:hover {
+  background-color: #444;
+}
+
+.dark-mode .leaflet-control-attribution {
+  background-color: rgba(30, 30, 30, 0.8);
+  color: #aaa;
+}
+
+.dark-mode .leaflet-control-attribution a {
+  color: #88b9ff;
+}
+
+/* Dark mode map popups */
+.dark-mode .leaflet-popup-content-wrapper {
+  background-color: #333;
+  color: #eee;
+}
+
+.dark-mode .leaflet-popup-tip {
+  background-color: #333;
+}
+
+/* Dark mode map tooltips */
+.dark-mode .leaflet-tooltip {
+  background-color: #333;
+  color: #eee;
+  border-color: #444;
+}
+
+.dark-mode .leaflet-tooltip:before {
+  border-color: transparent;
+}
+
+/* Ensure SVG icons are visible in dark mode */
+.dark-mode .leaflet-control a svg {
+  fill: #eee;
+}
