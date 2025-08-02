@@ -16,6 +16,7 @@
     --icon-sidebar-button-text-color: #1f2937;
     --icon-sidebar-button-hover-text-color: white;
     --icon-sidebar-button-active-text-color: white;
+    --candidate-hover-option: #d1d5db;
 
     /* Control sidebar styles - Light Mode */
     --control-sidebar-bg: linear-gradient(270deg, #dfe7ff, #abc3ff);
@@ -31,6 +32,11 @@
 
     --toggle-slider-bg: #ccc;
     --toggle-slider-checked-bg: #4287f5;
+
+    --map-inversion: 0;
+    --map-hue-rotate: 0deg;
+    --map-brightness: 1;
+    --map-contrast: 1;
 }
 
 /* Dark mode variables */
@@ -75,6 +81,17 @@
     /* slate gray */
     --toggle-slider-checked-bg: #3b82f6;
     /* bright blue */
+    --candidate-hover-option: #374151;
+
+    --map-inversion: 1;
+    --map-hue-rotate: 192deg;
+    --map-brightness: 1.2;
+    --map-contrast: 0.9;
+}
+
+.leaflet-tile {
+    filter: invert(var(--map-inversion)) hue-rotate(var(--map-hue-rotate)) brightness(var(--map-brightness)) contrast(var(--map-contrast)) !important;
+    transition: filter 0.2s ease-in-out;
 }
 
 /* Base styles */
@@ -444,7 +461,7 @@ body {
 }
 
 .select-candidate-button:hover {
-    background-color: var(--icon-sidebar-button-hover-bg);
+    background-color: var(--candidate-hover-option);
     color: white;
     border-color: #bbb;
 }
@@ -628,3 +645,15 @@ input:checked + .toggle-slider:before {
     color: white;
     border-color: var(--icon-sidebar-button-active-bg);
 }
+
+.close-button {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: none;
+    border: none;
+    color: var(--default-fg);
+    cursor: pointer;
+    font-size: 1.2rem;
+}
+

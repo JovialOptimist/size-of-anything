@@ -38,6 +38,7 @@ export interface MapState {
   areas: MapArea[];
   activeAreaId: string | null;
   geojsonAreas: GeoJSONFeature[];
+  historyItems: GeoJSONFeature[];
   isSelectingArea: boolean;
   clickedPosition: [number, number] | null;
   magicWandMode: boolean;
@@ -58,4 +59,6 @@ export interface MapState {
   updateElementColor: (id: string, color: string) => void;
   updateCurrentCoordinates: (id: string, coordinates: any) => void;
   setHoveredCandidate: (candidate: GeoJSONFeature | null) => void;
+  addToHistory: (feature: GeoJSONFeature) => void;
+  clearHistory: () => void;
 }

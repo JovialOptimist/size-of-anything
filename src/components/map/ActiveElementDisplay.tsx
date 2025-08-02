@@ -156,7 +156,7 @@ const ActiveElementDisplay: React.FC = () => {
         <div className="button-group">
           <button onClick={handleDuplicate}>Duplicate</button>
           <button onClick={() => setIsColorPickerOpen((prev) => !prev)}>
-            Change Color
+            Color
           </button>
           <button onClick={handleRemove}>Remove</button>
         </div>

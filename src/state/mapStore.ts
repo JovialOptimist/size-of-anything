@@ -10,10 +10,76 @@ import type {
 /**
  * Zustand store for managing map areas and active area
  */
+// Key for storing history in localStorage
+const HISTORY_STORAGE_KEY = "sizeOfAnything_history";
+
+// Load history from localStorage when creating the store
+const loadHistory = (): GeoJSONFeature[] => {
+  if (typeof window === 'undefined') return []; // For SSR safety
+  
+  const savedHistory = localStorage.getItem(HISTORY_STORAGE_KEY);
+  if (savedHistory) {
+    try {
+        // Parse and validate the saved history
+        if (!savedHistory) return [];
+        // Check if the saved history has duplicates
+        const parsedHistory = JSON.parse(savedHistory);
+        const uniqueHistory = Array.isArray(parsedHistory)
+            ? parsedHistory.filter((item, idx, arr) => {
+                
+                    // Check by osmId if available
+                    if (item.properties?.osmId) {
+                        return (
+                            arr.findIndex(
+                                (f) => f.properties?.osmId === item.properties.osmId
+                            ) === idx
+                        );
+                    }
+
+                    // For custom shapes, check by customId
+                    if (item.properties?.customId) {
+                        return (
+                            arr.findIndex(
+                                (f) => f.properties?.customId === item.properties.customId
+                            ) === idx
+                        );
+                    }
+                    
+                    // Fallback: check by name
+                    if (item.properties?.name) {
+                        return (
+                            arr.findIndex(
+                                (f) => f.properties?.name === item.properties?.name
+                            ) === idx
+                        );
+                    }
+                    console.error("Item has no identifiable properties:", item);
+                    return false; // Exclude items without identifiable properties
+                })
+            : [];
+        if (uniqueHistory.length !== parsedHistory.length) {
+            localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(uniqueHistory));
+        }
+        return uniqueHistory;
+    } catch (e) {
+      console.error("Failed to parse history from localStorage:", e);
+      localStorage.removeItem(HISTORY_STORAGE_KEY);
+    }
+  }
+  return [];
+};
+
+// Save history to localStorage
+const saveHistory = (history: GeoJSONFeature[]) => {
+  if (typeof window === 'undefined') return; // For SSR safety
+  localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history));
+};
+
 export const useMapStore = create<MapState>((set) => ({
   areas: [],
   activeAreaId: null,
   geojsonAreas: [],
+  historyItems: loadHistory(),
   isSelectingArea: false,
   clickedPosition: null,
   onMapClick: null,
@@ -53,6 +119,12 @@ export const useMapStore = create<MapState>((set) => ({
     };
 
     set({ activeAreaId: newArea.id });
+    
+    // Add feature to history immediately
+    // We'll use setTimeout to ensure it happens after the state update
+    setTimeout(() => {
+      useMapStore.getState().addToHistory(featureWithColor);
+    }, 0);
 
     return {
       geojsonAreas: [...state.geojsonAreas, featureWithColor],
@@ -182,6 +254,57 @@ updateCurrentCoordinates: (id, coordinates) => {
 
 setHoveredCandidate: (candidate) => {
   set({ hoveredCandidate: candidate });
+},
+
+// Add a feature to history
+addToHistory: (feature) => {
+  set((state) => {
+    // Create a copy of the feature to ensure we don't modify the original
+    const featureCopy = JSON.parse(JSON.stringify(feature));
+    if (featureCopy.properties.customId && featureCopy.properties.customId.includes("special-shape")) {
+        state.historyItems.some(item => {
+            console.log("Checking history item:", item.properties.customId);
+            console.log("Against feature customId:", featureCopy.properties.customId);
+            if (item.properties.customId.includes(featureCopy.properties.customId)) return false;
+        });
+    }
+    
+    // Check if this feature is already in history
+    const isAlreadyInHistory = state.historyItems.some(item => {
+
+        
+      // Check by osmId if available
+      if (item.properties.osmId && featureCopy.properties.osmId) {
+        return item.properties.osmId === featureCopy.properties.osmId;
+      }
+      
+      // For custom shapes without osmId, check by name and any custom identifier
+      if (featureCopy.properties.customId) {
+        return item.properties.customId === featureCopy.properties.customId;
+      }
+
+      
+      
+      // As a fallback, check by name
+      return item.properties.name === featureCopy.properties.name;
+    });
+    
+    if (isAlreadyInHistory) return state;
+    
+    // Add to history, limiting to last 20 items (increase from 10)
+    const updatedHistory = [featureCopy, ...state.historyItems].slice(0, 20);
+    
+    // Save to localStorage
+    saveHistory(updatedHistory);
+    
+    return { historyItems: updatedHistory };
+  });
+},
+
+// Clear all history
+clearHistory: () => {
+  localStorage.removeItem(HISTORY_STORAGE_KEY);
+  set({ historyItems: [] });
 },
 
 }));

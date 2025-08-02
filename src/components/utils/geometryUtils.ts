@@ -85,8 +85,7 @@ export function findCenterForMarker(polygon: L.Polygon): LatLng {
       const maxIndex = areas.indexOf(Math.max(...areas));
       return ringCentroid(multi[maxIndex]); // use largest piece
     }
-  } catch (e) {
-    console.warn("Fallback marker center due to error:", e);
+  } catch (error) {
     return polygon.getBounds().getCenter();
   }
 }
