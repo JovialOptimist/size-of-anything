@@ -83,7 +83,7 @@ export function attachMarkerDragHandlers(
     }
   });
 
-  marker.on("drag", (e) => {
+  marker.on("drag", () => {
     // Calculate pixel distance to determine if this is a drag
     const startPoint = map.latLngToContainerPoint(dragStartLatLng);
     const currentPoint = map.latLngToContainerPoint(marker.getLatLng());
