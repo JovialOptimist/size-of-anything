@@ -157,10 +157,6 @@ export default function MapView() {
       // Add click handler to set active element
       layer.on("click", (e) => {
         L.DomEvent.stopPropagation(e);
-        setActiveArea(`geojson-${idx}`);
-        console.log(
-          `MapView: Layer clicked, setting active area to geojson-${idx}`
-        );
       });
 
       // Only enable dragging if this is the active element or there is no active element

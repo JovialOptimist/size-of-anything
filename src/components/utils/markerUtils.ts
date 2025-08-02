@@ -58,15 +58,15 @@ export function attachMarkerDragHandlers(
     map.dragging.disable();
   });
 
-  marker.on("drag", () => {
+  marker.on("drag", (e) => {
     const current = marker.getLatLng();
     const latDiff = current.lat - dragStart.lat;
     const lngDiff = current.lng - dragStart.lng;
 
     geoJsonLayer.eachLayer((layer) => {
       if (layer instanceof L.Polygon) {
-        const coords = layer.getLatLngs();
-        const transformed = transformPolygonCoordinates(coords, latDiff, lngDiff);
+        const originalCoords = layer.getLatLngs();
+        const transformed = transformPolygonCoordinates(originalCoords, latDiff, lngDiff);
         layer.setLatLngs(transformed);
       }
     });
@@ -107,6 +107,9 @@ export function attachMarkerDragHandlers(
         // Update the store with the new coordinates
         const { useMapStore } = await import('../../state/mapStore');
         useMapStore.getState().updateCurrentCoordinates(`geojson-${featureIndex}`, convertedCoords);
+        
+        // Note: We don't set the area as active after a marker drag
+        // This keeps the behavior consistent with polygon dragging
       }
     }
   });

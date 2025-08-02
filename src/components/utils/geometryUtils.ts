@@ -153,78 +153,85 @@ export function enablePolygonDragging(geoJsonLayer: L.GeoJSON, map: L.Map | null
 
     let originalLatLngs: any = null;
     let dragStart: L.LatLng | null = null;
+    let isDragging = false;
+    let hasMoved = false;
+    const moveThreshold = 3; // Pixels to consider a drag vs a click
 
     innerLayer.on("mousedown", async (event: L.LeafletMouseEvent) => {
-        const feature = (innerLayer as any).feature as GeoJSON.Feature | undefined;
-      if (feature && feature.properties) {
-        const featureIndex = feature.properties.index;
+      L.DomEvent.stopPropagation(event);
+      map.dragging.disable();
+      dragStart = event.latlng;
+      const latLngs = innerLayer.getLatLngs();
+      originalLatLngs = JSON.parse(JSON.stringify(latLngs));
+      isDragging = true;
+      hasMoved = false;
+      
+      // Start dragging immediately
+      const onMouseMove = (e: L.LeafletMouseEvent) => {
+        if (!dragStart || !originalLatLngs) return;
 
-        if (featureIndex !== undefined) {
-          const { useMapStore } = await import('../../state/mapStore');
-          useMapStore.getState().setActiveArea(`geojson-${featureIndex}`);
-        } else {
-          console.warn("Feature has no index property, cannot set active area.", feature);
+        // Calculate pixel distance to determine if this is a drag
+        const startPoint = map.latLngToContainerPoint(dragStart);
+        const currentPoint = map.latLngToContainerPoint(e.latlng);
+        const pixelDistance = startPoint.distanceTo(currentPoint);
+        
+        if (pixelDistance > moveThreshold) {
+          hasMoved = true;
         }
-      } else {
-        console.warn("Feature is not valid or has no properties:", feature);
-      }
-  map.dragging.disable();
-  dragStart = event.latlng;
-  const latLngs = innerLayer.getLatLngs();
-  originalLatLngs = JSON.parse(JSON.stringify(latLngs));
+        
+        // Move the shape with the mouse
+        const latDiff = e.latlng.lat - dragStart.lat;
+        const lngDiff = e.latlng.lng - dragStart.lng;
+        const transformed = transformPolygonCoordinates(originalLatLngs, latDiff, lngDiff);
+        (innerLayer as L.Polygon).setLatLngs(transformed);
 
-  // Start dragging immediately
-  const onMouseMove = (e: L.LeafletMouseEvent) => {
-    if (!dragStart || !originalLatLngs) return;
+        // Update associated marker position
+        const markersGroup = (window as any).markersLayerGroupRef?.current;
+        const markerMap = (window as any).markerToLayerMap?.current;
+        if (markersGroup && markerMap) {
+          markerMap.forEach((layer: L.GeoJSON, marker: L.Marker) => {
+            layer.eachLayer((l) => {
+              if (l === innerLayer) {
+                marker.setLatLng(findCenterForMarker(innerLayer));
+              }
+            });
+          });
+        }
+      };
 
-    const latDiff = e.latlng.lat - dragStart.lat;
-    const lngDiff = e.latlng.lng - dragStart.lng;
-    const transformed = transformPolygonCoordinates(originalLatLngs, latDiff, lngDiff);
-    (innerLayer as L.Polygon).setLatLngs(transformed);
+      const onMouseUp = async () => {
+        map?.off("mousemove", onMouseMove);
+        map?.off("mouseup", onMouseUp);
+        map?.dragging.enable();
+        isDragging = false;
 
-    const markersGroup = (window as any).markersLayerGroupRef?.current;
-    const markerMap = (window as any).markerToLayerMap?.current;
-    if (markersGroup && markerMap) {
-      markerMap.forEach((layer: L.GeoJSON, marker: L.Marker) => {
-        layer.eachLayer((l) => {
-          if (l === innerLayer) {
-            marker.setLatLng(findCenterForMarker(innerLayer));
+        const feature = (innerLayer as any).feature as GeoJSON.Feature | undefined;
+        if (feature && feature.properties && feature.geometry) {
+          const featureIndex = feature.properties.index;
+          if (featureIndex !== undefined) {
+            // Save the new coordinates
+            const currentCoords = innerLayer.getLatLngs();
+            const convertedCoords = convertLatLngsToCoords(currentCoords);
+            (feature.geometry as any).currentCoordinates = convertedCoords;
+
+            const { useMapStore } = await import('../../state/mapStore');
+            const store = useMapStore.getState();
+            store.updateCurrentCoordinates(`geojson-${featureIndex}`, convertedCoords);
+
+            // Only set as active if it was a click (not a drag)
+            if (!hasMoved) {
+              store.setActiveArea(`geojson-${featureIndex}`);
+            }
           }
-        });
-      });
-    }
-  };
+        }
 
-  const onMouseUp = async () => {
-    map?.off("mousemove", onMouseMove);
-    map?.off("mouseup", onMouseUp);
-    map?.dragging.enable();
+        originalLatLngs = null;
+        dragStart = null;
+      };
 
-    const feature = (innerLayer as any).feature as GeoJSON.Feature | undefined;
-    if (feature && feature.properties && feature.geometry) {
-      const featureIndex = feature.properties.index;
-      if (featureIndex !== undefined) {
-        const currentCoords = innerLayer.getLatLngs();
-        const convertedCoords = convertLatLngsToCoords(currentCoords);
-        (feature.geometry as any).currentCoordinates = convertedCoords;
-
-        const { useMapStore } = await import('../../state/mapStore');
-        const store = useMapStore.getState();
-        store.updateCurrentCoordinates(`geojson-${featureIndex}`, convertedCoords);
-
-        // Activate area *after* drag completes (optional)
-        store.setActiveArea(`geojson-${featureIndex}`);
-      }
-    }
-
-    originalLatLngs = null;
-    dragStart = null;
-  };
-
-  map.on("mousemove", onMouseMove);
-  map.on("mouseup", onMouseUp);
-});
-
+      map.on("mousemove", onMouseMove);
+      map.on("mouseup", onMouseUp);
+    });
   });
 }
 
