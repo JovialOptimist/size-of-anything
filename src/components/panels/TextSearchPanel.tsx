@@ -171,8 +171,10 @@ async function fetchCandidates(input: string) {
     )}`
   );
 
-  const nearbyData = await nearbyResponse.json();
-  const nominatimDataRaw = await nominatimResponse.json();
+  const [nearbyData, nominatimDataRaw] = await Promise.all([
+    nearbyResponse.json(),
+    nominatimResponse.json(),
+  ]);
 
   // Combine: keep all from nearbyData, add only unique from nominatimDataRaw (by osm_id + osm_type)
   const existingKeys = new Set(
