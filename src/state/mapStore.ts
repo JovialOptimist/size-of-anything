@@ -16,9 +16,10 @@ export const useMapStore = create<MapState>((set) => ({
   geojsonAreas: [],
   isSelectingArea: false,
   clickedPosition: null,
-    onMapClick: null,
-    magicWandMode: false,
-    currentMapCenter: [0, 0],
+  onMapClick: null,
+  magicWandMode: false,
+  currentMapCenter: [0, 0],
+  hoveredCandidate: null,
   setIsSelectingArea: (isSelecting) => set({ isSelectingArea: isSelecting }),
   setClickedPosition: (position) => set({ clickedPosition: position }),
   addGeoJSONFromSearch: (feature: GeoJSONFeature) =>
@@ -177,6 +178,10 @@ updateCurrentCoordinates: (id, coordinates) => {
     
     return { geojsonAreas: updatedAreas };
   });
+},
+
+setHoveredCandidate: (candidate) => {
+  set({ hoveredCandidate: candidate });
 },
 
 }));

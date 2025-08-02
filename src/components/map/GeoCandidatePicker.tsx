@@ -1,15 +1,19 @@
 import type { GeoJSONFeature } from "../../state/mapStoreTypes";
 import reactLogo from "../../assets/react.svg";
+import { useMapStore } from "../../state/mapStore";
 
 export default function GeoCandidatePicker({
   candidates,
   onSelect,
   onCancel,
+  showOnHover = true,
 }: {
   candidates: GeoJSONFeature[];
   onSelect: (feature: GeoJSONFeature) => void;
   onCancel?: () => void;
+  showOnHover?: boolean;
 }) {
+  const setHoveredCandidate = useMapStore((state) => state.setHoveredCandidate);
   return (
     <div className="geo-candidate-picker">
       <h3>Choose an area:</h3>
@@ -28,6 +32,19 @@ export default function GeoCandidatePicker({
               <button
                 className="select-candidate-button"
                 onClick={() => onSelect(feature)}
+                onMouseEnter={() => {
+                  if (showOnHover) {
+                    // Set the hovered candidate to highlight it on the map
+                    setHoveredCandidate(feature);
+                    console.log(`Hovering over candidate: ${feature.properties.name}`);
+                  }
+                }}
+                onMouseLeave={() => {
+                  if (showOnHover) {
+                    // Clear the hover highlight when mouse leaves
+                    setHoveredCandidate(null);
+                  }
+                }}
               >
                 <img
                   src={iconUrl}

@@ -42,6 +42,7 @@ export interface MapState {
   clickedPosition: [number, number] | null;
   magicWandMode: boolean;
   currentMapCenter: [number, number];
+  hoveredCandidate: GeoJSONFeature | null;
   setIsSelectingArea: (isSelecting: boolean) => void;
   setClickedPosition: (position: [number, number] | null) => void;
   addGeoJSONFromSearch: (feature: GeoJSONFeature) => void;
@@ -56,4 +57,5 @@ export interface MapState {
   getActiveElement: () => GeoJSONFeature | null;
   updateElementColor: (id: string, color: string) => void;
   updateCurrentCoordinates: (id: string, coordinates: any) => void;
+  setHoveredCandidate: (candidate: GeoJSONFeature | null) => void;
 }

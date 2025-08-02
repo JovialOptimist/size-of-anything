@@ -7,7 +7,6 @@ import {
   enablePolygonDragging,
   shouldShowMarkerForPolygon,
   findCenterForMarker,
-  isValidGeometry,
 } from "../utils/geometryUtils";
 import { createMarker, attachMarkerDragHandlers } from "../utils/markerUtils";
 import type { GeoJSONFeature, MapState } from "../../state/mapStoreTypes";
@@ -19,6 +18,7 @@ export default function MapView() {
   const mapInstanceRef = useRef<L.Map | null>(null);
   const geoJSONLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const markersLayerGroupRef = useRef<L.LayerGroup | null>(null);
+  const hoveredCandidateLayerRef = useRef<L.LayerGroup | null>(null);
   const markerToLayerMap = useRef<Map<L.Marker, L.GeoJSON>>(new Map());
   const numShapesRef = useRef(0);
 
@@ -38,6 +38,14 @@ export default function MapView() {
   );
   const setCurrentMapCenter: (center: [number, number]) => void = useMapStore(
     (state: MapState) => state.setCurrentMapCenter
+  );
+
+  const hoveredCandidate: GeoJSONFeature | null = useMapStore(
+    (state: MapState) => state.hoveredCandidate
+  );
+
+  const magicWandMode: boolean = useMapStore(
+    (state: MapState) => state.magicWandMode
   );
 
   const [currentZoomLevel, setCurrentZoomLevel] = useState<number>(13);
@@ -77,11 +85,6 @@ export default function MapView() {
       setCurrentZoomLevel(map.getZoom());
 
       const center = map.getBounds().pad(0.1).getCenter(); // Add some padding to the bounds
-      console.log(
-        `MapView: Zoom changed to ${map.getZoom()}, center at [${center.lat}, ${
-          center.lng
-        }]`
-      );
       setCurrentMapCenter([center.lat, center.lng]);
       updateMarkers();
     });
@@ -89,15 +92,11 @@ export default function MapView() {
     map.on("moveend", () => {
       if (map.getZoom() === currentZoomLevel) updateMarkers();
       const center = map.getBounds().pad(0.1).getCenter(); // Add some padding to the bounds
-      console.log(
-        `MapView: Zoom changed to ${map.getZoom()}, center at [${center.lat}, ${
-          center.lng
-        }]`
-      );
       setCurrentMapCenter([center.lat, center.lng]);
     });
 
     markersLayerGroupRef.current = L.layerGroup().addTo(map);
+    hoveredCandidateLayerRef.current = L.layerGroup().addTo(map);
 
     // Expose the layer refs to the window for access from marker utils
     (window as any).markersLayerGroupRef = markersLayerGroupRef;
@@ -126,13 +125,6 @@ export default function MapView() {
 
     geojsonAreas.forEach((feature: GeoJSONFeature) => {
       const idx = feature.properties?.index;
-      if (!isValidGeometry(feature.geometry.coordinates)) {
-        console.warn(
-          `MapView: Feature #${idx} has invalid geometry, skipping`,
-          feature
-        );
-      }
-
       const polygonColor = feature.properties?.color || "blue";
       const isActive = activeAreaId === `geojson-${idx}`;
 
@@ -206,17 +198,17 @@ export default function MapView() {
         ) {
           // Get the color directly from the polygon's style options
           const polygonColor = poly.options.color || "blue";
-          
+
           // Get the exact center of the polygon for the marker
           const markerPosition = findCenterForMarker(poly);
-          
+
           // Create the marker at the exact polygon center
           const marker = createMarker(markerPosition, polygonColor);
           marker.addTo(markerLayerGroup);
-          
+
           // Store the association between marker and layer
           markerToLayerMap.current.set(marker, layer);
-          
+
           // Attach drag handlers to the marker
           attachMarkerDragHandlers(marker, layer, map);
         }
@@ -228,8 +220,41 @@ export default function MapView() {
     if (mapInstanceRef.current) updateMarkers();
   }, [geojsonAreas, activeAreaId]);
 
+  // Effect for handling the hover highlight
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    const hoveredLayer = hoveredCandidateLayerRef.current;
+
+    if (!map || !hoveredLayer) return;
+
+    // Clear previous hover highlights
+    hoveredLayer.clearLayers();
+
+    // If there's a hovered candidate, render it with a highlight style
+    if (hoveredCandidate) {
+      L.geoJSON(hoveredCandidate, {
+        style: {
+          color: "#FF4500", // Orange-red highlight color
+          weight: 5,
+          fillOpacity: 0.2,
+          opacity: 1,
+          dashArray: "5, 10", // Dashed line for distinction
+        },
+      }).addTo(hoveredLayer);
+    }
+
+    return () => {
+      // Cleanup function to clear the layer if the component unmounts
+      if (hoveredLayer) hoveredLayer.clearLayers();
+    };
+  }, [hoveredCandidate]);
+
   return (
-    <div className={`map-container ${isSelectingArea ? "selecting-area" : ""}`}>
+    <div
+      className={`map-container ${isSelectingArea ? "selecting-area" : ""} ${
+        magicWandMode ? "magic-wand-active" : ""
+      }`}
+    >
       <div id="map" ref={mapRef}></div>
     </div>
   );

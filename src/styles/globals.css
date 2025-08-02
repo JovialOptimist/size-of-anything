@@ -236,6 +236,14 @@ body {
     position: relative;
 }
 
+/* Magic Wand cursor style */
+.map-container.magic-wand-active,
+.map-container.magic-wand-active #map,
+.map-container.magic-wand-active .leaflet-container,
+.map-container.magic-wand-active .leaflet-interactive {
+    cursor: crosshair !important;
+}
+
 #map {
     height: 100%;
     width: 100%;

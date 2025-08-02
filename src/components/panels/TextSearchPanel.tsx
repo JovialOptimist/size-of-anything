@@ -101,10 +101,12 @@ export default function TextSearchPanel() {
           onSelect={(feature) => {
             addGeoJSONFromSearch(feature);
             setShowPicker(false);
+            useMapStore.getState().setHoveredCandidate(null);
             setCandidates([]);
           }}
           onCancel={() => {
             setShowPicker(false);
+            useMapStore.getState().setHoveredCandidate(null);
             setCandidates([]);
           }}
         />
