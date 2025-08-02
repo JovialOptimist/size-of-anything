@@ -144,12 +144,44 @@ export default function TextSearchPanel() {
 // and return the remaining list of candidates.
 async function fetchCandidates(input: string) {
   // Gather candidates from Nominatim
+  // You can bias the search to a location by adding the "viewbox" and "bounded" parameters.
+  // For example, to bias near latitude/longitude (lat, lon), create a small bounding box around it.
+  // Replace these with your desired coordinates:
+  const mapCenter = useMapStore.getState().currentMapCenter;
+  const lat = mapCenter[0];
+  const lon = mapCenter[1];
+  const delta = 0.1; // Approximate bounding box size in degrees
+
+  const viewbox = [
+    lon - delta, // left
+    lat - delta, // top
+    lon + delta, // right
+    lat + delta, // bottom
+  ].join(",");
+
+  let nearbyResponse = await fetch(
+    `https://nominatim.openstreetmap.org/search?format=json&polygon_geojson=1&extratags=1&q=${encodeURIComponent(
+      input
+    )}&viewbox=${viewbox}&bounded=1`
+  );
+
   let nominatimResponse = await fetch(
     `https://nominatim.openstreetmap.org/search?format=json&polygon_geojson=1&extratags=1&q=${encodeURIComponent(
       input
     )}`
   );
-  let nominatimData = await nominatimResponse.json();
+
+  const nearbyData = await nearbyResponse.json();
+  const nominatimDataRaw = await nominatimResponse.json();
+
+  // Combine: keep all from nearbyData, add only unique from nominatimDataRaw (by osm_id + osm_type)
+  const existingKeys = new Set(
+    nearbyData.map((item: any) => `${item.osm_type}_${item.osm_id}`)
+  );
+  const uniqueNominatim = nominatimDataRaw.filter(
+    (item: any) => !existingKeys.has(`${item.osm_type}_${item.osm_id}`)
+  );
+  let nominatimData = [...nearbyData, ...uniqueNominatim];
   console.log("Nominatim data:", nominatimData);
 
   // Helper to check if a polygon is closed
