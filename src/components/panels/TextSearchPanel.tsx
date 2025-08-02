@@ -6,7 +6,6 @@ import type { GeoJSONFeature } from "../../state/mapStoreTypes";
 import GeoCandidatePicker from "../map/GeoCandidatePicker";
 import { describeOsmObject } from "../utils/describeOsmObject";
 import fixMultiPolygon from "../utils/fixMultipolygon";
-import reactLogo from "../../assets/react.svg";
 
 export default function TextSearchPanel() {
   const [query, setQuery] = useState("");
