@@ -57,7 +57,7 @@
     
 
     /* Control sidebar styles - Dark Mode */
-    --control-sidebar-bg: linear-gradient(270deg, #1a243b, #223a5e);
+    --control-sidebar-bg: linear-gradient(270deg, #222f4d, #223a5e);
     /* dark blue gradient */
     --control-sidebar-text-color: #e2e8f0;
     /* slightly blue-tinted light text */

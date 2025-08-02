@@ -1,4 +1,5 @@
 import React from "react";
+import { useSettings } from "../../state/settingsStore";
 
 /**
  * Controls for the map view (zoom, layers, etc.)
@@ -13,7 +14,17 @@ const MapControls: React.FC = () => {
   // If not hovering, change the foreground color to black
   const [isHovered, setIsHovered] = React.useState(false);
 
-  const foregroundColor = isHovered ? "#ffffff" : "#000000";
+  // Assume dark mode is determined by a CSS class on body or a media query
+  const theme = useSettings((state) => state.theme);
+  const prefersDarkMode =
+    theme === "dark" ||
+    (theme === "system" &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches);
+  const foregroundColor = isHovered
+    ? "#ffffff"
+    : prefersDarkMode
+    ? "#cbd5e1"
+    : "#000000";
 
   return (
     <button
