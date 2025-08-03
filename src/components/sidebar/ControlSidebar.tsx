@@ -30,7 +30,6 @@ export default function ControlSidebar() {
                 | "history"
                 | "special"
                 | "help"
-                | "donate"
                 | "settings"
             }
           />

@@ -4,7 +4,6 @@ import {
   CustomAreaIcon,
   HistoryIcon,
   HelpIcon,
-  DonateIcon,
   SettingsIcon,
   PuzzlePieceIcon,
 } from "./icons";
@@ -21,7 +20,6 @@ const ICONS = [
 
 const SETTINGS_ICONS = [
   { key: "help", label: "Help", icon: <HelpIcon /> },
-  { key: "donate", label: "Donate", icon: <DonateIcon /> },
   { key: "settings", label: "Settings", icon: <SettingsIcon /> },
 ];
 

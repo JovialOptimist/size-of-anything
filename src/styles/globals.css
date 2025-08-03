@@ -30,6 +30,24 @@
     --active-element-display-bg: white;
     --active-element-display-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
 
+    /* Help Panel styles - Light Mode */
+    --color-bg-panel: rgba(0, 0, 0, 0.03);
+    --color-bg-intro: rgba(0, 0, 0, 0.03);
+    --color-bg-section-header: rgba(0, 0, 0, 0.05);
+    --color-bg-section-header-hover: rgba(0, 0, 0, 0.08);
+    --color-bg-section-content: rgba(255, 255, 255, 0.8);
+    --color-bg-method-icon: rgba(0, 0, 0, 0.03);
+    --color-bg-tip-card: rgba(0, 0, 0, 0.02);
+    
+    --color-border-section: rgba(0, 0, 0, 0.1);
+    --color-border-section-header-expanded: rgba(0, 0, 0, 0.15);
+    --color-border-method: rgba(0, 0, 0, 0.1);
+    
+    --color-title: #1a7fd4;
+    --color-header: #1f2937;
+    --color-method-title: #1a7fd4;
+    --color-footer: #1a7fd4;
+
     --toggle-slider-bg: #ccc;
     --toggle-slider-checked-bg: #4287f5;
 
@@ -37,6 +55,11 @@
     --map-hue-rotate: 0deg;
     --map-brightness: 1;
     --map-contrast: 1;
+
+    /* Custom scrollbar styles */
+    --scrollbar-thumb-bg: #4287f5;
+    --scrollbar-thumb-hover-bg: #2b6cb0;
+    --scrollbar-width: 6px;
 }
 
 /* Dark mode variables */
@@ -77,9 +100,27 @@
     --active-element-display-bg: #1e293b;
     --active-element-display-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
 
+    /* Help Panel styles - Dark Mode */
+    --color-bg-panel: rgba(255, 255, 255, 0.1);
+    --color-bg-intro: rgba(255, 255, 255, 0.1);
+    --color-bg-section-header: rgba(255, 255, 255, 0.05);
+    --color-bg-section-header-hover: rgba(255, 255, 255, 0.1);
+    --color-bg-section-content: rgba(0, 0, 0, 0.2);
+    --color-bg-method-icon: rgba(255, 255, 255, 0.1);
+    --color-bg-tip-card: rgba(255, 255, 255, 0.05);
+    
+    --color-border-section: rgba(255, 255, 255, 0.1);
+    --color-border-section-header-expanded: rgba(255, 255, 255, 0.1);
+    --color-border-method: rgba(255, 255, 255, 0.1);
+    
+    --color-title: #4dabf7;
+    --color-header: #fff;
+    --color-method-title: #4dabf7;
+    --color-footer: #4dabf7;
+
     --toggle-slider-bg: #4b5563;
     /* slate gray */
-    --toggle-slider-checked-bg: #3b82f6;
+    --toggle-slider-checked-bg: #2b6cb0;
     /* bright blue */
     --candidate-hover-option: #374151;
 
@@ -87,6 +128,10 @@
     --map-hue-rotate: 192deg;
     --map-brightness: 1.2;
     --map-contrast: 0.9;
+}
+
+.help-footer a {
+    color: var(--default-fg);
 }
 
 .leaflet-tile {
@@ -102,6 +147,10 @@ body {
     padding: 0;
     font-family: 'Segoe UI', Roboto,
         Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    /* Custom scrollbar styles */
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb-bg) var(--default-bg);
+    scrollbar-gutter: transparent;
 }
 
 /* Layout */

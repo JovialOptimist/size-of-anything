@@ -1,0 +1,193 @@
+/* Help Panel styles are now defined in globals.css */
+
+.help-panel {
+    max-height: 100%;
+    padding-bottom: 20px;
+}
+
+/* Introduction styling */
+.help-intro {
+    margin-bottom: 20px;
+    padding: 12px;
+    background-color: var(--color-bg-intro);
+    border-radius: 8px;
+}
+
+.welcome-text {
+    font-size: 1.1em;
+    margin-bottom: 10px;
+}
+
+.app-title {
+    font-weight: bold;
+    color: var(--color-title);
+    font-size: 1.2em;
+}
+
+.intro-description {
+    line-height: 1.4;
+}
+
+/* Collapsible section styling */
+.collapsible-section {
+    margin-bottom: 10px;
+    border: 1px solid var(--color-border-section);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background-color: var(--color-bg-section-header);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.section-header:hover {
+    background-color: var(--color-bg-section-header-hover);
+}
+
+.section-header h3 {
+    margin: 0;
+    font-size: 1.1em;
+    color: var(--color-header);
+}
+
+.toggle-icon {
+    font-size: 1.5em;
+    color: var(--color-title);
+    font-weight: bold;
+}
+
+.section-header.expanded {
+    border-bottom: 1px solid var(--color-border-section-header-expanded);
+}
+
+.section-content {
+    padding: 15px;
+    background-color: var(--color-bg-section-content);
+}
+
+/* Method icons and content */
+.help-method {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px dashed var(--color-border-method);
+}
+
+.help-method:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.method-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    margin-right: 15px;
+    flex-shrink: 0;
+    background-color: var(--color-bg-method-icon);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 60%;
+}
+
+.text-search {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%234dabf7" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>');
+}
+
+.magic-wand {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%234dabf7" stroke-width="2"><path d="M15 4V2m0 20v-2M4 15H2m20 0h-2M5.6 5.6l-1.4-1.4m14.2 0l-1.4 1.4m0 12.8l1.4 1.4M5.6 18.4l-1.4 1.4M12 17l5-5a2.83 2.83 0 000-4 2.83 2.83 0 00-4 0l-5 5v4h4z"/></svg>');
+}
+
+.custom-area {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%234dabf7" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/></svg>');
+}
+
+.special-shapes {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%234dabf7" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>');
+}
+
+.history {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%234dabf7" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>');
+}
+
+.method-content h4 {
+    margin-top: 0;
+    margin-bottom: 6px;
+    color: var(--color-method-title);
+}
+
+.method-content p {
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* Tip cards */
+.tip-card {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 10px;
+    border-radius: 6px;
+    background-color: var(--color-bg-tip-card);
+}
+
+.tip-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 12px;
+    flex-shrink: 0;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+
+.drag-icon {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%234dabf7" stroke-width="2"><path d="M16 13v-2H7a4 4 0 00-4 4 4 4 0 004 4h12a4 4 0 004-4 4 4 0 00-4-4h-3zm0 0V7"/></svg>');
+}
+
+.scale-icon {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%234dabf7" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>');
+}
+
+.history-icon {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%234dabf7" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>');
+}
+
+/* About section */
+.about-section p {
+    margin-bottom: 15px;
+    line-height: 1.5;
+}
+
+.about-section p:last-child {
+    margin-bottom: 0;
+}
+
+/* Footer */
+.help-footer {
+    margin-top: 20px;
+    text-align: center;
+    padding: 10px;
+    font-style: italic;
+    color: var(--color-footer);
+}
+
+/* For desktop */
+@media (min-width: 768px) {
+    .section-content {
+        padding: 20px;
+    }
+}
+
+/* Animation for expanding/collapsing */
+.section-header, .section-content {
+    transition: all 0.3s ease-out;
+}

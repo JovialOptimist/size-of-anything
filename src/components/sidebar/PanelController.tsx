@@ -3,7 +3,6 @@ import MagicWandPanel from "../panels/MagicWandPanel";
 import CustomAreaPanel from "../panels/CustomAreaPanel";
 import HistoryPanel from "../panels/HistoryPanel";
 import HelpPanel from "../panels/HelpPanel";
-import DonatePanel from "../panels/DonatePanel";
 import SettingsPanel from "../panels/SettingsPanel";
 import SpecialPanel from "../panels/SpecialPanel";
 
@@ -14,7 +13,6 @@ const PANEL_COMPONENTS = {
   special: SpecialPanel,
   history: HistoryPanel,
   help: HelpPanel,
-  donate: DonatePanel,
   settings: SettingsPanel,
 } as const;
 
