@@ -6,8 +6,7 @@ import { useSettings } from "../../state/settingsStore";
  */
 const MapControls: React.FC = () => {
   const handleShareClick = () => {
-    // Logic to handle sharing the map view
-    console.log("Share button clicked");
+    alert("Share functionality is not implemented yet.");
   };
 
   // If hovering, change the foreground color to white

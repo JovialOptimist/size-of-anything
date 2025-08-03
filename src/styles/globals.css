@@ -290,11 +290,11 @@ body {
     width: 20px;
     min-width: 20px;
     max-width: 20px;
-    background-color: rgba(255, 255, 255, 0.6);
+    background-color: var(--icon-sidebar-button-bg);
     transition: background-color 0.2s;
     height: 100px;
-    border-top-left-radius: 10px;
-    border-bottom-left-radius: 10px;
+    border-top-left-radius: 20px;
+    border-bottom-left-radius: 20px;
     align-items: center;
     justify-content: center;
     /* Vertically center using margin auto */
@@ -308,7 +308,7 @@ body {
 }
 
 .resize-handle:hover {
-    background-color: rgba(255, 255, 255, 1);
+    background-color: var(--icon-sidebar-button-hover-bg);
     border-top-left-radius: 5px;
     border-bottom-left-radius: 5px;
 }
@@ -578,7 +578,6 @@ body {
 .settings-panel {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
 }
 
 .settings-section {

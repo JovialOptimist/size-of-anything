@@ -23,7 +23,7 @@ export default function TextSearchPanel() {
     try {
       const possiblePlaces = await fetchCandidates(query);
       if (possiblePlaces.length === 0) {
-        alert("No valid candidates found for your search.");
+        alert("Couldn't find anything named " + query + ".");
         return;
       }
       console.log("Possible places:", possiblePlaces);
@@ -186,7 +186,6 @@ async function fetchCandidates(input: string) {
 
   // If no candidates found, alert the user
   if (nominatimData.length === 0) {
-    alert("Could not find anything named " + input + ".");
     return [];
   }
 
