@@ -34,7 +34,8 @@
   padding: 8px 16px;
   border-radius: 4px;
   cursor: pointer;
-font-size: 16px;
+  font-size: 16px;
+  width: 100%;
 }
 
 .magic-wand-panel .secondary-button:hover {
@@ -45,6 +46,22 @@ font-size: 16px;
   color: #a0aec0;
   border-color: #e2e8f0;
   cursor: not-allowed;
+}
+
+.magic-wand-panel .secondary-button.cancel-mode {
+    background-color: #7e8997;
+    color: white;
+    border: none;
+}
+
+.magic-wand-panel .secondary-button.cancel-mode:hover {
+    background-color: #505a6a;
+}
+
+.magic-wand-panel .secondary-button.cancel-mode:disabled {
+    background-color: #829ec5;
+    color: white;
+    cursor: not-allowed;
 }
 
 .magic-wand-panel .loading-indicator {

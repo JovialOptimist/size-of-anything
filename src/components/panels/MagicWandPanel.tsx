@@ -14,6 +14,7 @@ export default function MagicWandPanel() {
   const [error, setError] = useState<string | null>(null);
   const addGeoJSONFromSearch = useMapStore((s) => s.addGeoJSONFromSearch);
   const setOnMapClick = useMapStore((s) => s.setOnMapClick);
+  const magicWandMode = useMapStore((s) => s.magicWandMode);
 
   /**
    * Fetch both nearby features and containing areas using a two-step approach:
@@ -263,21 +264,24 @@ export default function MagicWandPanel() {
       <div className="magic-wand-controls">
         <div className="button-group">
           <button
-            className="primary-button"
-            onClick={activateWand}
+            className={
+              magicWandMode ? "secondary-button cancel-mode" : "primary-button"
+            }
+            onClick={magicWandMode ? deactivateWand : activateWand}
             disabled={isLoading}
           >
-            Activate
-          </button>
-          <button
-            className="secondary-button"
-            onClick={deactivateWand}
-            disabled={isLoading}
-          >
-            Cancel
+            {magicWandMode ? (isLoading ? "Loading..." : "Cancel") : "Activate"}
           </button>
         </div>
       </div>
+
+      {magicWandMode && !isLoading && !showPicker ? (
+        <div className="loading-indicator">
+          <p>Click on the map to select an area. Click again to cancel.</p>
+        </div>
+      ) : (
+        <div></div>
+      )}
 
       {isLoading && (
         <div className="loading-indicator">
@@ -292,15 +296,20 @@ export default function MagicWandPanel() {
       )}
 
       {showPicker && candidates.length > 0 && (
-        <GeoCandidatePicker
-          candidates={candidates}
-          onSelect={(feature) => {
-            addGeoJSONFromSearch(feature);
-            useMapStore.getState().setHoveredCandidate(null);
-            deactivateWand();
-          }}
-          onCancel={deactivateWand}
-        />
+        <>
+          <div className="loading-indicator">
+            <p>Found {candidates.length} areas. Hover to outline the area.</p>
+          </div>
+          <GeoCandidatePicker
+            candidates={candidates}
+            onSelect={(feature) => {
+              addGeoJSONFromSearch(feature);
+              useMapStore.getState().setHoveredCandidate(null);
+              deactivateWand();
+            }}
+            onCancel={deactivateWand}
+          />
+        </>
       )}
 
       <div className="custom-area-info">
