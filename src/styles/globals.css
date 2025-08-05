@@ -482,6 +482,12 @@ body {
     transition: background-color 0s, color 0s, transform 0.2s;
 }
 
+/* Container for the info bubble system */
+.info-bubble-container {
+    position: relative;
+    display: inline-block;
+}
+
 /* The popup bubble itself */
 .info-bubble {
     position: absolute;
@@ -497,6 +503,35 @@ body {
     max-width: 300px;
     font-size: 0.95rem;
     animation: fadeIn 0.2s ease-out;
+    overflow-wrap: break-word;
+    right: 0; /* Default position to the right */
+}
+
+/* Left-positioned variant that appears to the left of the button */
+.info-bubble-left {
+    right: calc(100% + 10px); /* Position to the left of the button with 10px spacing */
+    top: 0;
+    margin-top: 0;
+    text-align: left;
+}
+
+/* Special positioning for info bubbles in the panel header */
+.panel-header .info-bubble-container {
+    position: relative;
+}
+
+.panel-header .info-bubble {
+    max-width: 280px;
+    right: auto;
+    left: -240px; /* Position it to the left of the button */
+    top: calc(100% + 10px);
+}
+
+/* Mobile adjustments for the info bubble */
+@media (max-width: 640px) {
+    .info-bubble {
+        max-width: 250px;
+    }
 }
 
 /* Optional animation */
@@ -529,6 +564,7 @@ body {
     cursor: pointer;
     padding: 0.25rem 0;
     text-decoration: underline;
+    float: right;
 }
 
 .info-bubble-close:hover {

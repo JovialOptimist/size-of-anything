@@ -3,6 +3,7 @@ import SpecialShape from "../utils/SpecialShape";
 import blueWhaleSvg from "../../assets/bluewhale.svg";
 import boeingPlane from "../../assets/boeing-737.svg";
 import minecraftChunk from "../../assets/minecraft-chunk.svg"; // Assuming you have this SVG
+import { InformationBubble } from "../ui/informationBubble";
 
 /**
  * Panel for Special features
@@ -49,7 +50,10 @@ const SpecialPanel: React.FC = () => {
 
   return (
     <div className="panel special-panel">
-      <h2>Special Shapes</h2>
+      <div className="panel-header">
+        <h2>Special Shapes</h2>
+        <InformationBubble message="These are special shapes that you can add to the map. If you have suggestions for a special shape you'd like to see added to the Size of Anything, use the Feature Request option!" />
+      </div>
       <div className="panel-description">
         Notable shapes and areas that you've unlocked so far.
       </div>

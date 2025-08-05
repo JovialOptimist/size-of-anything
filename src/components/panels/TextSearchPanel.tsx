@@ -77,7 +77,7 @@ export default function TextSearchPanel() {
     <div className="panel">
       <div className="panel-header">
         <h2>Text Search</h2>
-        <InformationBubble message="Use this panel to search for places by name. You can search for cities, states, countries, or any other location that has a name. Results will appear below." />
+        <InformationBubble message="You can use the name of a place, the address, coordinates, or any other location identifier. If multiple results are found, you can select one from the list." />
       </div>
 
       <div className="panel-description">
@@ -127,6 +127,14 @@ export default function TextSearchPanel() {
           }}
         />
       )}
+
+      <div className="custom-area-info">
+        <p>
+          You can find anything you want! Large official borders like countries
+          and states, local areas like parks and lakes, or even smaller features
+          like buildings and monuments.
+        </p>
+      </div>
     </div>
   );
 }

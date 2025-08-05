@@ -1,6 +1,7 @@
 import React from "react";
 import { useMapStore } from "../../state/mapStore";
 import Card from "../utils/Card";
+import { InformationBubble } from "../ui/informationBubble";
 
 /**
  * Panel for history functionality
@@ -13,7 +14,10 @@ const HistoryPanel: React.FC = () => {
 
   return (
     <div className="panel history-panel">
-      <h2>History</h2>
+      <div className="panel-header">
+        <h2>History</h2>
+        <InformationBubble message="This panel shows the areas you've previously added to the map. Click an option from the list to place a copy of it on the map." />
+      </div>
       <div className="panel-description">
         Previously created areas and shapes.
       </div>
@@ -34,6 +38,13 @@ const HistoryPanel: React.FC = () => {
           <p>No history yet. Search for areas to see them here.</p>
         </div>
       )}
+
+      <div className="custom-area-info">
+        <p>
+          The outline of the area will be made around the original feature, not
+          where you are currently looking.
+        </p>
+      </div>
     </div>
   );
 };

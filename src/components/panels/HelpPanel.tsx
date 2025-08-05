@@ -25,7 +25,9 @@ const HelpPanel: React.FC = () => {
 
   return (
     <div className="panel help-panel">
-      <h2>Help / About</h2>
+      <div className="panel-header">
+        <h2>Help / About</h2>
+      </div>
 
       {/* Introduction Section - Always visible */}
       <div className="help-intro">

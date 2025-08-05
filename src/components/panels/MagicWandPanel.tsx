@@ -6,6 +6,7 @@ import fixMultiPolygon from "../utils/fixMultipolygon";
 import { describeOsmObject } from "../utils/describeOsmObject";
 import type { GeoJSONFeature } from "../../state/mapStoreTypes";
 import "../../styles/MagicWandPanel.css";
+import { InformationBubble } from "../ui/informationBubble";
 
 export default function MagicWandPanel() {
   const [candidates, setCandidates] = useState<GeoJSONFeature[]>([]);
@@ -257,7 +258,10 @@ export default function MagicWandPanel() {
 
   return (
     <div className="panel magic-wand-panel">
-      <h2>Magic Wand</h2>
+      <div className="panel-header">
+        <h2>Magic Wand</h2>
+        <InformationBubble message="Click activate, then click anywhere on the map. Wait for the list of options to appear, then hover over them to highlight them on the map. Once you've found the correct area, click the option to add it to the map." />
+      </div>
       <div className="panel-description">
         Find anything by clicking a location on the map.
       </div>

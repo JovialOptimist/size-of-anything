@@ -10,7 +10,7 @@ export const InformationBubble: React.FC<InformationBubbleProps> = ({
   const [open, setOpen] = useState(false);
 
   return (
-    <div>
+    <div className="info-bubble-container">
       <button
         onClick={() => setOpen(true)}
         aria-label="Show information"
@@ -19,12 +19,12 @@ export const InformationBubble: React.FC<InformationBubbleProps> = ({
         i
       </button>
       {open && (
-        <div className="info-bubble">
+        <div className="info-bubble info-bubble-left">
           <div style={{ marginBottom: 8 }} className="info-bubble-message">
             {message}
           </div>
           <button onClick={() => setOpen(false)} className="info-bubble-close">
-            Close
+            Got it!
           </button>
         </div>
       )}
