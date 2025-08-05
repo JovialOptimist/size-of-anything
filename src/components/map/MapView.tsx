@@ -56,6 +56,7 @@ export default function MapView() {
 
     const map = L.map(mapRef.current, {
       zoomControl: false,
+      worldCopyJump: true,
     }).setView([47.615, -122.035], 13);
     setCurrentMapCenter([47.615, -122.035]);
     mapInstanceRef.current = map;
@@ -67,6 +68,7 @@ export default function MapView() {
         '&copy; <a href="https://www.openstreetmap.org/">OSM</a> contributors',
       maxNativeZoom: 19,
       maxZoom: 22,
+      minZoom: 2,
     }).addTo(map);
 
     map.on("click", (e) => {

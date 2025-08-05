@@ -21,7 +21,7 @@
     /* Control sidebar styles - Light Mode */
     --control-sidebar-bg: linear-gradient(270deg, #dfe7ff, #abc3ff);
     --control-sidebar-text-color: black;
-    --control-sidebar-accent-text-color: #111111;
+    --control-sidebar-accent-text-color: #4287f5;
 
     /* Map controls and active element display styles - Light Mode */
     --panel-heading-border-color: #e5e7eb;
@@ -29,6 +29,7 @@
     --map-controls-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
     --active-element-display-bg: white;
     --active-element-display-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    
 
     /* Help Panel styles - Light Mode */
     --color-bg-panel: rgba(0, 0, 0, 0.03);
@@ -482,6 +483,18 @@ body {
     font-weight: 600;
     margin-bottom: 0.75rem;
     color: var(--control-sidebar-text-color);
+}
+
+.geo-candidate-picker .accent-text {
+    color: var(--control-sidebar-accent-text-color);
+    font-weight: 500;
+    font-style: italic;
+}
+
+.candidate-count {
+    font-size: 0.9rem;
+    color: var(--control-sidebar-text-color);
+    margin-bottom: 1rem;
 }
 
 .candidate-list {
