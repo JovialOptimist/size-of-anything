@@ -338,9 +338,6 @@ body {
 .panel h2 {
     font-size: 1.125rem;
     font-weight: 600;
-    margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--panel-heading-border-color);
     color: var(--control-sidebar-text-color);
 }
 
@@ -446,6 +443,97 @@ body {
     border: 5px solid #1a7fd4;
 }
 
+.panel-header {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--panel-heading-border-color);
+    vertical-align: middle;
+    width: 100%;
+    justify-content: space-between;
+}
+
+.panel-header .info-bubble-button {
+    margin-left: 0.5rem;
+    vertical-align: end;
+    background-color: var(--icon-sidebar-button-active-bg);
+    border: 2px solid black;
+    color: var(--icon-sidebar-button-active-text-color);
+    border-radius: 10px;
+    width: 3rem;
+    height: 3rem;
+    scale: 1;
+}
+
+.panel-header .info-bubble-button:hover {
+    background-color: var(--icon-sidebar-button-hover-bg);
+    color: var(--icon-sidebar-button-hover-text-color);
+    scale: 1.05;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s, transform 0.2s;
+}
+
+.panel-header .info-bubble-button:active {
+    background-color: var(--icon-sidebar-button-active-bg);
+    color: var(--icon-sidebar-button-active-text-color);
+    scale: 0.95;
+    transition: background-color 0s, color 0s, transform 0.2s;
+}
+
+/* The popup bubble itself */
+.info-bubble {
+    position: absolute;
+    z-index: 1000;
+    margin-top: 0.5rem;
+    padding: 1rem;
+    background-color: #f9fafb;
+    color: #111827;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    width: max-content;
+    max-width: 300px;
+    font-size: 0.95rem;
+    animation: fadeIn 0.2s ease-out;
+}
+
+/* Optional animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/* Message text inside the bubble */
+.info-bubble-message {
+    margin-bottom: 0.5rem;
+    z-index: 10000000;
+}
+
+
+/* Close button inside the popup */
+.info-bubble-close {
+    background-color: transparent;
+    color: #2563eb;
+    border: none;
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 0.25rem 0;
+    text-decoration: underline;
+}
+
+.info-bubble-close:hover {
+    color: #1d4ed8;
+}
 
 .text-search-button, 
 .voice-button, 

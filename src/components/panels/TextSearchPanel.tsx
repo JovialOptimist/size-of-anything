@@ -6,6 +6,7 @@ import type { GeoJSONFeature } from "../../state/mapStoreTypes";
 import GeoCandidatePicker from "../map/GeoCandidatePicker";
 import { describeOsmObject } from "../utils/describeOsmObject";
 import fixMultiPolygon from "../utils/fixMultipolygon";
+import { InformationBubble } from "../ui/informationBubble";
 
 export default function TextSearchPanel() {
   const [query, setQuery] = useState("");
@@ -74,7 +75,11 @@ export default function TextSearchPanel() {
 
   return (
     <div className="panel">
-      <h2>Text Search</h2>
+      <div className="panel-header">
+        <h2>Text Search</h2>
+        <InformationBubble message="Use this panel to search for places by name. You can search for cities, states, countries, or any other location that has a name. Results will appear below." />
+      </div>
+
       <div className="panel-description">
         Search for places by name. Results will appear below.
       </div>
