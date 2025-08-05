@@ -432,11 +432,20 @@ body {
 .text-search-input {
   flex: 1;
   padding: 0.5rem;
-  border: 1px solid #e5e7eb;
+  border: 5px solid #e5e7eb;
   border-radius: 0.25rem;
   font-size: 1rem;
   margin-right: 0.5rem;
+  outline: none;
+  background-image: none;
+  transition: background-image 0.2s ease;
 }
+
+.text-search-input:focus {
+    transition: background-image 0.2s ease, border-color 0.2s ease;
+    border: 5px solid #1a7fd4;
+}
+
 
 .text-search-button, 
 .voice-button, 

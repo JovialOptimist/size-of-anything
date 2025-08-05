@@ -1,5 +1,5 @@
 // src/components/panels/TextSearchPanel.tsx
-import React, { useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useMapStore } from "../../state/mapStore";
 import { OSM_Type } from "../../state/mapStoreTypes";
 import type { GeoJSONFeature } from "../../state/mapStoreTypes";
@@ -65,6 +65,13 @@ export default function TextSearchPanel() {
     }
   };
 
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    // Focus the input box when the panel mounts
+    inputRef.current?.focus();
+  }, []);
+
   return (
     <div className="panel">
       <h2>Text Search</h2>
@@ -73,13 +80,15 @@ export default function TextSearchPanel() {
       </div>
       <div className="text-search-panel">
         <input
+          ref={inputRef}
           type="text"
           value={query}
-          placeholder="Search for a place"
+          placeholder="Search for a place..."
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
           className="text-search-input"
         />
+
         <button onClick={handleSearch} className="text-search-button">
           <svg
             width="24"

@@ -10,7 +10,7 @@ interface PanelState {
  * Zustand store for managing active panel state
  */
 export const usePanel = create<PanelState>((set) => ({
-  activePanel: null,
+  activePanel: "text-search", // Start with text-search panel open
   setActivePanel: (panel) => set({ activePanel: panel }),
   togglePanel: (panel) => 
     set((state) => ({
