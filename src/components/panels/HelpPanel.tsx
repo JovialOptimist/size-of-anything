@@ -33,9 +33,16 @@ const HelpPanel: React.FC = () => {
           Welcome to <span className="app-title">The Size of Anything!</span>
         </p>
         <p className="intro-description">
-          This is an app that allows you to drag around any area in the world.
-          You can go steal the Space Needle and put it in your backyard, get a
-          better understanding of how big Russia is, or whatever you want.
+          <ul>
+            <li>
+              To create your first outline, use the Search tool at the top left
+              of the screen.
+            </li>
+            <li>
+              Once created, you can drag the outline by holding down the mouse
+              button.
+            </li>
+          </ul>
         </p>
       </div>
 
@@ -47,7 +54,7 @@ const HelpPanel: React.FC = () => {
           }`}
           onClick={() => toggleSection("adding")}
         >
-          <h3>How to Add Areas to the Map</h3>
+          <h3>Create an outline of a place</h3>
           <span className="toggle-icon">
             {expandedSections.adding ? "−" : "+"}
           </span>
@@ -121,7 +128,7 @@ const HelpPanel: React.FC = () => {
           }`}
           onClick={() => toggleSection("dragging")}
         >
-          <h3>Dragging Stuff Around</h3>
+          <h3>Drag an outline</h3>
           <span className="toggle-icon">
             {expandedSections.dragging ? "−" : "+"}
           </span>
@@ -155,7 +162,34 @@ const HelpPanel: React.FC = () => {
         )}
       </div>
 
-      {/* Collapsible section: About the Developer */}
+      {/* Collapsible section: basic map controls */}
+      <div className="collapsible-section">
+        <div
+          className={`section-header ${
+            expandedSections.mapControls ? "expanded" : ""
+          }`}
+          onClick={() => toggleSection("mapControls")}
+        >
+          <h3>Move the map</h3>
+          <span className="toggle-icon">
+            {expandedSections.mapControls ? "−" : "+"}
+          </span>
+        </div>
+
+        {expandedSections.mapControls && (
+          <div className="section-content">
+            <ul>
+              <li>
+                To zoom in and out, use the scroll wheel or the zoom buttons in
+                the bottom right corner.
+              </li>
+              <li>To move around the map, click and drag the mouse.</li>
+            </ul>
+          </div>
+        )}
+      </div>
+
+      {/* Collapsible section: About the developer */}
       <div className="collapsible-section">
         <div
           className={`section-header ${
@@ -163,7 +197,7 @@ const HelpPanel: React.FC = () => {
           }`}
           onClick={() => toggleSection("about")}
         >
-          <h3>About the Developer</h3>
+          <h3>About the developer</h3>
           <span className="toggle-icon">
             {expandedSections.about ? "−" : "+"}
           </span>
@@ -200,7 +234,7 @@ const HelpPanel: React.FC = () => {
           }`}
           onClick={() => toggleSection("donate")}
         >
-          <h3>Support the Site</h3>
+          <h3>Support the site</h3>
           <span className="toggle-icon">
             {expandedSections.donate ? "−" : "+"}
           </span>
@@ -216,7 +250,10 @@ const HelpPanel: React.FC = () => {
 
       <div className="help-footer">
         <p>
-          <a href="https://github.com/JovialOptimist/size-of-anything">
+          <a
+            target="_blank"
+            href="https://github.com/JovialOptimist/size-of-anything"
+          >
             Jac Chambers | GitHub
           </a>
         </p>
