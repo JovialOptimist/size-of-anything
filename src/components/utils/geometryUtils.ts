@@ -1,6 +1,26 @@
 import L, { LatLng } from "leaflet";
 import * as turf from "@turf/turf";
 
+/**
+ * Geometry Utilities for Size of Anything
+ * 
+ * This module provides utilities for handling geometric operations on map elements.
+ * 
+ * The polygon dragging implementation uses turf.transformTranslate to move polygons on the map.
+ * turf.transformTranslate moves any geojson Feature or Geometry along a Rhumb Line on the provided direction angle.
+ * 
+ * Parameters for turf.transformTranslate:
+ * - geojson: GeoJSON | GeometryCollection - object to be translated
+ * - distance: number - length of the motion; negative values determine motion in opposite direction
+ * - direction: number - angle of the motion; angle from North in decimal degrees, positive clockwise
+ * - options?: Object - Optional parameters
+ *   - units?: Units - in which distance will be express; miles, kilometers, degrees, or radians (default 'kilometers')
+ *   - zTranslation?: number - length of the vertical motion, same unit of distance (default 0)
+ *   - mutate?: boolean - allows GeoJSON input to be mutated (significant performance increase if true) (default false)
+ * 
+ * Returns: GeoJSON | GeometryCollection - the translated GeoJSON object
+ */
+
 
 // Utility to find the centroid of a ring (used to compare proximity)
 function ringCentroid(ring: LatLng[]): LatLng {
@@ -127,39 +147,26 @@ export function transformPolygonCoordinates(
     return latLngs;
   }
 
-  try {
-    const startLat = latLngs[0]?.[0]?.lat ?? 0;
-    const newLat = startLat + latDiff;
-    // Account for longitude distortion at different latitudes
-    const scale = Math.cos((startLat * Math.PI) / 180) / Math.cos((newLat * Math.PI) / 180);
-
-    const shiftRing = (ring: L.LatLng[]) => {
-      if (!Array.isArray(ring) || ring.length === 0) return ring;
-      
-      const centerLng = ring.reduce((sum, pt) => sum + (pt.lng || 0), 0) / ring.length;
-      return ring.map(pt => {
-        if (!pt || typeof pt.lat === 'undefined' || typeof pt.lng === 'undefined') {
-          console.warn("Invalid point in ring", pt);
-          return pt;
-        }
-        return L.latLng(
-          pt.lat + latDiff,
-          centerLng + ((pt.lng - centerLng) * scale + lngDiff)
-        );
-      });
-    };
-
-    return latLngs.map((ring: any) => {
-      if (!Array.isArray(ring)) return ring;
-      return Array.isArray(ring[0]) && ring[0] !== null
-        ? ring.map((sub: any) => shiftRing(sub))
-        : shiftRing(ring);
-    });
-  } catch (error) {
-    console.error("Error in transformPolygonCoordinates:", error);
-    return latLngs; // Return original on error to prevent crashes
+  // Recursively add latDiff and lngDiff to each coordinate
+  function translateCoords(coords: any): any {
+    if (typeof coords[0] === "number" && typeof coords[1] === "number") {
+      // Base case: single [lng, lat]
+      return [coords[0] + lngDiff, coords[1] + latDiff];
+    }
+    return coords.map(translateCoords);
   }
+
+  // Convert Leaflet latLngs -> GeoJSON coords
+  const geoJsonCoords = convertLatLngsToCoords(latLngs);
+
+  // Translate coordinates
+  const translatedCoords = translateCoords(geoJsonCoords);
+
+  // Convert back to Leaflet latLngs
+  return convertCoordsToLatLngs(translatedCoords);
 }
+
+
 
 // Enable click-and-drag on a polygon layer to move it interactively
 export function enablePolygonDragging(geoJsonLayer: L.GeoJSON, map: L.Map | null) {
@@ -223,6 +230,8 @@ export function enablePolygonDragging(geoJsonLayer: L.GeoJSON, map: L.Map | null
         // Move the shape with the mouse - calculate total displacement from start
         const latDiff = e.latlng.lat - dragStartLatLng.lat;
         const lngDiff = e.latlng.lng - dragStartLatLng.lng;
+        
+        // Use turf.transformTranslate to move the polygon accurately
         const transformed = transformPolygonCoordinates(originalLatLngs, latDiff, lngDiff);
         
         // Update the polygon position
@@ -293,11 +302,42 @@ export function calculateAreaInKm2(feature: GeoJSON.Feature): number {
 export const convertLatLngsToCoords = (latLngs: any): any => {
   if (!Array.isArray(latLngs) || latLngs.length === 0) return [];
 
-  if (latLngs[0] instanceof L.LatLng) {
-    // Ring of LatLngs (e.g. outer ring or hole)
-    return latLngs.map((ll: L.LatLng) => [ll.lng, ll.lat]);
+  const isLatLng = (pt: any): pt is { lat: number; lng: number } =>
+    pt &&
+    typeof pt === "object" &&
+    typeof pt.lat === "number" &&
+    typeof pt.lng === "number";
+
+  // Case 1: this is a single point (rare in your case, but safe to support)
+  if (isLatLng(latLngs)) {
+    return [latLngs.lng, latLngs.lat];
   }
 
-  // If the first element is an array, recurse into it
-  return latLngs.map((subArray: any) => convertLatLngsToCoords(subArray));
+  // Case 2: this is an array of point objects
+  if (Array.isArray(latLngs) && latLngs.every(isLatLng)) {
+    return latLngs.map((pt) => [pt.lng, pt.lat]);
+  }
+
+  // Case 3: deeper nesting (e.g., Polygon[], MultiPolygon[])
+  return latLngs.map((subArray) => convertLatLngsToCoords(subArray));
+};
+
+
+
+/**
+ * Converts GeoJSON coordinates format back to Leaflet LatLng objects
+ * 
+ * @param coords - GeoJSON coordinates array [lng, lat] format
+ * @returns Coordinates in Leaflet LatLng format
+ */
+export const convertCoordsToLatLngs = (coords: any): any => {
+  if (!Array.isArray(coords) || coords.length === 0) return [];
+
+  // If the first two elements are numbers, this is a single coordinate
+  if (typeof coords[0] === 'number' && typeof coords[1] === 'number') {
+    return L.latLng(coords[1], coords[0]); // Note: GeoJSON is [lng, lat], Leaflet is [lat, lng]
+  }
+
+  // Otherwise, recurse into the array
+  return coords.map((subArray: any) => convertCoordsToLatLngs(subArray));
 };

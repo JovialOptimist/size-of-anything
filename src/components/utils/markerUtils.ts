@@ -99,7 +99,7 @@ export function attachMarkerDragHandlers(
     const latDiff = current.lat - dragStartLatLng.lat;
     const lngDiff = current.lng - dragStartLatLng.lng;
     
-    // Apply transformation to original coordinates to ensure accurate movement
+    // Apply transformation using turf.js to ensure accurate movement
     const transformed = transformPolygonCoordinates(originalPolygonCoords, latDiff, lngDiff);
     activePolygon.setLatLngs(transformed);
   });
