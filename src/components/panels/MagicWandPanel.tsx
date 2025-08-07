@@ -7,6 +7,7 @@ import { describeOsmObject } from "../utils/describeOsmObject";
 import type { GeoJSONFeature } from "../../state/mapStoreTypes";
 import "../../styles/MagicWandPanel.css";
 import { InformationBubble } from "../ui/informationBubble";
+import { countCoordinates } from "../utils/geometryUtils";
 
 export default function MagicWandPanel() {
   const [candidates, setCandidates] = useState<GeoJSONFeature[]>([]);
@@ -116,6 +117,7 @@ export default function MagicWandPanel() {
                 type:
                   place.geojson.type === "Polygon" ? "Polygon" : "MultiPolygon",
                 coordinates: place.geojson.coordinates,
+                coordinateCount: countCoordinates(place.geojson.coordinates),
               },
               properties: {
                 name: place.display_name,

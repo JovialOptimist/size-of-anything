@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useMapStore } from "../../state/mapStore";
 import type { GeoJSONFeature } from "../../state/mapStoreTypes";
 import { InformationBubble } from "../ui/informationBubble";
+import { countCoordinates } from "../utils/geometryUtils";
 
 /**
  * Panel for custom area functionality
@@ -99,6 +100,7 @@ const CustomAreaPanel: React.FC = () => {
       geometry: {
         type: "Polygon",
         coordinates: [coordinates],
+        coordinateCount: countCoordinates(coordinates),
       },
       properties: {
         name,

@@ -27,6 +27,20 @@
   opacity: 0.7;
 }
 
+.confirm-button {
+    background-color: #4a90e2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.confirm-button:hover {
+    background-color: #357ABD;
+}
+
 .active-element-panel h3 {
   margin-top: 0;
   border-bottom: 1px solid var(--panel-heading-border-color);

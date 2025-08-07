@@ -7,6 +7,7 @@ import GeoCandidatePicker from "../map/GeoCandidatePicker";
 import { describeOsmObject } from "../utils/describeOsmObject";
 import fixMultiPolygon from "../utils/fixMultipolygon";
 import { InformationBubble } from "../ui/informationBubble";
+import { countCoordinates } from "../utils/geometryUtils";
 
 export default function TextSearchPanel() {
   const [query, setQuery] = useState("");
@@ -37,6 +38,7 @@ export default function TextSearchPanel() {
           geometry: {
             type: osmType === OSM_Type.WAY ? "Polygon" : "MultiPolygon",
             coordinates: place.geojson.coordinates,
+            coordinateCount: countCoordinates(place.geojson.coordinates),
           },
           properties: {
             name: place.display_name,

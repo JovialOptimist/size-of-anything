@@ -1,4 +1,5 @@
 import type { GeoJSONFeature } from "../../state/mapStoreTypes";
+import { countCoordinates } from "./geometryUtils";
 
 function fixMultiPolygon(feature: GeoJSONFeature): GeoJSONFeature {
   const geom = feature.geometry;
@@ -18,6 +19,7 @@ function fixMultiPolygon(feature: GeoJSONFeature): GeoJSONFeature {
       geometry: {
         type: "Polygon",
         coordinates: geom.coordinates as any, // safe to treat as Polygon
+        coordinateCount: countCoordinates(geom.coordinates as any),
       },
     };
     return corrected;

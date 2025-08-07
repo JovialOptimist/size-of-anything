@@ -2,6 +2,7 @@ import React from "react";
 import { useMapStore } from "../../state/mapStore";
 import type { GeoJSONFeature } from "../../state/mapStoreTypes";
 import { generateRandomColor } from "./colorUtils";
+import { countCoordinates } from "./geometryUtils";
 
 interface CardProps {
   // Either provide a complete GeoJSONFeature
@@ -54,6 +55,7 @@ const Card: React.FC<CardProps> = ({
             ? "MultiPolygon"
             : "Polygon",
           coordinates: geojson.coordinates,
+          coordinateCount: countCoordinates(geojson.coordinates),
         },
         properties: {
           name: name || "Custom Area",

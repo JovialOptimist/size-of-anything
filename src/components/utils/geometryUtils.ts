@@ -35,6 +35,19 @@ function ringCentroid(ring: LatLng[]): LatLng {
   return L.latLng(sum.lat / ring.length, sum.lng / ring.length);
 }
 
+export const countCoordinates = (coords: any[]): number => {
+  if (!Array.isArray(coords)) return 0;
+  if (
+    coords.length === 2 &&
+    typeof coords[0] === "number" &&
+    typeof coords[1] === "number"
+  ) {
+    return 1; // Base case: this is a coordinate pair [lng, lat]
+  }
+  // Recursive case: sum up points in nested arrays
+  return coords.reduce((sum, item) => sum + countCoordinates(item), 0);
+};
+
 // Utility to measure if all centroids are within ~200km
 function centroidsAreClose(centroids: LatLng[], thresholdKm = 200): boolean {
   const EARTH_RADIUS_KM = 6371;

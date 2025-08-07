@@ -5,6 +5,7 @@ import "../../styles/ActiveElementDisplay.css";
 import { calculateAreaInKm2 } from "../utils/geometryUtils";
 import { getExistingColors } from "../utils/colorUtils";
 import { getContinent } from "../utils/countryHelper"; // Assuming this function exists
+import { countCoordinates } from "../utils/geometryUtils";
 
 const ActiveElementDisplay: React.FC = () => {
   const { activePanel } = usePanel();
@@ -78,13 +79,6 @@ const ActiveElementDisplay: React.FC = () => {
     setIsColorPickerOpen(false); // close after selection
   };
 
-  const handleCustomColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const color = e.target.value;
-    setSelectedColor(color);
-    updateElementColor(activeAreaId, color);
-    setIsColorPickerOpen(false);
-  };
-
   const handleDuplicate = () => {
     if (activeAreaId) {
       duplicateArea(activeAreaId);
@@ -124,14 +118,30 @@ const ActiveElementDisplay: React.FC = () => {
                   onClick={() => handleColorSelect(color)}
                 />
               ))}
-              <label className="custom-color-label">
-                <input
-                  type="color"
-                  value={selectedColor}
-                  onChange={handleCustomColorChange}
-                  className="custom-color-input"
-                />
-              </label>
+              <ColorPickerButton
+                onConfirm={(color) => {
+                  presetColors.push(color); // optional: store it
+                  setSelectedColor(color);
+                  updateElementColor(activeAreaId, color);
+                  setIsColorPickerOpen(false);
+                }}
+                onChange={(color) => {
+                  setSelectedColor(color);
+                  const activeElement = getActiveElement();
+                  if (activeElement && activeElement.geometry) {
+                    // Count coordinates in the geometry
+                    const coordinateCount = countCoordinates(
+                      activeElement.geometry.coordinates
+                    );
+
+                    // Only update visual feedback if there are 10000 or fewer points
+                    if (coordinateCount <= 1000) {
+                      // Always update the actual color regardless of coordinate count
+                      updateElementColor(activeAreaId, color);
+                    }
+                  }
+                }}
+              />
             </div>
           </div>
         )}
@@ -164,5 +174,78 @@ const ActiveElementDisplay: React.FC = () => {
     </div>
   );
 };
+
+type ColorPickerButtonProps = {
+  onConfirm: (color: string) => void;
+  onChange: (color: string) => void;
+};
+
+function ColorPickerButton({ onConfirm, onChange }: ColorPickerButtonProps) {
+  const colorInputRef = useRef<HTMLInputElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [tempColor, setTempColor] = useState<string | null>(null);
+
+  // Open native picker and measure position
+  const handleOpenPicker = () => {
+    setIsOpen(true);
+    setTimeout(() => colorInputRef.current?.click(), 0);
+  };
+
+  const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTempColor(e.target.value);
+    onChange(e.target.value);
+  };
+
+  const handleConfirm = () => {
+    if (tempColor) {
+      onConfirm(tempColor);
+    }
+    setIsOpen(false);
+    setTempColor(null);
+  };
+
+  return (
+    <div style={{ position: "relative", display: "inline-block" }}>
+      <button
+        ref={buttonRef}
+        className="color-button"
+        style={{
+          backgroundColor: tempColor || "#ffffff",
+          color: tempColor
+            ? (() => {
+                // Calculate luminance to decide black or white text
+                const hex = tempColor.replace("#", "");
+                const r = parseInt(hex.substring(0, 2), 16);
+                const g = parseInt(hex.substring(2, 4), 16);
+                const b = parseInt(hex.substring(4, 6), 16);
+                // Standard luminance formula
+                const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+                return luminance > 0.5 ? "#000" : "#fff";
+              })()
+            : "#000",
+          border: "1px solid #ccc",
+        }}
+        onClick={isOpen ? handleConfirm : handleOpenPicker}
+        title={isOpen ? "Confirm custom color" : "Pick a custom color"}
+      >
+        {isOpen ? " " : "+"}
+      </button>
+      {isOpen && (
+        <button onClick={handleConfirm} className="confirm-button">
+          Confirm
+        </button>
+      )}
+
+      {/* Hidden native input */}
+      <input
+        type="color"
+        ref={colorInputRef}
+        onChange={handleColorChange}
+        style={{ display: "none" }}
+      />
+    </div>
+  );
+}
 
 export default ActiveElementDisplay;

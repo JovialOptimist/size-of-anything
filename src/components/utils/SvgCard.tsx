@@ -8,6 +8,7 @@ import {
 import type { GeoJSONFeature } from "../../state/mapStoreTypes";
 import { useMapStore } from "../../state/mapStore";
 import { svgPathProperties } from "svg-path-properties";
+import { countCoordinates } from "./geometryUtils";
 
 interface SvgCardProps {
   svgUrl: string;
@@ -149,6 +150,7 @@ function svgPathToGeoJSONFeature(
       geometry: {
         type: "Polygon",
         coordinates: [closedGeoPoints],
+        coordinateCount: countCoordinates([closedGeoPoints]),
       },
       properties: {
         name: featureDisplayName,
