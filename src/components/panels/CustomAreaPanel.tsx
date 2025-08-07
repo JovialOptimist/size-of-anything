@@ -116,7 +116,10 @@ const CustomAreaPanel: React.FC = () => {
   return (
     <div className="panel custom-area-panel">
       <div className="panel-header">
-        <h2>Custom Area</h2>
+        <h2>
+          Custom Area<span className="keybind-text">C</span>
+        </h2>
+
         <InformationBubble message="Create a square area of a specific size. Enter the size and select the unit, then click Generate to place it on the map. The outline will morph as it is moved around the map to account for projection artifacts." />
       </div>
       <div className="panel-description">

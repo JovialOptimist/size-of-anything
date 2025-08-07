@@ -78,7 +78,9 @@ export default function TextSearchPanel() {
   return (
     <div className="panel">
       <div className="panel-header">
-        <h2>Text Search</h2>
+        <h2>
+          Text Search<span className="keybind-text">T</span>
+        </h2>
         <InformationBubble message="You can use the name of a place, the address, coordinates, or any other location identifier. If multiple results are found, you can select one from the list." />
       </div>
 

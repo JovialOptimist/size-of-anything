@@ -261,7 +261,10 @@ export default function MagicWandPanel() {
   return (
     <div className="panel magic-wand-panel">
       <div className="panel-header">
-        <h2>Magic Wand</h2>
+        <h2>
+          Magic Wand<span className="keybind-text">W</span>
+        </h2>
+
         <InformationBubble message="Click activate, then click anywhere on the map. Wait for the list of options to appear, then hover over them to highlight them on the map. Once you've found the correct area, click the option to add it to the map." />
       </div>
       <div className="panel-description">

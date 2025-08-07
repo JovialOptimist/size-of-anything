@@ -51,7 +51,9 @@ const SpecialPanel: React.FC = () => {
   return (
     <div className="panel special-panel">
       <div className="panel-header">
-        <h2>Special Shapes</h2>
+        <h2>
+          Special Shapes<span className="keybind-text">S</span>
+        </h2>
         <InformationBubble message="These are special shapes that you can add to the map. If you have suggestions for a special shape you'd like to see added to the Size of Anything, use the Feature Request option!" />
       </div>
       <div className="panel-description">

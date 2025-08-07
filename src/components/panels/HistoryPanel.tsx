@@ -15,7 +15,9 @@ const HistoryPanel: React.FC = () => {
   return (
     <div className="panel history-panel">
       <div className="panel-header">
-        <h2>History</h2>
+        <h2>
+          History<span className="keybind-text">H</span>
+        </h2>
         <InformationBubble message="This panel shows the areas you've previously added to the map. Click an option from the list to place a copy of it on the map." />
       </div>
       <div className="panel-description">
