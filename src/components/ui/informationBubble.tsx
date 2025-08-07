@@ -15,6 +15,7 @@ export const InformationBubble: React.FC<InformationBubbleProps> = ({
         onClick={() => setOpen(true)}
         aria-label="Show information"
         className="info-bubble-button"
+        tabIndex={0}
       >
         i
       </button>
@@ -23,7 +24,7 @@ export const InformationBubble: React.FC<InformationBubbleProps> = ({
           <div style={{ marginBottom: 8 }} className="info-bubble-message">
             {message}
           </div>
-          <button onClick={() => setOpen(false)} className="info-bubble-close">
+          <button onClick={() => setOpen(false)} className="info-bubble-close" tabIndex={0}>
             Got it!
           </button>
         </div>

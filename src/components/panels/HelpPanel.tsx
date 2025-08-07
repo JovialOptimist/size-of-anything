@@ -55,6 +55,9 @@ const HelpPanel: React.FC = () => {
             expandedSections.adding ? "expanded" : ""
           }`}
           onClick={() => toggleSection("adding")}
+          tabIndex={0}
+          role="button"
+          onKeyDown={(e) => {if (e.key === 'Enter' || e.key === ' ') toggleSection("adding");}}
         >
           <h3>Create an outline of a place</h3>
           <span className="toggle-icon">
@@ -129,6 +132,9 @@ const HelpPanel: React.FC = () => {
             expandedSections.dragging ? "expanded" : ""
           }`}
           onClick={() => toggleSection("dragging")}
+          tabIndex={0}
+          role="button"
+          onKeyDown={(e) => {if (e.key === 'Enter' || e.key === ' ') toggleSection("dragging");}}
         >
           <h3>Drag an outline</h3>
           <span className="toggle-icon">
@@ -171,6 +177,9 @@ const HelpPanel: React.FC = () => {
             expandedSections.mapControls ? "expanded" : ""
           }`}
           onClick={() => toggleSection("mapControls")}
+          tabIndex={0}
+          role="button"
+          onKeyDown={(e) => {if (e.key === 'Enter' || e.key === ' ') toggleSection("mapControls");}}
         >
           <h3>Move the map</h3>
           <span className="toggle-icon">
@@ -198,6 +207,9 @@ const HelpPanel: React.FC = () => {
             expandedSections.about ? "expanded" : ""
           }`}
           onClick={() => toggleSection("about")}
+          tabIndex={0}
+          role="button"
+          onKeyDown={(e) => {if (e.key === 'Enter' || e.key === ' ') toggleSection("about");}}
         >
           <h3>About the developer</h3>
           <span className="toggle-icon">
@@ -235,6 +247,9 @@ const HelpPanel: React.FC = () => {
             expandedSections.about ? "expanded" : ""
           }`}
           onClick={() => toggleSection("donate")}
+          tabIndex={0}
+          role="button"
+          onKeyDown={(e) => {if (e.key === 'Enter' || e.key === ' ') toggleSection("donate");}}
         >
           <h3>Support the site</h3>
           <span className="toggle-icon">
@@ -255,6 +270,7 @@ const HelpPanel: React.FC = () => {
           <a
             target="_blank"
             href="https://github.com/JovialOptimist/size-of-anything"
+            tabIndex={0}
           >
             Jac Chambers | GitHub
           </a>

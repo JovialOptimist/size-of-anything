@@ -33,18 +33,21 @@ const SettingsPanel: React.FC = () => {
             <button
               className={`radio-option ${theme === "light" ? "selected" : ""}`}
               onClick={() => setTheme("light")}
+              tabIndex={0}
             >
               Light
             </button>
             <button
               className={`radio-option ${theme === "dark" ? "selected" : ""}`}
               onClick={() => setTheme("dark")}
+              tabIndex={0}
             >
               Dark
             </button>
             <button
               className={`radio-option ${theme === "system" ? "selected" : ""}`}
               onClick={() => setTheme("system")}
+              tabIndex={0}
             >
               System
             </button>
@@ -63,7 +66,7 @@ const SettingsPanel: React.FC = () => {
             </span>
           </div>
           <label className="toggle-switch">
-            <input type="checkbox" />
+            <input type="checkbox" tabIndex={0} />
             <span className="toggle-slider"></span>
           </label>
         </div>
@@ -76,7 +79,7 @@ const SettingsPanel: React.FC = () => {
             </span>
           </div>
           <label className="toggle-switch">
-            <input type="checkbox" />
+            <input type="checkbox" tabIndex={0} />
             <span className="toggle-slider"></span>
           </label>
         </div>
@@ -93,8 +96,8 @@ const SettingsPanel: React.FC = () => {
             </span>
           </div>
           <div className="radio-options">
-            <button className="radio-option selected">Metric</button>
-            <button className="radio-option">Imperial</button>
+            <button className="radio-option selected" tabIndex={0}>Metric</button>
+            <button className="radio-option" tabIndex={0}>Imperial</button>
           </div>
         </div>
       </div>

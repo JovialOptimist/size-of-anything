@@ -31,7 +31,7 @@ const HistoryPanel: React.FC = () => {
               <Card key={`history-${index}`} feature={item} />
             ))}
           </div>
-          <button className="clear-history-button" onClick={clearHistory}>
+          <button className="clear-history-button" onClick={clearHistory} tabIndex={0}>
             Clear History
           </button>
         </>

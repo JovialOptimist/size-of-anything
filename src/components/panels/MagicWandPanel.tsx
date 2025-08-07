@@ -278,6 +278,7 @@ export default function MagicWandPanel() {
             }
             onClick={magicWandMode ? deactivateWand : activateWand}
             disabled={isLoading}
+            tabIndex={0}
           >
             {magicWandMode ? (isLoading ? "Loading..." : "Cancel") : "Activate"}
           </button>

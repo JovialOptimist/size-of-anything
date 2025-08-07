@@ -98,7 +98,7 @@ export default function TextSearchPanel() {
           className="text-search-input"
         />
 
-        <button onClick={handleSearch} className="text-search-button">
+        <button onClick={handleSearch} className="text-search-button" tabIndex={0}>
           <svg
             width="24"
             height="24"

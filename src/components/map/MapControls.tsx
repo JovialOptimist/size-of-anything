@@ -31,6 +31,7 @@ const MapControls: React.FC = () => {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleShareClick}
+      tabIndex={0}
     >
       <svg
         fill={foregroundColor}

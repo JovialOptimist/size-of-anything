@@ -143,6 +143,7 @@ const CustomAreaPanel: React.FC = () => {
               value={areaUnit}
               onChange={(e) => setAreaUnit(e.target.value)}
               className="unit-select"
+              tabIndex={0}
             >
               <option value="acres">acres</option>
               <option value="hectares">hectares</option>
@@ -153,7 +154,7 @@ const CustomAreaPanel: React.FC = () => {
           </div>
         </div>
 
-        <button className="generate-area-button" onClick={generateCustomArea}>
+        <button className="generate-area-button" onClick={generateCustomArea} tabIndex={0}>
           Generate
         </button>
       </div>

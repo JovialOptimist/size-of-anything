@@ -30,7 +30,9 @@ export function KeyboardHandler() {
             type === "number" ||
             type === "")) ||
         tag === "textarea" ||
-        element.contentEditable === "true"
+        element.contentEditable === "true" ||
+        tag === "button" ||
+        tag === "a"
       );
     };
 

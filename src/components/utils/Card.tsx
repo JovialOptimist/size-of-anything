@@ -72,7 +72,7 @@ const Card: React.FC<CardProps> = ({
   };
 
   return (
-    <div className="area-card" onClick={handleCardClick}>
+    <div className="area-card" onClick={handleCardClick} tabIndex={0} role="button" onKeyDown={(e) => {if (e.key === 'Enter' || e.key === ' ') handleCardClick();}}>
       <div className="area-card-content">
         {iconUrl && (
           <div className="area-card-icon">

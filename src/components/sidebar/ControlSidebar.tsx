@@ -37,7 +37,15 @@ export default function ControlSidebar() {
       </div>
 
       <div className="resize-container">
-        <div className="resize-handle" onClick={handleCollapse}>
+        <div
+          className="resize-handle"
+          onClick={handleCollapse}
+          tabIndex={0}
+          role="button"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") handleCollapse();
+          }}
+        >
           <span className="resize-icon">&#11104;</span>
         </div>
       </div>

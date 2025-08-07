@@ -35,6 +35,7 @@ export default function IconSidebar() {
       className={`icon-button group relative ${
         activePanel === item.key ? "active" : ""
       }`}
+      tabIndex={0}
     >
       {item.icon}
       <span>{item.label}</span>

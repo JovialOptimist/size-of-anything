@@ -51,6 +51,7 @@ export default function GeoCandidatePicker({
                     setHoveredCandidate(null);
                   }
                 }}
+                tabIndex={0}
               >
                 <img
                   src={iconUrl}
@@ -69,7 +70,7 @@ export default function GeoCandidatePicker({
         })}
       </ul>
       {onCancel && (
-        <button className="cancel-candidate-button" onClick={onCancel}>
+        <button className="cancel-candidate-button" onClick={onCancel} tabIndex={0}>
           Cancel
         </button>
       )}
