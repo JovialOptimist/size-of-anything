@@ -2,7 +2,6 @@ import React from "react";
 import SpecialShape from "../utils/SpecialShape";
 import blueWhaleSvg from "../../assets/bluewhale.svg";
 import boeingPlane from "../../assets/boeing-737.svg";
-import minecraftChunk from "../../assets/minecraft-chunk.svg"; // Assuming you have this SVG
 import { InformationBubble } from "../ui/informationBubble";
 
 /**
@@ -28,24 +27,6 @@ const SpecialPanel: React.FC = () => {
       widthInMeters: 34.3,
       heightInMeters: 39.37,
     },
-    {
-      id: "minecraft-chunk",
-      svgUrl: minecraftChunk,
-      name: "Minecraft Chunk",
-      description: "A 16x16 block area in Minecraft",
-      widthInMeters: 16,
-      heightInMeters: 16,
-    },
-    // Add more special shapes here as needed
-    // Example:
-    // {
-    //   id: "elephant",
-    //   svgUrl: elephantSvg,
-    //   name: "African Elephant",
-    //   description: "Largest land animal",
-    //   widthInMeters: 10.5,
-    //   heightInMeters: 6.2,
-    // },
   ];
 
   return (
