@@ -35,10 +35,22 @@
     padding: 6px 10px;
     cursor: pointer;
     font-size: 13px;
+    width: 200px;
+    margin: 0 auto;
+    position: "absolute";
+    left: "30px";
+    top: "0px";
+    white-space: nowrap;
 }
 
 .confirm-button:hover {
     background-color: #357ABD;
+}
+
+.color-input {
+    width: 0px;
+    height: 0px;
+    position: "absolute";
 }
 
 .active-element-panel h3 {

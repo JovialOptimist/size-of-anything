@@ -233,16 +233,20 @@ function ColorPickerButton({ onConfirm, onChange }: ColorPickerButtonProps) {
       </button>
       {isOpen && (
         <button onClick={handleConfirm} className="confirm-button">
-          Confirm
+          Confirm Color
         </button>
       )}
 
       {/* Hidden native input */}
       <input
         type="color"
+        className="color-input"
         ref={colorInputRef}
         onChange={handleColorChange}
-        style={{ display: "none" }}
+        style={{
+          backgroundColor: "transparent",
+          borderColor: "transparent",
+        }}
       />
     </div>
   );
