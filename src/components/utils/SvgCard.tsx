@@ -155,7 +155,8 @@ function svgPathToGeoJSONFeature(
       properties: {
         name: featureDisplayName,
         whatIsIt,
-        osmType: "custom",
+        osmType:
+          "custom-" + featureDisplayName.toLowerCase().replace(/\s+/g, "-"),
         osmId: `svg-${Math.random().toString(36).slice(2)}`,
         osmClass: "svg-shape",
       },

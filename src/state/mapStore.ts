@@ -326,23 +326,23 @@ addToHistory: (feature) => {
     // Check if this feature is already in history
     const isAlreadyInHistory = state.historyItems.some(item => {
 
-        
-      // Check by osmId if available
-      if (item.properties.osmId && featureCopy.properties.osmId) {
-        return item.properties.osmId === featureCopy.properties.osmId;
-      }
-      
-      // For custom shapes without osmId, check by name and any custom identifier
-      if (featureCopy.properties.customId) {
-        return item.properties.customId === featureCopy.properties.customId;
-      }
+        if (featureCopy.properties.osmType === item.properties.osmType && featureCopy.properties.osmType.includes("custom-")) {
+            return true;
+        }
 
-      
-      
-      // As a fallback, check by name
-      return item.properties.name === featureCopy.properties.name;
+        if (featureCopy.properties.customId) {
+            return item.properties.customId === featureCopy.properties.customId;
+        }
+        // Check by osmId if available
+        if (item.properties.osmId && featureCopy.properties.osmId) {
+            return item.properties.osmId === featureCopy.properties.osmId;
+        }
+        // For custom shapes without osmId, check by name and any custom identifier
+        
+        // As a fallback, check by name
+        return item.properties.name === featureCopy.properties.name;
     });
-    
+        
     if (isAlreadyInHistory) return state;
     
     // Add to history, limiting to last 20 items (increase from 10)
