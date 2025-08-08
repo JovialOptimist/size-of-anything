@@ -105,7 +105,7 @@ const CustomAreaPanel: React.FC = () => {
       properties: {
         name,
         whatIsIt: `Custom ${areaUnit} square`,
-        osmType: "custom",
+        osmType: "custom-" + sideLength + "-square",
         osmId: null,
         customId: `custom-square-${Math.random().toString(36).slice(2)}`,
         osmClass: "custom-shape",
@@ -154,7 +154,11 @@ const CustomAreaPanel: React.FC = () => {
           </div>
         </div>
 
-        <button className="generate-area-button" onClick={generateCustomArea} tabIndex={0}>
+        <button
+          className="generate-area-button"
+          onClick={generateCustomArea}
+          tabIndex={0}
+        >
           Generate
         </button>
       </div>

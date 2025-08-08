@@ -326,12 +326,13 @@ addToHistory: (feature) => {
     // Check if this feature is already in history
     const isAlreadyInHistory = state.historyItems.some(item => {
 
-        if (featureCopy.properties.osmType === item.properties.osmType && featureCopy.properties.osmType.includes("custom-")) {
+        if (
+            (featureCopy.properties.osmType === item.properties.osmType) 
+            && (featureCopy.properties.osmType.includes("special-") || featureCopy.properties.osmType.includes("custom-"))) {
+                console.log("Skipping history check for special/custom type:", featureCopy.properties.osmType);
+                console.log("Feature properties:", featureCopy.properties);
+                console.log("Item properties:", item.properties);
             return true;
-        }
-
-        if (featureCopy.properties.customId) {
-            return item.properties.customId === featureCopy.properties.customId;
         }
         // Check by osmId if available
         if (item.properties.osmId && featureCopy.properties.osmId) {
