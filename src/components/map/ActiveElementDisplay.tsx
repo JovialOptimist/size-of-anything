@@ -5,6 +5,7 @@ import "../../styles/ActiveElementDisplay.css";
 import "../../styles/RotationControl.css";
 import "../../styles/CloseButton.css";
 import { calculateAreaInKm2 } from "../utils/geometryUtils";
+import { applyRotation } from "../utils/transformUtils";
 import { getExistingColors } from "../utils/colorUtils";
 import { getContinent } from "../utils/countryHelper"; // Assuming this function exists
 import { countCoordinates } from "../utils/geometryUtils";
@@ -116,7 +117,8 @@ const ActiveElementDisplay: React.FC = () => {
   const handleRotationReset = () => {
     setRotationAngle(0);
     if (activeAreaId) {
-      updateElementRotation(activeAreaId, 0);
+      // Reset rotation to 0, which will clear rotatedCoordinates and use current position
+      updateElementRotation(activeAreaId, 0, null);
     }
   };
 
@@ -136,7 +138,33 @@ const ActiveElementDisplay: React.FC = () => {
                 // Only update if the angle has actually changed by a significant amount
                 if (Math.abs(angle - rotationAngle) >= 1) {
                   setRotationAngle(angle);
-                  updateElementRotation(activeAreaId, angle);
+
+                  // Get the active element to apply rotation to its current position
+                  const element = getActiveElement();
+                  if (element && activeAreaId) {
+                    // Apply rotation to the current position and store the result
+                    // This ensures rotation is only applied when explicitly changed
+                    try {
+                      // Only rotate if we have an element and a valid angle
+                      if (angle !== 0) {
+                        const rotated = applyRotation(element, angle);
+                        // Store both the rotation angle and the pre-calculated rotated coordinates
+                        updateElementRotation(
+                          activeAreaId,
+                          angle,
+                          rotated.geometry.coordinates
+                        );
+                      } else {
+                        // For zero rotation, just clear any rotation
+                        updateElementRotation(activeAreaId, 0);
+                      }
+                    } catch (error) {
+                      console.error("Error applying rotation:", error);
+                      updateElementRotation(activeAreaId, angle);
+                    }
+                  } else {
+                    updateElementRotation(activeAreaId, angle);
+                  }
                 }
               }}
               size={36}

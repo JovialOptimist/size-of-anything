@@ -16,6 +16,7 @@ export interface GeoJSONFeature {
     coordinates: any;
     originalCoordinates?: any; // Store the original coordinates before any transformations
     currentCoordinates?: any; // Store the current coordinates after dragging
+    rotatedCoordinates?: any; // Store pre-calculated rotated coordinates
     readonly coordinateCount: number;
   };
   properties: {
@@ -60,7 +61,7 @@ export interface MapState {
   setOnMapClick: (handler: ((latlng: L.LatLng) => void) | null) => void;
   getActiveElement: () => GeoJSONFeature | null;
   updateElementColor: (id: string, color: string) => void;
-  updateElementRotation: (id: string, rotation: number) => void;
+  updateElementRotation: (id: string, rotation: number, rotatedCoordinates?: any | null) => void;
   updateCurrentCoordinates: (id: string, coordinates: any) => void;
   setHoveredCandidate: (candidate: GeoJSONFeature | null) => void;
   addToHistory: (feature: GeoJSONFeature) => void;

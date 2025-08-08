@@ -148,34 +148,13 @@ export default function MapView() {
           featureToRender.geometry.currentCoordinates;
       }
 
-      // Get base coordinates (either current or original)
-      const baseCoordinates = featureToRender.geometry.currentCoordinates || 
-                            featureToRender.geometry.coordinates;
-      
-      // Store original coordinates if not already set
-      if (!featureToRender.geometry.originalCoordinates) {
-        featureToRender.geometry.originalCoordinates = feature.geometry.coordinates;
-      }
-      
-      // Apply rotation if defined in properties
-      if (featureToRender.properties.rotation) {
-        try {
-          // Apply rotation to the current coordinates
-          const rotated = applyRotation(
-            featureToRender, 
-            featureToRender.properties.rotation,
-            baseCoordinates
-          );
-          
-          // Update geometry while preserving needed properties
-          featureToRender.geometry = {
-            ...rotated.geometry,
-            coordinateCount: (featureToRender.geometry as any).coordinateCount,
-            originalCoordinates: featureToRender.geometry.originalCoordinates,
-          };
-        } catch (error) {
-          console.error("Error applying rotation to feature:", error);
-        }
+      // We'll only apply rotation when it's newly set through the rotation wheel,
+      // not automatically during rendering after movement.
+      // The rotation is now managed separately in the RotationWheel component
+      // and stored in a "rotatedCoordinates" property in the feature's geometry.
+      // If we have pre-calculated rotated coordinates, use those instead of recalculating
+      if (featureToRender.geometry.rotatedCoordinates && featureToRender.properties.rotation !== 0) {
+        featureToRender.geometry.coordinates = featureToRender.geometry.rotatedCoordinates;
       }
 
       const layer = L.geoJSON(featureToRender, {
