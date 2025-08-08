@@ -305,8 +305,16 @@ export function enablePolygonDragging(geoJsonLayer: L.GeoJSON, map: L.Map | null
             // Deep clone the feature to avoid modifying the original
             const featureToTransform = JSON.parse(JSON.stringify(feature));
             
-            // Target coordinates for the drag operation
-            const targetCoordinates: [number, number] = [e.latlng.lng, e.latlng.lat];
+            // Calculate the displacement from the drag start position
+            const latDiff = e.latlng.lat - dragStartLatLng.lat;
+            const lngDiff = e.latlng.lng - dragStartLatLng.lng;
+            
+            // Calculate target coordinates based on the original feature's centroid plus the displacement
+            const originalCentroid = turf.centroid(featureToTransform);
+            const targetCoordinates: [number, number] = [
+              originalCentroid.geometry.coordinates[0] + lngDiff,
+              originalCentroid.geometry.coordinates[1] + latDiff
+            ];
             
             // Use our projection-based transformation for accurate shape preservation
             const transformedFeature = projectAndTranslateGeometry(featureToTransform, targetCoordinates);

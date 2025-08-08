@@ -1,4 +1,5 @@
 import L from "leaflet";
+import * as turf from "@turf/turf";
 import { 
   transformPolygonCoordinates, 
   convertLatLngsToCoords,
@@ -106,9 +107,17 @@ export function attachMarkerDragHandlers(
         // Deep clone the feature to avoid modifying the original
         const featureToTransform = JSON.parse(JSON.stringify(feature));
         
-        // Target coordinates from the marker's current position
+        // Calculate the displacement from the drag start position
         const current = marker.getLatLng();
-        const targetCoordinates: [number, number] = [current.lng, current.lat];
+        const latDiff = current.lat - dragStartLatLng.lat;
+        const lngDiff = current.lng - dragStartLatLng.lng;
+        
+        // Calculate target coordinates based on the original feature's centroid plus the displacement
+        const originalCentroid = turf.centroid(featureToTransform);
+        const targetCoordinates: [number, number] = [
+          originalCentroid.geometry.coordinates[0] + lngDiff,
+          originalCentroid.geometry.coordinates[1] + latDiff
+        ];
         
         // Use our projection-based transformation for accurate shape preservation
         const transformedFeature = projectAndTranslateGeometry(featureToTransform, targetCoordinates);

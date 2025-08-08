@@ -160,6 +160,7 @@ export default function MapView() {
             ...rotated.geometry,
             coordinateCount: (featureToRender.geometry as any).coordinateCount,
           };
+          feature.properties.rotation = 0; // Clear rotation after applying
         } catch (error) {
           console.error("Error applying rotation to feature:", error);
         }
