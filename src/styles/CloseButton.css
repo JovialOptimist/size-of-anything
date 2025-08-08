@@ -1,0 +1,14 @@
+.close-button {
+    background: none;
+    border: none;
+    color: var(--control-sidebar-text-color);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0 6px;
+    margin-left: 5px;
+    transition: color 0.2s ease;
+}
+
+.close-button:hover {
+    color: #e74c3c;
+}

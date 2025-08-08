@@ -8,8 +8,8 @@ import {
   enablePolygonDragging,
   shouldShowMarkerForPolygon,
   findCenterForMarker,
-  rotateFeature,
 } from "../utils/geometryUtils";
+import { applyRotation } from "../utils/transformUtils";
 import { createMarker, attachMarkerDragHandlers } from "../utils/markerUtils";
 import type { GeoJSONFeature, MapState } from "../../state/mapStoreTypes";
 
@@ -148,19 +148,31 @@ export default function MapView() {
           featureToRender.geometry.currentCoordinates;
       }
 
+      // Get base coordinates (either current or original)
+      const baseCoordinates = featureToRender.geometry.currentCoordinates || 
+                            featureToRender.geometry.coordinates;
+      
+      // Store original coordinates if not already set
+      if (!featureToRender.geometry.originalCoordinates) {
+        featureToRender.geometry.originalCoordinates = feature.geometry.coordinates;
+      }
+      
       // Apply rotation if defined in properties
       if (featureToRender.properties.rotation) {
         try {
-          const rotated = rotateFeature(
-            featureToRender,
-            featureToRender.properties.rotation
+          // Apply rotation to the current coordinates
+          const rotated = applyRotation(
+            featureToRender, 
+            featureToRender.properties.rotation,
+            baseCoordinates
           );
-          // Ensure the geometry has coordinateCount property
+          
+          // Update geometry while preserving needed properties
           featureToRender.geometry = {
             ...rotated.geometry,
             coordinateCount: (featureToRender.geometry as any).coordinateCount,
+            originalCoordinates: featureToRender.geometry.originalCoordinates,
           };
-          feature.properties.rotation = 0; // Clear rotation after applying
         } catch (error) {
           console.error("Error applying rotation to feature:", error);
         }

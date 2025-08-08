@@ -3,10 +3,12 @@ import { usePanel } from "../../state/panelStore";
 import { useMapStore } from "../../state/mapStore";
 import "../../styles/ActiveElementDisplay.css";
 import "../../styles/RotationControl.css";
+import "../../styles/CloseButton.css";
 import { calculateAreaInKm2 } from "../utils/geometryUtils";
 import { getExistingColors } from "../utils/colorUtils";
 import { getContinent } from "../utils/countryHelper"; // Assuming this function exists
 import { countCoordinates } from "../utils/geometryUtils";
+import RotationWheel from "../ui/RotationWheel";
 
 const ActiveElementDisplay: React.FC = () => {
   const { activePanel } = usePanel();
@@ -21,7 +23,6 @@ const ActiveElementDisplay: React.FC = () => {
 
   const activeElement = getActiveElement();
   const currentColor = activeElement?.properties?.color || "#1f77b4";
-  
   // Update rotation angle when active element changes
   useEffect(() => {
     if (activeElement) {
@@ -30,15 +31,18 @@ const ActiveElementDisplay: React.FC = () => {
   }, [activeElement]);
   const [selectedColor, setSelectedColor] = useState(currentColor);
   const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
-  const [isRotationControlOpen, setIsRotationControlOpen] = useState(false);
-  const [rotationAngle, setRotationAngle] = useState(activeElement?.properties?.rotation || 0);
+  // Rotation now handled directly by the wheel
+  const [rotationAngle, setRotationAngle] = useState(
+    activeElement?.properties?.rotation || 0
+  );
   const duplicateArea = useMapStore((state: any) => state.duplicateArea);
-  const updateElementRotation = useMapStore((state: any) => state.updateElementRotation);
+  const updateElementRotation = useMapStore(
+    (state: any) => state.updateElementRotation
+  );
 
   const colorPickerRef = useRef<HTMLDivElement>(null);
 
-  // Create a ref for rotation control
-  const rotationControlRef = useRef<HTMLDivElement>(null);
+  // Rotation now handled directly by the wheel component
 
   // Close popups if clicking outside of them
   useEffect(() => {
@@ -49,23 +53,18 @@ const ActiveElementDisplay: React.FC = () => {
       ) {
         setIsColorPickerOpen(false);
       }
-      
-      if (
-        rotationControlRef.current &&
-        !rotationControlRef.current.contains(e.target as Node)
-      ) {
-        setIsRotationControlOpen(false);
-      }
+
+      // Rotation popup has been removed
     }
-    
-    if (isColorPickerOpen || isRotationControlOpen) {
+
+    if (isColorPickerOpen) {
       document.addEventListener("mousedown", handleClickOutside);
     } else {
       document.removeEventListener("mousedown", handleClickOutside);
     }
-    
+
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isColorPickerOpen, isRotationControlOpen]);
+  }, [isColorPickerOpen]);
 
   const displayClass = activePanel
     ? "active-element-display sidebar-expanded"
@@ -113,14 +112,6 @@ const ActiveElementDisplay: React.FC = () => {
       removeArea(activeAreaId);
     }
   };
-  
-  const handleRotationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value);
-    setRotationAngle(value);
-    if (activeAreaId) {
-      updateElementRotation(activeAreaId, value);
-    }
-  };
 
   const handleRotationReset = () => {
     setRotationAngle(0);
@@ -129,14 +120,62 @@ const ActiveElementDisplay: React.FC = () => {
     }
   };
 
+  // Rotation is now handled by the RotationWheel component
+
   return (
     <div className={`${displayClass} active-element-panel`}>
       <div className="element-info">
         <div className="element-header">
-          <h3>{elementName.split(",")[0]}</h3>
-          <button className="close-button" onClick={() => setActiveArea(null)}>
-            &times;
-          </button>
+          <div className="element-title">
+            <h3>{elementName.split(",")[0]}</h3>
+          </div>
+          <div className="element-controls">
+            <RotationWheel
+              rotationAngle={rotationAngle}
+              onChange={(angle) => {
+                // Only update if the angle has actually changed by a significant amount
+                if (Math.abs(angle - rotationAngle) >= 1) {
+                  setRotationAngle(angle);
+                  updateElementRotation(activeAreaId, angle);
+                }
+              }}
+              size={36}
+            />
+            <div className="rotation-angle-display">
+              {/* <button
+                className="rotation-btn"
+                onMouseDown={() => startHold(-1)}
+                onMouseUp={stopHold}
+                onMouseLeave={stopHold}
+              >
+                –
+              </button> */}
+
+              <span className="rotation-value">{rotationAngle}°</span>
+
+              {/* <button
+                className="rotation-btn"
+                onMouseDown={() => startHold(1)}
+                onMouseUp={stopHold}
+                onMouseLeave={stopHold}
+              >
+                +
+              </button> */}
+              <button
+                className="reset-rotation-icon"
+                title="Reset rotation"
+                onClick={handleRotationReset}
+              >
+                ↺
+              </button>
+            </div>
+            <button
+              className="close-button"
+              onClick={() => setActiveArea(null)}
+            >
+              &times;
+            </button>
+          </div>
         </div>
 
         {isColorPickerOpen && (
@@ -206,37 +245,14 @@ const ActiveElementDisplay: React.FC = () => {
           <button onClick={() => setIsColorPickerOpen((prev) => !prev)}>
             Color
           </button>
-          <button onClick={() => setIsRotationControlOpen((prev) => !prev)}>
-            Rotate
-          </button>
         </div>
         <div className="button-group remove-button">
-          <button onClick={handleRemove} className="remove-btn">Remove</button>
+          <button onClick={handleRemove} className="remove-btn">
+            Remove
+          </button>
         </div>
-        
-        {isRotationControlOpen && (
-          <div className="rotation-control-popup" ref={rotationControlRef}>
-            <div className="rotation-control">
-              <div className="rotation-slider-container">
-                <input
-                  type="range"
-                  min="0"
-                  max="359"
-                  value={rotationAngle}
-                  onChange={handleRotationChange}
-                  className="rotation-slider"
-                />
-                <div className="rotation-value">{rotationAngle}°</div>
-              </div>
-              <button 
-                onClick={handleRotationReset}
-                className="reset-rotation-btn"
-              >
-                Reset Rotation
-              </button>
-            </div>
-          </div>
-        )}
+
+        {/* Rotation control now implemented as wheel in the header */}
       </div>
     </div>
   );

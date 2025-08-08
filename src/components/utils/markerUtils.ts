@@ -75,7 +75,7 @@ export function attachMarkerDragHandlers(
     }
   });
 
-  marker.on("dragstart", (e) => {
+  marker.on("dragstart", async (e) => {
     hasMoved = false;
     dragStartLatLng = e.target.getLatLng().clone(); // Clone to ensure we have a separate instance
     map.dragging.disable();

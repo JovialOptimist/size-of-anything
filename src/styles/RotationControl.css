@@ -53,11 +53,13 @@
 }
 
 .rotation-value {
-    min-width: 45px;
+    display: inline-block;
+    width: 45px;
     text-align: center;
     font-size: 14px;
     font-weight: bold;
     color: var(--control-sidebar-text-color);
+    font-variant-numeric: tabular-nums;
 }
 
 .reset-rotation-btn {
@@ -69,4 +71,54 @@
     cursor: pointer;
     font-size: 13px;
     width: 100%;
+}
+
+/* New Rotation Wheel Styles */
+.rotation-wheel-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 8px;
+}
+
+.rotation-wheel {
+    cursor: grab;
+    transition: transform 0.1s ease;
+}
+
+.rotation-wheel:active {
+    cursor: grabbing;
+}
+
+.rotation-wheel-inner {
+    transition: fill 0.1s ease;
+}
+
+.rotation-wheel-inner:hover {
+    fill: #5a9eff;
+}
+
+.rotation-angle-display {
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--control-sidebar-text-color);
+    margin-left: 5px;
+    display: flex;
+    align-items: center;
+    margin-right: 8px;
+}
+
+.reset-rotation-icon {
+    background: none;
+    border: none;
+    font-size: 14px;
+    color: #4287f5;
+    cursor: pointer;
+    padding: 0 5px;
+    margin-left: 4px;
+    transition: transform 0.2s ease;
+}
+
+.reset-rotation-icon:hover {
+    transform: rotate(-30deg);
 }

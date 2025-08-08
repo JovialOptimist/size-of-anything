@@ -265,11 +265,16 @@ updateCurrentCoordinates: (id, coordinates) => {
     if (featureIndex < 0) return state;
     
     const updatedAreas = [...state.geojsonAreas];
+    // Preserve originalCoordinates if they exist
+    const originalCoordinates = updatedAreas[featureIndex].geometry.originalCoordinates;
+    
     updatedAreas[featureIndex] = {
       ...updatedAreas[featureIndex],
       geometry: {
         ...updatedAreas[featureIndex].geometry,
-        currentCoordinates: coordinates
+        currentCoordinates: coordinates,
+        // Always preserve the original coordinates
+        originalCoordinates: originalCoordinates || updatedAreas[featureIndex].geometry.coordinates
       }
     };
     

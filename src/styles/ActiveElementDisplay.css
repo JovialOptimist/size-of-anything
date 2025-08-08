@@ -8,7 +8,7 @@
   box-shadow: var(--active-element-display-shadow);
   padding: 15px;
   width: 100px;
-  max-width: 300px;
+  max-width: 350px; /* Increased to accommodate the rotation wheel */
 }
 
 .active-element-empty {
@@ -68,16 +68,20 @@
     align-items: center;
 }
 
-.element-header:nth-child(1) {
-    flex: 2;
+.element-title {
+    flex: 1;
     text-align: left;
+    margin-right: auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.element-header:nth-child(2) {
-    flex: 1;
-    text-align: right;
-    align-self: right;
-    align-content: right;
+.element-controls {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    white-space: nowrap;
 }
 
 .button-group {

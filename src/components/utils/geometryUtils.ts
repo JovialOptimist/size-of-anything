@@ -491,8 +491,14 @@ export function rotateFeature(
   feature: Feature<Polygon | MultiPolygon>,
   angleDegrees: number
 ): Feature<Polygon | MultiPolygon> {
+  // Use original coordinates if available to prevent distortion from multiple rotations
+  let featureToRotate = JSON.parse(JSON.stringify(feature));
+  if ((featureToRotate.geometry as any).originalCoordinates) {
+    featureToRotate.geometry.coordinates = (featureToRotate.geometry as any).originalCoordinates;
+  }
+  
   // Compute centroid
-  const centroid = turf.centroid(feature);
+  const centroid = turf.centroid(featureToRotate);
   const [centerLng, centerLat] = centroid.geometry.coordinates;
 
   // Convert angle to radians

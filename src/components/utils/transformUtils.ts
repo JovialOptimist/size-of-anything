@@ -1,0 +1,72 @@
+import * as turf from "@turf/turf";
+import type { Feature, Polygon, MultiPolygon } from "geojson";
+import proj4 from "proj4";
+
+/**
+ * Utility functions for handling geometric transformations 
+ * that keeps rotation and translation as separate operations
+ */
+
+/**
+ * Apply rotation to a feature's coordinates without modifying the original feature
+ * 
+ * @param feature - The GeoJSON feature to rotate
+ * @param angleDegrees - Rotation angle in degrees
+ * @param baseCoordinates - Base coordinates to use (optional, defaults to feature.geometry.coordinates)
+ * @returns A new feature with rotated coordinates
+ */
+export function applyRotation(
+  feature: Feature<Polygon | MultiPolygon>,
+  angleDegrees: number,
+  baseCoordinates?: any
+): Feature<Polygon | MultiPolygon> {
+  // Skip if no rotation
+  if (!angleDegrees || angleDegrees === 0) return JSON.parse(JSON.stringify(feature));
+
+  // Create a copy of the feature to avoid modifying the original
+  let featureToRotate = JSON.parse(JSON.stringify(feature));
+  
+  // If baseCoordinates are provided, use them as the starting point
+  if (baseCoordinates) {
+    featureToRotate.geometry.coordinates = baseCoordinates;
+  }
+  
+  // Compute centroid
+  const centroid = turf.centroid(featureToRotate);
+  const [centerLng, centerLat] = centroid.geometry.coordinates;
+
+  // Convert angle to radians
+  const angleRad = (angleDegrees * Math.PI) / 180;
+
+  // Define a local projection centered at the centroid
+  const projName = `+proj=tmerc +lat_0=${centerLat} +lon_0=${centerLng} +units=m +datum=WGS84`;
+  proj4.defs("LOCAL", projName);
+
+  // Helper: rotate a 2D point (in meters) around origin
+  function rotateXY([x, y]: [number, number]): [number, number] {
+    const cosA = Math.cos(angleRad);
+    const sinA = Math.sin(angleRad);
+    return [
+      x * cosA - y * sinA,
+      x * sinA + y * cosA,
+    ];
+  }
+
+  // Project → Rotate → Unproject
+  function rotateCoordinates(coords: any[]): any[] {
+    if (typeof coords[0] === "number") {
+      // Project to local XY
+      const [x, y] = proj4("WGS84", "LOCAL", coords);
+      const [xRot, yRot] = rotateXY([x, y]);
+      // Unproject back to lat/lng
+      return proj4("LOCAL", "WGS84", [xRot, yRot]);
+    }
+    return coords.map(rotateCoordinates);
+  }
+
+  // Apply the rotation to the coordinates
+  const rotatedFeature: Feature<Polygon | MultiPolygon> = JSON.parse(JSON.stringify(feature));
+  rotatedFeature.geometry.coordinates = rotateCoordinates(featureToRotate.geometry.coordinates);
+
+  return rotatedFeature;
+}

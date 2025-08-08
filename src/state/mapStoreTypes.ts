@@ -14,6 +14,7 @@ export interface GeoJSONFeature {
   geometry: {
     type: "Polygon" | "MultiPolygon";
     coordinates: any;
+    originalCoordinates?: any; // Store the original coordinates before any transformations
     currentCoordinates?: any; // Store the current coordinates after dragging
     readonly coordinateCount: number;
   };
