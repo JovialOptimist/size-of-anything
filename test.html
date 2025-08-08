@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Projected Polygon Drag</title>
+        <link
+            rel="stylesheet"
+            href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+        <style>
+    body, html, #map { height: 100%; margin: 0; }
+    .drag-marker { width: 0; height: 0; opacity: 0; }
+  </style>
+    </head>
+    <body>
+        <div id="map"></div>
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <script
+            src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+        <script
+            src="https://cdn.jsdelivr.net/npm/proj4@2.11.0/dist/proj4.min.js"></script>
+        <script>
+        const map = L.map('map').setView([47.6, -122.3], 10);
+        console.log('Map initialized');
+
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+        }).addTo(map);
+        console.log('Tile layer added');
+
+        const square = turf.polygon([[
+          [-122.5, 47.7],
+          [-122.5, 47.5],
+          [-122.1, 47.5],
+          [-122.1, 47.7],
+          [-122.5, 47.7],
+        ]]);
+        console.log('Square polygon created:', square);
+
+        let shapeLayer = L.geoJSON(square).addTo(map);
+        console.log('Shape layer added to map');
+
+        const dragMarker = L.marker([47.6, -122.3], { draggable: true }).addTo(map);
+        console.log('Draggable marker added at [47.6, -122.3]');
+
+        function translateProjected(feature, to) {
+            const from = turf.centroid(feature).geometry.coordinates;
+            console.log('Centroid of feature:', from);
+
+            if (!Array.isArray(from) || !isFinite(from[0]) || !isFinite(from[1])) {
+                console.error("Invalid centroid coordinates:", from);
+                return feature;
+            }
+
+            if (!Array.isArray(to) || !isFinite(to[0]) || !isFinite(to[1])) {
+                console.error("Invalid 'to' coordinates:", to);
+                return feature;
+            }
+
+            const proj = proj4(
+                '+proj=longlat +datum=WGS84 +no_defs',
+                `+proj=laea +lat_0=${from[1]} +lon_0=${from[0]} +x_0=0 +y_0=0 +ellps=GRS80 +units=m +no_defs`
+            );
+
+            console.log('Projection created: ', proj);
+
+            const fromXY = proj.forward(from);
+            const toXY = proj.forward(to);
+
+            if (!Array.isArray(fromXY) || !isFinite(fromXY[0]) || !isFinite(fromXY[1])) {
+                console.error("Invalid projected 'fromXY':", fromXY);
+                return feature;
+            }
+            if (!Array.isArray(toXY) || !isFinite(toXY[0]) || !isFinite(toXY[1])) {
+                console.error("Invalid projected 'toXY':", toXY);
+                return feature;
+            }
+
+            const dx = toXY[0] - fromXY[0];
+            const dy = toXY[1] - fromXY[1];
+            console.log('dx:', dx, 'dy:', dy);
+
+            function translateRing(ring) {
+                return ring.map(([lng, lat], idx) => {
+                const forward = proj.forward([lng, lat]);
+                if (!Array.isArray(forward) || !isFinite(forward[0]) || !isFinite(forward[1])) {
+                    console.error(`Invalid forward projection at index ${idx}:`, [lng, lat], '->', forward);
+                    return [lng, lat]; // Fallback to original point
+                }
+
+                const moved = [forward[0] + dx, forward[1] + dy];
+                const inverse = proj.inverse(moved);
+
+                if (!Array.isArray(inverse) || !isFinite(inverse[0]) || !isFinite(inverse[1])) {
+                    console.error(`Invalid inverse projection at index ${idx}:`, moved, '->', inverse);
+                    return [lng, lat]; // Fallback to original point
+                }
+
+                return inverse;
+                });
+            }
+
+            const coords = feature.geometry.coordinates;
+            if (!Array.isArray(coords)) {
+                console.error("Feature has no valid coordinates:", coords);
+                return feature;
+            }
+
+            const translatedCoords = coords.map(translateRing);
+            console.log('Translated coordinates:', translatedCoords);
+
+            return turf.polygon(translatedCoords);
+        }
+
+
+
+        dragMarker.on('drag', () => {
+          const { lat, lng } = dragMarker.getLatLng();
+          console.log('Marker dragged to:', { lat, lng });
+
+          const moved = translateProjected(square, [lng, lat]);
+          console.log('Moved polygon:', moved);
+
+          // Remove the old shape and add the new one
+          map.removeLayer(shapeLayer);
+          shapeLayer = L.geoJSON(moved).addTo(map);
+          console.log('Updated shape layer');
+        });
+      </script>
+    </body>
+</html>
