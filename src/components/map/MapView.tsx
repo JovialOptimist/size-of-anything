@@ -8,6 +8,7 @@ import {
   enablePolygonDragging,
   shouldShowMarkerForPolygon,
   findCenterForMarker,
+  rotateFeature,
 } from "../utils/geometryUtils";
 import { createMarker, attachMarkerDragHandlers } from "../utils/markerUtils";
 import type { GeoJSONFeature, MapState } from "../../state/mapStoreTypes";
@@ -145,6 +146,23 @@ export default function MapView() {
       if (featureToRender.geometry.currentCoordinates) {
         featureToRender.geometry.coordinates =
           featureToRender.geometry.currentCoordinates;
+      }
+
+      // Apply rotation if defined in properties
+      if (featureToRender.properties.rotation) {
+        try {
+          const rotated = rotateFeature(
+            featureToRender,
+            featureToRender.properties.rotation
+          );
+          // Ensure the geometry has coordinateCount property
+          featureToRender.geometry = {
+            ...rotated.geometry,
+            coordinateCount: (featureToRender.geometry as any).coordinateCount,
+          };
+        } catch (error) {
+          console.error("Error applying rotation to feature:", error);
+        }
       }
 
       const layer = L.geoJSON(featureToRender, {

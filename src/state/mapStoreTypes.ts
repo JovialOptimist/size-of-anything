@@ -23,6 +23,7 @@ export interface GeoJSONFeature {
     osmId: string | null;
     osmClass: string;
     color?: string; // Add color property
+    rotation?: number; // Rotation angle in degrees
     [key: string]: any;
     whatIsIt: string;
   };
@@ -58,6 +59,7 @@ export interface MapState {
   setOnMapClick: (handler: ((latlng: L.LatLng) => void) | null) => void;
   getActiveElement: () => GeoJSONFeature | null;
   updateElementColor: (id: string, color: string) => void;
+  updateElementRotation: (id: string, rotation: number) => void;
   updateCurrentCoordinates: (id: string, coordinates: any) => void;
   setHoveredCandidate: (candidate: GeoJSONFeature | null) => void;
   addToHistory: (feature: GeoJSONFeature) => void;

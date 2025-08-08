@@ -1,5 +1,6 @@
 import L, { LatLng } from "leaflet";
 import * as turf from "@turf/turf";
+import type { Feature, Polygon, MultiPolygon } from "geojson";
 
 /**
  * Geometry Utilities for Size of Anything
@@ -468,6 +469,61 @@ export const convertCoordsToLatLngs = (coords: any): any => {
  * @param targetCoordinates - [lng, lat] location for new centroid
  * @returns Transformed GeoJSON feature
  */
+/**
+ * Rotate a GeoJSON feature by the specified angle (in degrees) around its centroid
+ * 
+ * @param feature - The GeoJSON feature to rotate
+ * @param angle - Rotation angle in degrees (positive = clockwise)
+ * @returns Rotated GeoJSON feature
+ */
+import proj4 from "proj4";
+
+
+export function rotateFeature(
+  feature: Feature<Polygon | MultiPolygon>,
+  angleDegrees: number
+): Feature<Polygon | MultiPolygon> {
+  // Compute centroid
+  const centroid = turf.centroid(feature);
+  const [centerLng, centerLat] = centroid.geometry.coordinates;
+
+  // Convert angle to radians
+  const angleRad = (angleDegrees * Math.PI) / 180;
+
+  // Define a local projection centered at the centroid
+  const projName = `+proj=tmerc +lat_0=${centerLat} +lon_0=${centerLng} +units=m +datum=WGS84`;
+  proj4.defs("LOCAL", projName);
+
+  // Helper: rotate a 2D point (in meters) around origin
+  function rotateXY([x, y]: [number, number]): [number, number] {
+    const cosA = Math.cos(angleRad);
+    const sinA = Math.sin(angleRad);
+    return [
+      x * cosA - y * sinA,
+      x * sinA + y * cosA,
+    ];
+  }
+
+  // Project → Rotate → Unproject
+  function rotateCoordinates(coords: any[]): any[] {
+    if (typeof coords[0] === "number") {
+      // Project to local XY
+      const [x, y] = proj4("WGS84", "LOCAL", coords);
+      const [xRot, yRot] = rotateXY([x, y]);
+      // Unproject back to lat/lng
+      return proj4("LOCAL", "WGS84", [xRot, yRot]);
+    }
+    return coords.map(rotateCoordinates);
+  }
+
+  // Deep clone the feature to avoid mutation
+  const rotatedFeature: Feature<Polygon | MultiPolygon> = JSON.parse(JSON.stringify(feature));
+  rotatedFeature.geometry.coordinates = rotateCoordinates(feature.geometry.coordinates);
+
+  return rotatedFeature;
+}
+
+
 export function projectAndTranslateGeometry(
   feature: GeoJSON.Feature<GeoJSON.Polygon | GeoJSON.MultiPolygon>,
   targetCoordinates: [number, number]

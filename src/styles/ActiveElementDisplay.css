@@ -86,7 +86,16 @@
     justify-content: space-between;
     margin-top: 10px;
     padding-bottom: 3px;
-        margin-bottom: 5px;
+    margin-bottom: 5px;
+}
+
+.button-group.remove-button {
+    margin-top: 5px;
+}
+
+.remove-btn {
+    width: 100%;
+    background-color: #e74c3c !important;
 }
 
 .button-group button {

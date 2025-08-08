@@ -1,0 +1,72 @@
+/* Rotation control styles */
+.rotation-control-popup {
+    position: absolute;
+    top: 50px;
+    right: 20px;
+    background: var(--active-element-display-bg);
+    border: 1px solid var(--panel-heading-border-color);
+    border-radius: 8px;
+    padding: 15px;
+    z-index: 1000;
+    box-shadow: var(--active-element-display-shadow);
+    width: 250px;
+}
+
+.rotation-control {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.rotation-slider-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.rotation-slider {
+    flex: 1;
+    height: 6px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: #d3d3d3;
+    outline: none;
+    border-radius: 3px;
+}
+
+.rotation-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: #4287f5;
+    cursor: pointer;
+    border-radius: 50%;
+}
+
+.rotation-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: #4287f5;
+    cursor: pointer;
+    border-radius: 50%;
+}
+
+.rotation-value {
+    min-width: 45px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: bold;
+    color: var(--control-sidebar-text-color);
+}
+
+.reset-rotation-btn {
+    padding: 6px 10px;
+    background-color: #4287f5;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    width: 100%;
+}
