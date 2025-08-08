@@ -23,12 +23,21 @@ export function applyRotation(
   // Skip if no rotation
   if (!angleDegrees || angleDegrees === 0) return JSON.parse(JSON.stringify(feature));
 
-  // Create a copy of the feature to avoid modifying the original
+  // Create a deep copy of the feature to avoid modifying the original
   let featureToRotate = JSON.parse(JSON.stringify(feature));
   
-  // If baseCoordinates are provided, use them as the starting point
+  // Determine which coordinates to use as the base for rotation:
+  // 1. Use explicitly provided baseCoordinates if available
+  // 2. Use currentCoordinates if available (position after movement)
+  // 3. Fall back to the original coordinates otherwise
   if (baseCoordinates) {
     featureToRotate.geometry.coordinates = baseCoordinates;
+  } else if (featureToRotate.geometry.currentCoordinates) {
+    // Use current position (after any dragging) as base
+    featureToRotate.geometry.coordinates = featureToRotate.geometry.currentCoordinates;
+  } else if (featureToRotate.geometry.originalCoordinates) {
+    // Fall back to original coordinates if needed
+    featureToRotate.geometry.coordinates = featureToRotate.geometry.originalCoordinates;
   }
   
   // Compute centroid

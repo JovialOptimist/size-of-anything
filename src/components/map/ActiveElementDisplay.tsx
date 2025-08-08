@@ -147,7 +147,13 @@ const ActiveElementDisplay: React.FC = () => {
                     try {
                       // Only rotate if we have an element and a valid angle
                       if (angle !== 0) {
-                        const rotated = applyRotation(element, angle);
+                        // Make sure we use the current coordinates as the base for rotation
+                        // This ensures the shape rotates in place instead of teleporting
+                        const baseCoordinates = element.geometry.currentCoordinates || 
+                                              element.geometry.coordinates;
+                        
+                        // Apply rotation using the current position as the base
+                        const rotated = applyRotation(element, angle, baseCoordinates);
                         // Store both the rotation angle and the pre-calculated rotated coordinates
                         updateElementRotation(
                           activeAreaId,

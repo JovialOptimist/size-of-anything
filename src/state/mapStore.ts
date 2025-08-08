@@ -315,7 +315,8 @@ updateCurrentCoordinates: (id, coordinates) => {
           try {
             const { applyRotation } = require('../components/utils/transformUtils');
             // Apply rotation to the new position
-            const rotated = applyRotation(feature, rotation);
+            // Explicitly use the updated current coordinates to ensure rotation happens in place
+            const rotated = applyRotation(feature, rotation, coordinates);
             // Update rotation without causing a state update loop
             useMapStore.getState().updateElementRotation(id, rotation, rotated.geometry.coordinates);
           } catch (error) {
