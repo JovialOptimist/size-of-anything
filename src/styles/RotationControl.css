@@ -58,7 +58,7 @@
     text-align: center;
     font-size: 14px;
     font-weight: bold;
-    color: var(--control-sidebar-text-color);
+    color: var(--default-fg);
     font-variant-numeric: tabular-nums;
 }
 

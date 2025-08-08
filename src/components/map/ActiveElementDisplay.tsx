@@ -114,14 +114,6 @@ const ActiveElementDisplay: React.FC = () => {
     }
   };
 
-  const handleRotationReset = () => {
-    setRotationAngle(0);
-    if (activeAreaId) {
-      // Reset rotation to 0, which will clear rotatedCoordinates and use current position
-      updateElementRotation(activeAreaId, 0, null);
-    }
-  };
-
   // Rotation is now handled by the RotationWheel component
 
   return (
@@ -149,11 +141,16 @@ const ActiveElementDisplay: React.FC = () => {
                       if (angle !== 0) {
                         // Make sure we use the current coordinates as the base for rotation
                         // This ensures the shape rotates in place instead of teleporting
-                        const baseCoordinates = element.geometry.currentCoordinates || 
-                                              element.geometry.coordinates;
-                        
+                        const baseCoordinates =
+                          element.geometry.currentCoordinates ||
+                          element.geometry.coordinates;
+
                         // Apply rotation using the current position as the base
-                        const rotated = applyRotation(element, angle, baseCoordinates);
+                        const rotated = applyRotation(
+                          element,
+                          angle,
+                          baseCoordinates
+                        );
                         // Store both the rotation angle and the pre-calculated rotated coordinates
                         updateElementRotation(
                           activeAreaId,
@@ -195,13 +192,6 @@ const ActiveElementDisplay: React.FC = () => {
               >
                 +
               </button> */}
-              <button
-                className="reset-rotation-icon"
-                title="Reset rotation"
-                onClick={handleRotationReset}
-              >
-                ↺
-              </button>
             </div>
             <button
               className="close-button"

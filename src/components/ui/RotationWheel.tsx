@@ -51,11 +51,11 @@ const RotationWheel: React.FC<RotationWheelProps> = ({
 
   // Track the last reported angle to avoid frequent updates
   const lastReportedAngle = useRef(rotationAngle);
-  
+
   // Handle mouse move during drag
   const handleMouseMove = (e: MouseEvent) => {
     if (!isDragging || !wheelRef.current) return;
-    
+
     // Calculate current angle and the difference from start
     const rect = wheelRef.current.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
@@ -64,12 +64,12 @@ const RotationWheel: React.FC<RotationWheelProps> = ({
       { x: centerX, y: centerY },
       { x: e.clientX, y: e.clientY }
     );
-    
+
     // Calculate angle difference and apply to starting rotation
     // Invert the difference to match the shape rotation direction
     let angleDiff = dragStartAngle - currentAngle;
     let newRotation = normalizeAngle(startRotation + angleDiff);
-    
+
     // Round to the nearest integer and only update if changed by at least 1 degree
     const roundedRotation = Math.round(newRotation);
     if (Math.abs(roundedRotation - lastReportedAngle.current) >= 1) {
@@ -90,7 +90,7 @@ const RotationWheel: React.FC<RotationWheelProps> = ({
     // Invert the direction to match shape rotation
     const increment = e.deltaY > 0 ? -5 : 5;
     const newRotation = normalizeAngle(rotationAngle + increment);
-    
+
     // Only update if we haven't reported this angle recently
     if (newRotation !== lastReportedAngle.current) {
       lastReportedAngle.current = newRotation;
@@ -110,12 +110,12 @@ const RotationWheel: React.FC<RotationWheelProps> = ({
       document.removeEventListener("mouseup", handleMouseUp);
     };
   }, [isDragging, dragStartAngle, startRotation]);
-  
+
   // Update last reported angle when rotation angle prop changes
   useEffect(() => {
     lastReportedAngle.current = rotationAngle;
   }, [rotationAngle]);
-  
+
   // Ensure we always work with normalized angles
   useEffect(() => {
     // If the rotation angle isn't normalized (0-359), normalize it
@@ -186,7 +186,12 @@ const RotationWheel: React.FC<RotationWheelProps> = ({
         />
 
         {/* Indicator */}
-        <circle cx={indicatorX} cy={indicatorY} r={size * 0.08} fill="#fff" />
+        <circle
+          cx={indicatorX}
+          cy={indicatorY}
+          r={size * 0.08}
+          fill="var(--default-fg)"
+        />
 
         {/* Invisible overlay for better mouse interaction */}
         <circle
