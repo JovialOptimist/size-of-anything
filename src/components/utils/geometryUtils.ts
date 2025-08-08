@@ -1,6 +1,5 @@
 import L, { LatLng } from "leaflet";
 import * as turf from "@turf/turf";
-import proj4 from "proj4";
 
 /**
  * Geometry Utilities for Size of Anything
@@ -463,6 +462,7 @@ export const convertCoordsToLatLngs = (coords: any): any => {
 
 /**
  * Rotate a GeoJSON shape across the sphere without distorting or rotating it.
+ * Includes counter-rotation logic to maintain original orientation during horizontal translation.
  * 
  * @param feature - Polygon or MultiPolygon GeoJSON feature
  * @param targetCoordinates - [lng, lat] location for new centroid
@@ -557,43 +557,4 @@ export function projectAndTranslateGeometry(
   rotated.geometry.coordinates = transformCoords(rotated.geometry.coordinates);
 
   return rotated;
-}
-
-
-/**
- * Transforms polygon rings using the projection and offset
- */
-function transformPolygonRings(
-  rings: number[][][],
-  projection: proj4.Converter,
-  dx: number,
-  dy: number
-): number[][][] {
-  return rings.map(ring => {
-    return ring.map(coord => {
-      try {
-        // Project to flat space
-        const projected = projection.forward(coord);
-        // Translate in projected space
-        const moved = [projected[0] + dx, projected[1] + dy];
-        // Project back to WGS84
-        return projection.inverse(moved);
-      } catch (e) {
-        console.error("Error transforming coordinate:", coord, e);
-        return coord; // Return original on error
-      }
-    });
-  });
-}
-
-/**
- * Transforms multipolygon rings using the projection and offset
- */
-function transformMultiPolygonRings(
-  polygons: number[][][][],
-  projection: proj4.Converter,
-  dx: number,
-  dy: number
-): number[][][][] {
-  return polygons.map(polygon => transformPolygonRings(polygon, projection, dx, dy));
 }
