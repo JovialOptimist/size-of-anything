@@ -56,7 +56,7 @@ export default function MapView() {
 
     const map = L.map(mapRef.current, {
       zoomControl: false,
-      worldCopyJump: true,
+      worldCopyJump: false,
     }).setView([47.615, -122.035], 13);
     setCurrentMapCenter([47.615, -122.035]);
     mapInstanceRef.current = map;
@@ -69,6 +69,13 @@ export default function MapView() {
       maxNativeZoom: 19,
       maxZoom: 22,
       minZoom: 2,
+      noWrap: true,
+      bounds: [
+        [-90, -180],
+        [90, 180],
+      ],
+      errorTileUrl:
+        "https://en.wikipedia.org/wiki/Color#/media/File:Colouring_pencils.jpg",
     }).addTo(map);
 
     map.on("click", (e) => {
