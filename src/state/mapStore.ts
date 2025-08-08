@@ -6,7 +6,6 @@ import type {
   GeoJSONFeature,
   MapState
 } from "./mapStoreTypes";
-import { applyRotation } from '../components/utils/transformUtils';
 
 /**
  * Zustand store for managing map areas and active area
@@ -288,11 +287,6 @@ updateCurrentCoordinates: (id, coordinates) => {
     // Preserve originalCoordinates if they exist
     const originalCoordinates = updatedAreas[featureIndex].geometry.originalCoordinates;
     
-    // When position changes, clear any pre-calculated rotated coordinates
-    // This ensures we'll recalculate them based on the new position if rotation is applied
-    // We only want to preserve the rotation value itself
-    const rotation = updatedAreas[featureIndex].properties.rotation;
-    
     updatedAreas[featureIndex] = {
       ...updatedAreas[featureIndex],
       geometry: {
@@ -307,24 +301,6 @@ updateCurrentCoordinates: (id, coordinates) => {
     
     // If we have a non-zero rotation, we need to re-apply it after updating the position
     // This ensures the shape maintains its orientation after being moved
-    if (rotation && rotation !== 0) {
-      setTimeout(() => {
-        // Get updated feature for rotation
-        const feature = updatedAreas[featureIndex];
-        if (feature) {
-          try {
-            const { applyRotation } = require('../components/utils/transformUtils');
-            // Apply rotation to the new position
-            // Explicitly use the updated current coordinates to ensure rotation happens in place
-            const rotated = applyRotation(feature, rotation, coordinates);
-            // Update rotation without causing a state update loop
-            useMapStore.getState().updateElementRotation(id, rotation, rotated.geometry.coordinates);
-          } catch (error) {
-            console.error("Error re-applying rotation after position update:", error);
-          }
-        }
-      }, 0);
-    }
     
     return { geojsonAreas: updatedAreas };
   });

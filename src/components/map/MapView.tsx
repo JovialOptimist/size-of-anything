@@ -9,7 +9,6 @@ import {
   shouldShowMarkerForPolygon,
   findCenterForMarker,
 } from "../utils/geometryUtils";
-import { applyRotation } from "../utils/transformUtils";
 import { createMarker, attachMarkerDragHandlers } from "../utils/markerUtils";
 import type { GeoJSONFeature, MapState } from "../../state/mapStoreTypes";
 
@@ -153,8 +152,12 @@ export default function MapView() {
       // The rotation is now managed separately in the RotationWheel component
       // and stored in a "rotatedCoordinates" property in the feature's geometry.
       // If we have pre-calculated rotated coordinates, use those instead of recalculating
-      if (featureToRender.geometry.rotatedCoordinates && featureToRender.properties.rotation !== 0) {
-        featureToRender.geometry.coordinates = featureToRender.geometry.rotatedCoordinates;
+      if (
+        featureToRender.geometry.rotatedCoordinates &&
+        featureToRender.properties.rotation !== 0
+      ) {
+        featureToRender.geometry.coordinates =
+          featureToRender.geometry.rotatedCoordinates;
       }
 
       const layer = L.geoJSON(featureToRender, {
