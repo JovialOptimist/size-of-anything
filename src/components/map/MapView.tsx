@@ -4,6 +4,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "../../styles/mapDarkMode.css";
 import { useMapStore } from "../../state/mapStore";
+import { usePanel } from "../../state/panelStore";
 import {
   enablePolygonDragging,
   shouldShowMarkerForPolygon,
@@ -54,11 +55,29 @@ export default function MapView() {
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
 
+    // Find user location or default to a central point
+    const defaultCenter: [number, number] = [47.615, -122.035]; // Seattle coordinates
+    // use https://geolocation-db.com/json/
+    fetch("https://geolocation-db.com/json/")
+      .then((response) => response.json())
+      .then((data) => {
+        if (data && data.latitude && data.longitude) {
+          defaultCenter[0] = data.latitude;
+          defaultCenter[1] = data.longitude;
+        }
+      });
+
+    // Based on whether or not the control panel is open, we can adjust the default center
+    const isPanelOpen = usePanel.getState().activePanel !== null;
+    if (isPanelOpen) {
+      defaultCenter[1] -= 0.15;
+    }
+
     const map = L.map(mapRef.current, {
       zoomControl: false,
       worldCopyJump: false,
-    }).setView([47.615, -122.035], 13);
-    setCurrentMapCenter([47.615, -122.035]);
+    }).setView(defaultCenter, 11);
+    setCurrentMapCenter(defaultCenter);
     mapInstanceRef.current = map;
 
     L.control.zoom({ position: "bottomright" }).addTo(map);
