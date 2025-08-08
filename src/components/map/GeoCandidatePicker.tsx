@@ -7,22 +7,31 @@ export default function GeoCandidatePicker({
   onSelect,
   onCancel,
   showOnHover = true,
+  isLoading = false,
 }: {
   candidates: GeoJSONFeature[];
   onSelect: (feature: GeoJSONFeature) => void;
   onCancel?: () => void;
   showOnHover?: boolean;
+  isLoading?: boolean;
 }) {
   const setHoveredCandidate = useMapStore((state) => state.setHoveredCandidate);
   return (
     <div className="geo-candidate-picker">
-      <p className="candidate-count">
-        Found {candidates.length} places.{" "}
-        <span className="accent-text">Hover</span> over one of the items below
-        to see their outline on the map.
-      </p>
-      <ul className="candidate-list">
-        {candidates.map((feature, index) => {
+      {isLoading ? (
+        <div className="candidate-loading">
+          <div className="candidate-spinner"></div>
+          <p>Searching for areas...</p>
+        </div>
+      ) : (
+        <>
+          <p className="candidate-count">
+            Found {candidates.length} places.{" "}
+            <span className="accent-text">Hover</span> over one of the items below
+            to see their outline on the map.
+          </p>
+          <ul className="candidate-list">
+            {candidates.map((feature, index) => {
           const name = feature.properties?.name || `Candidate ${index + 1}`;
           const label = formatCandidateLabel(feature);
 
@@ -73,6 +82,8 @@ export default function GeoCandidatePicker({
         <button className="cancel-candidate-button" onClick={onCancel} tabIndex={0}>
           Cancel
         </button>
+      )}
+        </>
       )}
     </div>
   );

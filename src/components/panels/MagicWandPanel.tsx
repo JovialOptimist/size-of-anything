@@ -206,8 +206,8 @@ export default function MagicWandPanel() {
 
     setIsLoading(true);
     setError(null);
-    setShowPicker(false);
     setCandidates([]);
+    setShowPicker(true);
 
     try {
       // Fetch features using our improved two-step approach
@@ -221,12 +221,11 @@ export default function MagicWandPanel() {
         setError(
           "No recognizable areas found at this location. Try clicking on or near a building, park, or other defined area."
         );
-        setIsLoading(false);
+        setShowPicker(false);
         return;
       }
 
       setCandidates(organizedFeatures);
-      setShowPicker(true);
     } catch (error) {
       console.error("Error fetching features:", error);
       setError(
@@ -234,6 +233,7 @@ export default function MagicWandPanel() {
           error instanceof Error ? error.message : String(error)
         }`
       );
+      setShowPicker(false);
     } finally {
       setIsLoading(false);
     }
@@ -293,33 +293,23 @@ export default function MagicWandPanel() {
         <div></div>
       )}
 
-      {isLoading && (
-        <div className="loading-indicator">
-          <p>Searching for areas...</p>
-        </div>
-      )}
-
       {error && (
         <div className="error-message">
           <p>{error}</p>
         </div>
       )}
 
-      {showPicker && candidates.length > 0 && (
-        <>
-          <div className="loading-indicator">
-            <p>Found {candidates.length} areas. Hover to outline the area.</p>
-          </div>
-          <GeoCandidatePicker
-            candidates={candidates}
-            onSelect={(feature) => {
-              addGeoJSONFromSearch(feature);
-              useMapStore.getState().setHoveredCandidate(null);
-              deactivateWand();
-            }}
-            onCancel={deactivateWand}
-          />
-        </>
+      {(isLoading || showPicker) && (
+        <GeoCandidatePicker
+          candidates={candidates}
+          isLoading={isLoading}
+          onSelect={(feature) => {
+            addGeoJSONFromSearch(feature);
+            useMapStore.getState().setHoveredCandidate(null);
+            deactivateWand();
+          }}
+          onCancel={deactivateWand}
+        />
       )}
 
       <div className="custom-area-info">

@@ -16,15 +16,18 @@ export default function TextSearchPanel() {
   );
   const [candidates, setCandidates] = useState<GeoJSONFeature[]>([]);
   const [showPicker, setShowPicker] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSearch = async () => {
     if (!query.trim()) return;
     setCandidates([]);
-    setShowPicker(false);
+    setIsLoading(true);
+    setShowPicker(true);
 
     try {
       const possiblePlaces = await fetchCandidates(query);
       if (possiblePlaces.length === 0) {
+        setShowPicker(false);
         alert("Couldn't find anything named " + query + ".");
         return;
       }
@@ -52,13 +55,16 @@ export default function TextSearchPanel() {
       });
       if (geojsons.length === 1) {
         addGeoJSONFromSearch(geojsons[0]);
+        setShowPicker(false);
         return;
       }
       setCandidates(geojsons);
-      setShowPicker(true);
     } catch (error) {
       console.error("Search error:", error);
       alert("There was a problem searching.");
+      setShowPicker(false);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -115,9 +121,10 @@ export default function TextSearchPanel() {
         </button>
       </div>
 
-      {showPicker && candidates.length > 0 && (
+      {showPicker && (
         <GeoCandidatePicker
           candidates={candidates}
+          isLoading={isLoading}
           onSelect={(feature) => {
             addGeoJSONFromSearch(feature);
             setShowPicker(false);
