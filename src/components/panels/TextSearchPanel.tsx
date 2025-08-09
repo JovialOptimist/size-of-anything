@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useMapStore } from "../../state/mapStore";
 import { OSM_Type } from "../../state/mapStoreTypes";
 import type { GeoJSONFeature } from "../../state/mapStoreTypes";
-import GeoCandidatePicker from "../map/GeoCandidatePicker";
+import GeoCandidatePicker from "../ui/GeoCandidatePicker";
 import { describeOsmObject } from "../utils/describeOsmObject";
 import { InformationBubble } from "../ui/informationBubble";
 import { DismissableMessage } from "../ui/DismissableMessage";
@@ -192,16 +192,6 @@ async function fetchCandidates(input: string) {
     nominatimResponse.json(),
   ]);
 
-  // Combine: keep all from nearbyData, add only unique from nominatimDataRaw (by osm_id + osm_type)
-  const existingKeys = new Set(
-    nearbyData.map((item: any) => `${item.osm_type}_${item.osm_id}`)
-  );
-  const uniqueNominatim = nominatimDataRaw.filter(
-    (item: any) => !existingKeys.has(`${item.osm_type}_${item.osm_id}`)
-  );
-  let nominatimData = [...nearbyData, ...uniqueNominatim];
-  console.log("Nominatim data:", nominatimData);
-
   // Helper to check if a polygon is closed
   function isClosedPolygon(geojson: any): boolean {
     if (geojson?.type !== "Polygon") return false;
@@ -213,13 +203,30 @@ async function fetchCandidates(input: string) {
   }
 
   // Filter for closed ways and valid relations with polygon geometry
-  nominatimData = nominatimData.filter(
-    (candidate: any) =>
-      (candidate.osm_type === "relation" ||
-        (candidate.osm_type === "way" && isClosedPolygon(candidate.geojson))) &&
-      (candidate.geojson?.type === "Polygon" ||
-        candidate.geojson?.type === "MultiPolygon")
+  const filterCandidates = (data: any[]) =>
+    data.filter(
+      (candidate: any) =>
+        (candidate.osm_type === "relation" ||
+          (candidate.osm_type === "way" &&
+            isClosedPolygon(candidate.geojson))) &&
+        (candidate.geojson?.type === "Polygon" ||
+          candidate.geojson?.type === "MultiPolygon")
+    );
+
+  // Filter both sets
+  const filteredNominatim = filterCandidates(nominatimDataRaw);
+  const filteredNearby = filterCandidates(nearbyData);
+
+  // Remove duplicates from filteredNearby that are already in filteredNominatim (by osm_id + osm_type)
+  const nominatimKeys = new Set(
+    filteredNominatim.map((item: any) => `${item.osm_type}_${item.osm_id}`)
   );
+  const uniqueNearby = filteredNearby.filter(
+    (item: any) => !nominatimKeys.has(`${item.osm_type}_${item.osm_id}`)
+  );
+
+  // Results: nominatim first, then unique nearby
+  const nominatimData = [...filteredNominatim, ...uniqueNearby];
 
   // If no candidates found, alert the user
   if (nominatimData.length === 0) {

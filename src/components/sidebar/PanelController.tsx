@@ -1,10 +1,12 @@
-import TextSearchPanel from "../panels/TextSearchPanel";
-import MagicWandPanel from "../panels/MagicWandPanel";
-import CustomAreaPanel from "../panels/CustomAreaPanel";
-import HistoryPanel from "../panels/HistoryPanel";
-import HelpPanel from "../panels/HelpPanel";
-import SettingsPanel from "../panels/SettingsPanel";
-import SpecialPanel from "../panels/SpecialPanel";
+import {
+  TextSearchPanel,
+  MagicWandPanel,
+  CustomAreaPanel,
+  SpecialPanel,
+  HistoryPanel,
+  HelpPanel,
+  SettingsPanel,
+} from "../panels";
 
 const PANEL_COMPONENTS = {
   "text-search": TextSearchPanel,

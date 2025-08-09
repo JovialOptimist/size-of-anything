@@ -6,7 +6,7 @@ import {
   HelpIcon,
   SettingsIcon,
   PuzzlePieceIcon,
-} from "./icons";
+} from "./icons"; // uses the index.ts file to import all icons
 
 import { usePanel } from "../../state/panelStore";
 

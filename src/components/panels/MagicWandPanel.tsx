@@ -1,7 +1,7 @@
 // src/components/panels/MagicWandPanel.tsx
 import { useState } from "react";
 import { useMapStore } from "../../state/mapStore";
-import GeoCandidatePicker from "../map/GeoCandidatePicker";
+import GeoCandidatePicker from "../ui/GeoCandidatePicker";
 import { describeOsmObject } from "../utils/describeOsmObject";
 import type { GeoJSONFeature } from "../../state/mapStoreTypes";
 import "../../styles/MagicWandPanel.css";
