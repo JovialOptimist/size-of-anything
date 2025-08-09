@@ -34,7 +34,7 @@ const HelpPanel: React.FC = () => {
         <p className="welcome-text">
           Welcome to <span className="app-title">The Size of Anything!</span>
         </p>
-        <p className="intro-description">
+        <div className="intro-description">
           <ul>
             <li>
               To create your first outline, use the Search tool at the top left
@@ -45,7 +45,7 @@ const HelpPanel: React.FC = () => {
               button.
             </li>
           </ul>
-        </p>
+        </div>
       </div>
 
       {/* Collapsible section: Adding Areas */}
@@ -57,7 +57,9 @@ const HelpPanel: React.FC = () => {
           onClick={() => toggleSection("adding")}
           tabIndex={0}
           role="button"
-          onKeyDown={(e) => {if (e.key === 'Enter' || e.key === ' ') toggleSection("adding");}}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") toggleSection("adding");
+          }}
         >
           <h3>Create an outline of a place</h3>
           <span className="toggle-icon">
@@ -134,7 +136,9 @@ const HelpPanel: React.FC = () => {
           onClick={() => toggleSection("dragging")}
           tabIndex={0}
           role="button"
-          onKeyDown={(e) => {if (e.key === 'Enter' || e.key === ' ') toggleSection("dragging");}}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") toggleSection("dragging");
+          }}
         >
           <h3>Drag an outline</h3>
           <span className="toggle-icon">
@@ -179,7 +183,10 @@ const HelpPanel: React.FC = () => {
           onClick={() => toggleSection("mapControls")}
           tabIndex={0}
           role="button"
-          onKeyDown={(e) => {if (e.key === 'Enter' || e.key === ' ') toggleSection("mapControls");}}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ")
+              toggleSection("mapControls");
+          }}
         >
           <h3>Move the map</h3>
           <span className="toggle-icon">
@@ -209,7 +216,9 @@ const HelpPanel: React.FC = () => {
           onClick={() => toggleSection("about")}
           tabIndex={0}
           role="button"
-          onKeyDown={(e) => {if (e.key === 'Enter' || e.key === ' ') toggleSection("about");}}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") toggleSection("about");
+          }}
         >
           <h3>About the developer</h3>
           <span className="toggle-icon">
@@ -249,7 +258,9 @@ const HelpPanel: React.FC = () => {
           onClick={() => toggleSection("donate")}
           tabIndex={0}
           role="button"
-          onKeyDown={(e) => {if (e.key === 'Enter' || e.key === ' ') toggleSection("donate");}}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") toggleSection("donate");
+          }}
         >
           <h3>Support the site</h3>
           <span className="toggle-icon">

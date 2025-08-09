@@ -1,0 +1,77 @@
+.custom-area-info {
+  position: relative;
+  margin-top: 15px;
+  padding: 10px;
+  background-color: var(--info-bg, rgba(52, 152, 219, 0.1));
+  border-left: 4px solid var(--primary-color, #3498db);
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+/* Define fade-out animation */
+@keyframes fadeOutDown {
+  from {
+    opacity: 1;
+    scale: 1;
+  }
+  to {
+    opacity: 0;
+    scale: 0;
+  }
+}
+
+/* Apply animation when dismissing */
+.custom-area-info.dismissing {
+  animation: fadeOutDown 200ms ease-in forwards;
+  pointer-events: none; /* Prevent further interaction during animation */
+}
+
+/* Ensure paragraphs have proper spacing */
+.message-content p {
+  margin: 0 0 0.75em 0;
+}
+
+.message-content p:last-child {
+  margin-bottom: 0;
+}
+
+.dismiss-button-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px; /* Match spacing of other buttons */
+}
+
+.dismiss-message-btn {
+  padding: 8px 16px;
+  background-color: #4287f5; /* Same as select-area-button */
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.dismiss-message-btn:hover {
+  background-color: #3b7ae0; /* Same as select-area-button:hover */
+}
+
+.dismiss-message-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(66, 135, 245, 0.4);
+}
+
+/* Dark mode adjustments */
+.dark-mode .dismiss-message-btn {
+  background-color: var(--icon-sidebar-button-active-bg);
+  color: white;
+}
+
+.dark-mode .dismiss-message-btn:hover {
+  background-color: var(--icon-sidebar-button-hover-bg);
+}
+
+.dark-mode .dismiss-message-btn:focus {
+  box-shadow: 0 0 0 2px rgba(66, 135, 245, 0.4);
+}

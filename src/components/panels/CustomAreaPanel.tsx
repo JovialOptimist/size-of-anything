@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useMapStore } from "../../state/mapStore";
 import type { GeoJSONFeature } from "../../state/mapStoreTypes";
 import { InformationBubble } from "../ui/informationBubble";
+import { DismissableMessage } from "../ui/DismissableMessage";
 import { countCoordinates } from "../utils/geometryUtils";
 
 /**
@@ -163,11 +164,11 @@ const CustomAreaPanel: React.FC = () => {
         </button>
       </div>
 
-      <div className="custom-area-info">
+      <DismissableMessage messageId="custom-area-center-info">
         <p>
           The square area will be placed at the center of your current map view.
         </p>
-      </div>
+      </DismissableMessage>
     </div>
   );
 };

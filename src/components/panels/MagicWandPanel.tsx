@@ -7,6 +7,7 @@ import { describeOsmObject } from "../utils/describeOsmObject";
 import type { GeoJSONFeature } from "../../state/mapStoreTypes";
 import "../../styles/MagicWandPanel.css";
 import { InformationBubble } from "../ui/informationBubble";
+import { DismissableMessage } from "../ui/DismissableMessage";
 import { countCoordinates } from "../utils/geometryUtils";
 
 export default function MagicWandPanel() {
@@ -312,12 +313,12 @@ export default function MagicWandPanel() {
         />
       )}
 
-      <div className="custom-area-info">
+      <DismissableMessage messageId="magic-wand-large-areas-info">
         <p>
           Some larger areas may not show up in the list - click on one of its
           corners to select it.
         </p>
-      </div>
+      </DismissableMessage>
     </div>
   );
 }

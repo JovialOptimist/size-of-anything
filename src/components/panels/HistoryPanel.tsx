@@ -2,6 +2,7 @@ import React from "react";
 import { useMapStore } from "../../state/mapStore";
 import Card from "../utils/Card";
 import { InformationBubble } from "../ui/informationBubble";
+import { DismissableMessage } from "../ui/DismissableMessage";
 
 /**
  * Panel for history functionality
@@ -41,12 +42,12 @@ const HistoryPanel: React.FC = () => {
         </div>
       )}
 
-      <div className="custom-area-info">
+      <DismissableMessage messageId="history-feature-location-info">
         <p>
           The outline of the area will be made around the original feature, not
           where you are currently looking.
         </p>
-      </div>
+      </DismissableMessage>
     </div>
   );
 };

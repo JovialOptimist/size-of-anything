@@ -3,6 +3,7 @@ import SpecialShape from "../utils/SpecialShape";
 import blueWhaleSvg from "../../assets/bluewhale.svg";
 import boeingPlane from "../../assets/boeing-737.svg";
 import { InformationBubble } from "../ui/informationBubble";
+import { DismissableMessage } from "../ui/DismissableMessage";
 
 /**
  * Panel for Special features
@@ -53,12 +54,12 @@ const SpecialPanel: React.FC = () => {
           />
         ))}
       </div>
-      <div className="custom-area-info">
+      <DismissableMessage messageId="special-area-center-info">
         <p>
           The special area will be placed at the center of your current map
           view.
         </p>
-      </div>
+      </DismissableMessage>
     </div>
   );
 };

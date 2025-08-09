@@ -7,6 +7,7 @@ import GeoCandidatePicker from "../map/GeoCandidatePicker";
 import { describeOsmObject } from "../utils/describeOsmObject";
 import fixMultiPolygon from "../utils/fixMultipolygon";
 import { InformationBubble } from "../ui/informationBubble";
+import { DismissableMessage } from "../ui/DismissableMessage";
 import { countCoordinates } from "../utils/geometryUtils";
 
 export default function TextSearchPanel() {
@@ -139,13 +140,13 @@ export default function TextSearchPanel() {
         />
       )}
 
-      <div className="custom-area-info">
+      <DismissableMessage messageId="text-search-capabilities-info">
         <p>
           You can find anything you want! Large official borders like countries
           and states, local areas like parks and lakes, or even smaller features
           like buildings and monuments.
         </p>
-      </div>
+      </DismissableMessage>
     </div>
   );
 }
