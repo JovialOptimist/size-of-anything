@@ -1,3 +1,8 @@
+// src/components/map/ActiveElementDisplay.tsx
+/**
+ * Component that displays information about the currently active map element.
+ * Shows area details, controls for manipulation, and enables shape rotation.
+ */
 import React, { useState, useRef, useEffect } from "react";
 import { usePanel } from "../../state/panelStore";
 import { useMapStore } from "../../state/mapStore";

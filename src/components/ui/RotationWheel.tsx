@@ -1,3 +1,8 @@
+// src/components/ui/RotationWheel.tsx
+/**
+ * Interactive wheel control for rotating map elements.
+ * Allows users to precisely adjust the rotation angle of shapes.
+ */
 import React, { useRef, useState, useEffect } from "react";
 
 interface RotationWheelProps {

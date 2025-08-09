@@ -1,3 +1,8 @@
+// src/components/utils/markerUtils.ts
+/**
+ * Utility functions for map markers and drag handles.
+ * Provides functionality for creating, updating, and handling markers on the map.
+ */
 import L from "leaflet";
 import * as turf from "@turf/turf";
 import {
@@ -7,7 +12,7 @@ import {
   convertCoordsToLatLngs,
 } from "./geometryUtils";
 
-const markerSize = 1.5;
+const markerSize = 1.5; // TODO: make this configurable
 
 export function createMarker(
   center: L.LatLng,

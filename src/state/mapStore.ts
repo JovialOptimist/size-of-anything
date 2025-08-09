@@ -2,7 +2,7 @@
 import { create } from "zustand";
 import { generateRandomColor } from "../components/utils/colorUtils";
 import type { MapArea, GeoJSONFeature, MapState } from "./mapStoreTypes";
-import * as turf from "@turf/turf";
+import * as turf from "@turf/turf"; // TODO: what does this import other than simplify?
 
 /**
  * Zustand store for managing map areas and active area

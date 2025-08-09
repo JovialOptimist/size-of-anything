@@ -1,3 +1,8 @@
+// src/components/map/ShareButton.tsx
+/**
+ * Button component that enables sharing the current map state.
+ * Generates and copies a shareable link with the current view and selected areas.
+ */
 import { useState } from "react";
 import { generateShareableLink } from "../../state/urlSync";
 

@@ -1,3 +1,8 @@
+// src/main.tsx
+/**
+ * Application entry point that renders the main App component.
+ * Imports global styles and initializes the React application.
+ */
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./styles/globals.css";

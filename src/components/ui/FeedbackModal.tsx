@@ -1,3 +1,8 @@
+// src/components/ui/FeedbackModal.tsx
+/**
+ * Modal component for collecting user feedback.
+ * Allows users to submit bug reports and feature requests.
+ */
 import { useState, useEffect } from "react";
 import "../../styles/Feedback.css";
 

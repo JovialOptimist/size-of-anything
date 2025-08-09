@@ -1,3 +1,8 @@
+// src/state/panelStore.ts
+/**
+ * Store for managing the active panel in the sidebar.
+ * Controls which panel is currently active and handles panel toggling.
+ */
 import { create } from "zustand";
 
 interface PanelState {

@@ -1,3 +1,8 @@
+// src/state/messageStore.ts
+/**
+ * Store for managing dismissable messages in the application.
+ * Handles persistent storage of dismissed message IDs and related functionality.
+ */
 import { create } from "zustand";
 
 // Key for storing dismissed messages in localStorage

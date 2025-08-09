@@ -1,4 +1,8 @@
-// src/utils/countryToContinent.ts
+// src/components/utils/countryHelper.ts
+/**
+ * Utility functions for country-related operations.
+ * Provides mapping between countries and continents.
+ */
 
 /**
  * Returns the continent or continents for a given UN-recognized country name.

@@ -1,3 +1,8 @@
+// src/components/ui/informationBubble.tsx
+/**
+ * Information bubble component that displays help text when clicked.
+ * Provides context or explanations for UI elements.
+ */
 import React, { useState } from "react";
 
 interface InformationBubbleProps {

@@ -1,3 +1,8 @@
+// src/components/ui/SvgCard.tsx
+/**
+ * Card component that renders SVG content as a selectable shape.
+ * Converts SVG paths to map polygons for display on the map.
+ */
 import React, { useMemo } from "react";
 import Card from "./Card";
 import {

@@ -1,3 +1,9 @@
+// src/components/ui/Card.tsx
+/**
+ * Card component that displays an area with its details and provides 
+ * actions for adding it to the map.
+ * Used in search results and history panel.
+ */
 import React from "react";
 import { useMapStore } from "../../state/mapStore";
 import type { GeoJSONFeature } from "../../state/mapStoreTypes";

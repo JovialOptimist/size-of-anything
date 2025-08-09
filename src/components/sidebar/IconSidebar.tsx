@@ -1,3 +1,8 @@
+// src/components/sidebar/IconSidebar.tsx
+/**
+ * Left sidebar component that displays tool icons.
+ * Provides navigation between different panels like search, magic wand, custom area, etc.
+ */
 import {
   SearchIcon,
   MagicWandIcon,

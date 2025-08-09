@@ -1,3 +1,9 @@
+// src/App.tsx
+/**
+ * Main application component for Size of Anything.
+ * Composes the UI layout including map, sidebars, and controls that allow users
+ * to compare and visualize the sizes of different areas on a map.
+ */
 import IconSidebar from "./components/sidebar/IconSidebar";
 import ControlSidebar from "./components/sidebar/ControlSidebar";
 import MapView from "./components/map/MapView";

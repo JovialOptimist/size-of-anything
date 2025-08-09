@@ -1,3 +1,8 @@
+// src/components/sidebar/PanelController.tsx
+/**
+ * Component that manages which panel is currently displayed in the control sidebar.
+ * Renders the appropriate panel component based on the active panel selection.
+ */
 import {
   TextSearchPanel,
   MagicWandPanel,

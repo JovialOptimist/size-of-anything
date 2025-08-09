@@ -1,3 +1,8 @@
+// src/state/settingsStore.ts
+/**
+ * Store for managing application settings.
+ * Handles theme settings (light/dark/system) and their application.
+ */
 import { create } from "zustand";
 
 type ThemeMode = "light" | "dark" | "system";

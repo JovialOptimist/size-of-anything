@@ -1,3 +1,8 @@
+// src/components/ui/SpecialShape.tsx
+/**
+ * Component for displaying special predefined shapes like landmarks or objects.
+ * Loads SVG content and displays it with size information.
+ */
 import React, { useEffect, useState } from "react";
 import SvgCard from "./SvgCard";
 import { getSvgContent } from "../utils/assetUtils";

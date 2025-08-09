@@ -1,3 +1,8 @@
+// src/components/sidebar/ControlSidebar.tsx
+/**
+ * Right sidebar component that shows the active panel content.
+ * Contains the panel controller and handles sidebar collapse functionality.
+ */
 import { useRef } from "react";
 import PanelController from "./PanelController";
 import { usePanel } from "../../state/panelStore";

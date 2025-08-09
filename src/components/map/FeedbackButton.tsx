@@ -1,3 +1,8 @@
+// src/components/map/FeedbackButton.tsx
+/**
+ * Button component that opens a feedback form modal.
+ * Allows users to submit feedback about the application.
+ */
 import { useState } from "react";
 import FeedbackModal from "../ui/FeedbackModal";
 import "../../styles/Feedback.css";

@@ -1,3 +1,8 @@
+// src/state/urlSync.ts
+/**
+ * Functionality to synchronize application state with the URL.
+ * Enables sharing map state through URLs and restoring state from URL parameters.
+ */
 import { useEffect } from "react";
 import { useMapStore } from "./mapStore";
 import { usePanel } from "./panelStore";

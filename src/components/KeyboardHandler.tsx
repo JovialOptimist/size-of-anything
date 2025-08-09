@@ -15,7 +15,7 @@ export function KeyboardHandler() {
   const activePanel = usePanel((state) => state.activePanel);
 
   useEffect(() => {
-    const isTextInput = (element: EventTarget | null) => {
+    const isInCriticalInput = (element: EventTarget | null) => {
       if (!element || !(element instanceof HTMLElement)) return false;
 
       const tag = element.tagName.toLowerCase();
@@ -38,7 +38,7 @@ export function KeyboardHandler() {
 
     const handleKeyDown = (event: KeyboardEvent) => {
       // Don't handle keyboard shortcuts if user is typing in a text field
-      if (isTextInput(document.activeElement)) {
+      if (isInCriticalInput(document.activeElement)) {
         return;
       }
 

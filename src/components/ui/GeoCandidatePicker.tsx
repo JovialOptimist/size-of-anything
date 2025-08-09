@@ -1,3 +1,8 @@
+// src/components/ui/GeoCandidatePicker.tsx
+/**
+ * Component that displays a list of geographic candidates for selection.
+ * Used when multiple areas match a search term or coordinate point.
+ */
 import type { GeoJSONFeature } from "../../state/mapStoreTypes";
 import reactLogo from "../../assets/react.svg";
 import { useMapStore } from "../../state/mapStore";

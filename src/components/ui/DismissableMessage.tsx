@@ -1,3 +1,8 @@
+// src/components/ui/DismissableMessage.tsx
+/**
+ * Component for displaying messages that can be dismissed by the user.
+ * Dismissal state persists across sessions using localStorage.
+ */
 import React, { useState } from "react";
 import { useMessageStore } from "../../state/messageStore";
 
