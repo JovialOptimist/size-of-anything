@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "../../styles/mapDarkMode.css";
+import "../../styles/ShareButton.css";
 import { useMapStore } from "../../state/mapStore";
 import { usePanel } from "../../state/panelStore";
 import {
@@ -12,6 +13,7 @@ import {
 } from "../utils/geometryUtils";
 import { createMarker, attachMarkerDragHandlers } from "../utils/markerUtils";
 import type { GeoJSONFeature, MapState } from "../../state/mapStoreTypes";
+import ShareButton from "./ShareButton";
 
 const POLYGON_SIZE_THRESHOLD_PERCENT = 0.01; //TODO: Make this configurable
 
@@ -127,9 +129,10 @@ export default function MapView() {
     markersLayerGroupRef.current = L.layerGroup().addTo(map);
     hoveredCandidateLayerRef.current = L.layerGroup().addTo(map);
 
-    // Expose the layer refs to the window for access from marker utils
+    // Expose the layer refs to the window for access from marker utils and share functionality
     (window as any).markersLayerGroupRef = markersLayerGroupRef;
     (window as any).markerToLayerMap = markerToLayerMap;
+    (window as any).mapInstanceRef = mapInstanceRef;
 
     return () => {
       map.off();
@@ -298,6 +301,7 @@ export default function MapView() {
       }`}
     >
       <div id="map" ref={mapRef}></div>
+      <ShareButton />
     </div>
   );
 }

@@ -2,12 +2,12 @@ import IconSidebar from "./components/sidebar/IconSidebar";
 import ControlSidebar from "./components/sidebar/ControlSidebar";
 import MapView from "./components/map/MapView";
 import ActiveElementDisplay from "./components/map/ActiveElementDisplay";
-import MapControls from "./components/map/MapControls";
 import useUrlSync from "./state/urlSync";
 import { useEffect } from "react";
 import { useSettings, applyTheme } from "./state/settingsStore";
 import ThemeInitializer from "./components/ThemeInitializer";
 import KeyboardHandler from "./components/KeyboardHandler";
+import ShareButton from "./components/map/ShareButton";
 
 function App() {
   // Use the URL sync hook to synchronize state with URL
@@ -49,7 +49,7 @@ function App() {
       <div className="map-view-container">
         <MapView />
         <ActiveElementDisplay />
-        <MapControls />
+        <ShareButton />
       </div>
     </div>
   );
