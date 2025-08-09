@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 
 interface PanelState {
   activePanel: string | null;
@@ -12,7 +12,7 @@ interface PanelState {
 export const usePanel = create<PanelState>((set) => ({
   activePanel: "text-search", // Start with text-search panel open
   setActivePanel: (panel) => set({ activePanel: panel }),
-  togglePanel: (panel) => 
+  togglePanel: (panel) =>
     set((state) => ({
       activePanel: state.activePanel === panel ? null : panel,
     })),

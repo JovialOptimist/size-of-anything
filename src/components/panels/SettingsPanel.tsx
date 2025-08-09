@@ -96,8 +96,12 @@ const SettingsPanel: React.FC = () => {
             </span>
           </div>
           <div className="radio-options">
-            <button className="radio-option selected" tabIndex={0}>Metric</button>
-            <button className="radio-option" tabIndex={0}>Imperial</button>
+            <button className="radio-option selected" tabIndex={0}>
+              Metric
+            </button>
+            <button className="radio-option" tabIndex={0}>
+              Imperial
+            </button>
           </div>
         </div>
       </div>

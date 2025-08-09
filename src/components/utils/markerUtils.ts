@@ -1,17 +1,20 @@
 import L from "leaflet";
 import * as turf from "@turf/turf";
-import { 
-  transformPolygonCoordinates, 
+import {
+  transformPolygonCoordinates,
   convertLatLngsToCoords,
   hybridProjectAndTranslateGeometry,
-  convertCoordsToLatLngs
+  convertCoordsToLatLngs,
 } from "./geometryUtils";
 
 const markerSize = 1.5;
 
-export function createMarker(center: L.LatLng, color: string = "blue"): L.Marker {
-    const width = 18 * markerSize;
-    const height = 24 * markerSize;
+export function createMarker(
+  center: L.LatLng,
+  color: string = "blue"
+): L.Marker {
+  const width = 18 * markerSize;
+  const height = 24 * markerSize;
 
   return L.marker(center, {
     draggable: true,
@@ -55,7 +58,7 @@ export function attachMarkerDragHandlers(
   marker.on("click", async (e) => {
     // Stop the event propagation to prevent it from triggering the map's click handler
     L.DomEvent.stopPropagation(e);
-    
+
     if (!hasMoved) {
       // Access the feature to get its index
       let feature: GeoJSON.Feature | undefined;
@@ -64,13 +67,19 @@ export function attachMarkerDragHandlers(
           feature = layer.feature as GeoJSON.Feature;
         }
       });
-      
-      if (feature && feature.properties && feature.properties.index !== undefined) {
+
+      if (
+        feature &&
+        feature.properties &&
+        feature.properties.index !== undefined
+      ) {
         const featureIndex = feature.properties.index;
         // Set active area - we don't need to set wasLayerClickedRef since we're stopping propagation
-        const { useMapStore } = await import('../../state/mapStore');
+        const { useMapStore } = await import("../../state/mapStore");
         useMapStore.getState().setActiveArea(`geojson-${featureIndex}`);
-        console.log(`MarkerUtils: Marker clicked, setting active area to geojson-${featureIndex}`);
+        console.log(
+          `MarkerUtils: Marker clicked, setting active area to geojson-${featureIndex}`
+        );
       }
     }
   });
@@ -79,12 +88,14 @@ export function attachMarkerDragHandlers(
     hasMoved = false;
     dragStartLatLng = e.target.getLatLng().clone(); // Clone to ensure we have a separate instance
     map.dragging.disable();
-    
+
     // Find and store the associated polygon
     activePolygon = findAssociatedPolygon();
     if (activePolygon) {
       // Store original coordinates for reference during drag
-      originalPolygonCoords = JSON.parse(JSON.stringify(activePolygon.getLatLngs()));
+      originalPolygonCoords = JSON.parse(
+        JSON.stringify(activePolygon.getLatLngs())
+      );
     }
   });
 
@@ -93,39 +104,47 @@ export function attachMarkerDragHandlers(
     const startPoint = map.latLngToContainerPoint(dragStartLatLng);
     const currentPoint = map.latLngToContainerPoint(marker.getLatLng());
     const pixelDistance = startPoint.distanceTo(currentPoint);
-    
+
     if (pixelDistance > moveThreshold) {
       hasMoved = true;
     }
-    
+
     if (!originalPolygonCoords || !activePolygon) return;
-    
+
     try {
       // Get the feature associated with this polygon for projection-based transformation
       const feature = activePolygon.feature as GeoJSON.Feature | undefined;
       if (feature && feature.geometry) {
         // Deep clone the feature to avoid modifying the original
         const featureToTransform = JSON.parse(JSON.stringify(feature));
-        
+
         // Calculate the displacement from the drag start position
         const current = marker.getLatLng();
         const latDiff = current.lat - dragStartLatLng.lat;
         const lngDiff = current.lng - dragStartLatLng.lng;
-        
+
         // Calculate target coordinates based on the original feature's centroid plus the displacement
         const originalCentroid = turf.centroid(featureToTransform);
         const targetCoordinates: [number, number] = [
           originalCentroid.geometry.coordinates[0] + lngDiff,
-          originalCentroid.geometry.coordinates[1] + latDiff
+          originalCentroid.geometry.coordinates[1] + latDiff,
         ];
-        
+
         // Use our hybrid transformation for accurate shape preservation
-        const transformedFeature = hybridProjectAndTranslateGeometry(featureToTransform, targetCoordinates);
-        
+        const transformedFeature = hybridProjectAndTranslateGeometry(
+          featureToTransform,
+          targetCoordinates
+        );
+
         // Convert GeoJSON coordinates to Leaflet LatLngs and update the polygon
         if ("coordinates" in transformedFeature.geometry) {
           const transformedLatLngs = convertCoordsToLatLngs(
-            (transformedFeature.geometry as Extract<GeoJSON.Geometry, { coordinates: any }>).coordinates
+            (
+              transformedFeature.geometry as Extract<
+                GeoJSON.Geometry,
+                { coordinates: any }
+              >
+            ).coordinates
           );
           activePolygon.setLatLngs(transformedLatLngs);
         }
@@ -134,51 +153,66 @@ export function attachMarkerDragHandlers(
         const current = marker.getLatLng();
         const latDiff = current.lat - dragStartLatLng.lat;
         const lngDiff = current.lng - dragStartLatLng.lng;
-        
+
         // Apply simple transformation if we can't use projection-based approach
-        const transformed = transformPolygonCoordinates(originalPolygonCoords, latDiff, lngDiff);
+        const transformed = transformPolygonCoordinates(
+          originalPolygonCoords,
+          latDiff,
+          lngDiff
+        );
         activePolygon.setLatLngs(transformed);
       }
     } catch (error) {
       console.error("Error during marker drag:", error);
-      
+
       // Fallback to simple translation on error
       const current = marker.getLatLng();
       const latDiff = current.lat - dragStartLatLng.lat;
       const lngDiff = current.lng - dragStartLatLng.lng;
-      
-      const transformed = transformPolygonCoordinates(originalPolygonCoords, latDiff, lngDiff);
+
+      const transformed = transformPolygonCoordinates(
+        originalPolygonCoords,
+        latDiff,
+        lngDiff
+      );
       activePolygon.setLatLngs(transformed);
     }
   });
 
   marker.on("dragend", async () => {
     map.dragging.enable();
-    
+
     if (!activePolygon) return;
-    
+
     try {
       // Get feature from the active polygon
       const feature = activePolygon.feature as GeoJSON.Feature | undefined;
       if (feature && feature.properties && feature.geometry) {
         const featureIndex = feature.properties.index;
-        
+
         if (featureIndex !== undefined) {
           // Get the final coordinates from the polygon after projection-based transformation
           const currentCoords = activePolygon.getLatLngs();
           const convertedCoords = convertLatLngsToCoords(currentCoords);
-          
+
           // Store the current coordinates in the feature itself
           (feature.geometry as any).currentCoordinates = convertedCoords;
-          
+
           // Update the store with the new coordinates
-          const { useMapStore } = await import('../../state/mapStore');
-          useMapStore.getState().updateCurrentCoordinates(`geojson-${featureIndex}`, convertedCoords);
-          
+          const { useMapStore } = await import("../../state/mapStore");
+          useMapStore
+            .getState()
+            .updateCurrentCoordinates(
+              `geojson-${featureIndex}`,
+              convertedCoords
+            );
+
           // Note: We don't set the area as active after a marker drag
           // This keeps the behavior consistent with polygon dragging
-          
-          console.log("Updated area position using projection-based transformation");
+
+          console.log(
+            "Updated area position using projection-based transformation"
+          );
         }
       }
     } catch (error) {

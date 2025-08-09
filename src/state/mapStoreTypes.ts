@@ -4,8 +4,8 @@
 export interface MapArea {
   id: string;
   name: string;
-  coordinates: [number, number][][] | [number, number][][][]; 
-  type: 'polygon' | 'rectangle' | 'circle' | 'multipolygon';
+  coordinates: [number, number][][] | [number, number][][][];
+  type: "polygon" | "rectangle" | "circle" | "multipolygon";
   properties?: Record<string, any>;
 }
 
@@ -29,7 +29,7 @@ export interface GeoJSONFeature {
     [key: string]: any;
     whatIsIt: string;
   };
-};
+}
 
 export const OSM_Type = {
   NODE: "node",
@@ -61,7 +61,11 @@ export interface MapState {
   setOnMapClick: (handler: ((latlng: L.LatLng) => void) | null) => void;
   getActiveElement: () => GeoJSONFeature | null;
   updateElementColor: (id: string, color: string) => void;
-  updateElementRotation: (id: string, rotation: number, rotatedCoordinates?: any | null) => void;
+  updateElementRotation: (
+    id: string,
+    rotation: number,
+    rotatedCoordinates?: any | null
+  ) => void;
   updateCurrentCoordinates: (id: string, coordinates: any) => void;
   setHoveredCandidate: (candidate: GeoJSONFeature | null) => void;
   addToHistory: (feature: GeoJSONFeature) => void;

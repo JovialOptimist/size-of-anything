@@ -27,62 +27,66 @@ export default function GeoCandidatePicker({
         <>
           <p className="candidate-count">
             Found {candidates.length} places.{" "}
-            <span className="accent-text">Hover</span> over one of the items below
-            to see their outline on the map.
+            <span className="accent-text">Hover</span> over one of the items
+            below to see their outline on the map.
           </p>
           <ul className="candidate-list">
             {candidates.map((feature, index) => {
-          const name = feature.properties?.name || `Candidate ${index + 1}`;
-          const label = formatCandidateLabel(feature);
+              const name = feature.properties?.name || `Candidate ${index + 1}`;
+              const label = formatCandidateLabel(feature);
 
-          const iconUrl = getOsmIconUrl(
-            feature.properties?.osmClass,
-            feature.properties?.osmType
-          );
+              const iconUrl = getOsmIconUrl(
+                feature.properties?.osmClass,
+                feature.properties?.osmType
+              );
 
-          return (
-            <li key={index} className="candidate-item">
-              <button
-                className="select-candidate-button"
-                onClick={() => onSelect(feature)}
-                onMouseEnter={() => {
-                  if (showOnHover) {
-                    // Set the hovered candidate to highlight it on the map
-                    setHoveredCandidate(feature);
-                    console.log(
-                      `Hovering over candidate: ${feature.properties.name}`
-                    );
-                  }
-                }}
-                onMouseLeave={() => {
-                  if (showOnHover) {
-                    // Clear the hover highlight when mouse leaves
-                    setHoveredCandidate(null);
-                  }
-                }}
-                tabIndex={0}
-              >
-                <img
-                  src={iconUrl}
-                  alt=""
-                  className="candidate-icon"
-                  width={20}
-                  height={20}
-                />
-                <div className="candidate-text">
-                  <div className="candidate-label">{name}</div>
-                  <div className="candidate-description">{label}</div>
-                </div>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-      {onCancel && (
-        <button className="cancel-candidate-button" onClick={onCancel} tabIndex={0}>
-          Cancel
-        </button>
-      )}
+              return (
+                <li key={index} className="candidate-item">
+                  <button
+                    className="select-candidate-button"
+                    onClick={() => onSelect(feature)}
+                    onMouseEnter={() => {
+                      if (showOnHover) {
+                        // Set the hovered candidate to highlight it on the map
+                        setHoveredCandidate(feature);
+                        console.log(
+                          `Hovering over candidate: ${feature.properties.name}`
+                        );
+                      }
+                    }}
+                    onMouseLeave={() => {
+                      if (showOnHover) {
+                        // Clear the hover highlight when mouse leaves
+                        setHoveredCandidate(null);
+                      }
+                    }}
+                    tabIndex={0}
+                  >
+                    <img
+                      src={iconUrl}
+                      alt=""
+                      className="candidate-icon"
+                      width={20}
+                      height={20}
+                    />
+                    <div className="candidate-text">
+                      <div className="candidate-label">{name}</div>
+                      <div className="candidate-description">{label}</div>
+                    </div>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+          {onCancel && (
+            <button
+              className="cancel-candidate-button"
+              onClick={onCancel}
+              tabIndex={0}
+            >
+              Cancel
+            </button>
+          )}
         </>
       )}
     </div>

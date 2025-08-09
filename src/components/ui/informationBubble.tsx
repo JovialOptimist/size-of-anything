@@ -24,7 +24,11 @@ export const InformationBubble: React.FC<InformationBubbleProps> = ({
           <div style={{ marginBottom: 8 }} className="info-bubble-message">
             {message}
           </div>
-          <button onClick={() => setOpen(false)} className="info-bubble-close" tabIndex={0}>
+          <button
+            onClick={() => setOpen(false)}
+            className="info-bubble-close"
+            tabIndex={0}
+          >
             Got it!
           </button>
         </div>

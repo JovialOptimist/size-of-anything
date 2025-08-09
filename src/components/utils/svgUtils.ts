@@ -10,14 +10,14 @@
 export function extractPathsFromSvg(svgString: string): string[] {
   const paths: string[] = [];
   const pathRegex = /<path[^>]*d=["']([^"']+)["'][^>]*>/g;
-  
+
   let match;
   while ((match = pathRegex.exec(svgString)) !== null) {
     if (match[1] && match[1].length > 0) {
       paths.push(match[1]);
     }
   }
-  
+
   return paths;
 }
 
@@ -29,8 +29,8 @@ export function extractPathsFromSvg(svgString: string): string[] {
  */
 export function getLongestPath(paths: string[]): string {
   if (paths.length === 0) return "";
-  
-  return paths.reduce((longest, current) => 
+
+  return paths.reduce((longest, current) =>
     current.length > longest.length ? current : longest
   );
 }
@@ -49,7 +49,9 @@ export function combinePaths(paths: string[]): string {
  * @param svgString The SVG content as a string
  * @returns An object with width and height, or null if not found
  */
-export function extractViewBox(svgString: string): { width: number, height: number } | null {
+export function extractViewBox(
+  svgString: string
+): { width: number; height: number } | null {
   const viewBoxMatch = svgString.match(/viewBox=["']([^"']+)["']/);
   if (viewBoxMatch && viewBoxMatch[1]) {
     const [, , width, height] = viewBoxMatch[1].split(/\s+/).map(Number);

@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import SvgCard from './SvgCard';
-import { getSvgContent } from './assetUtils';
+import React, { useEffect, useState } from "react";
+import SvgCard from "./SvgCard";
+import { getSvgContent } from "./assetUtils";
 
 interface SpecialShapeProps {
   svgUrl: string;
@@ -21,7 +21,7 @@ const SpecialShape: React.FC<SpecialShapeProps> = ({
   widthInMeters,
   heightInMeters,
 }) => {
-  const [svgContent, setSvgContent] = useState<string>('');
+  const [svgContent, setSvgContent] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,8 +34,8 @@ const SpecialShape: React.FC<SpecialShapeProps> = ({
         setIsLoading(false);
       })
       .catch((err) => {
-        console.error('Failed to load SVG:', err);
-        setError('Failed to load shape');
+        console.error("Failed to load SVG:", err);
+        setError("Failed to load shape");
         setIsLoading(false);
       });
   }, [svgUrl]);
@@ -45,7 +45,7 @@ const SpecialShape: React.FC<SpecialShapeProps> = ({
   }
 
   if (error || !svgContent) {
-    return <div className="error-card">{error || 'Failed to load shape'}</div>;
+    return <div className="error-card">{error || "Failed to load shape"}</div>;
   }
 
   return (

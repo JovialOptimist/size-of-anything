@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useMessageStore } from '../../state/messageStore';
+import React, { useState } from "react";
+import { useMessageStore } from "../../state/messageStore";
 
 interface DismissableMessageProps {
   messageId: string;
@@ -10,7 +10,7 @@ interface DismissableMessageProps {
 export const DismissableMessage: React.FC<DismissableMessageProps> = ({
   messageId,
   children,
-  className = '',
+  className = "",
 }) => {
   const { isMessageDismissed, dismissMessage } = useMessageStore();
   const [isDismissing, setIsDismissing] = useState(false);
@@ -33,15 +33,15 @@ export const DismissableMessage: React.FC<DismissableMessageProps> = ({
   };
 
   return (
-    <div 
-      className={`custom-area-info ${className} ${isDismissing ? 'dismissing' : ''}`}
+    <div
+      className={`custom-area-info ${className} ${
+        isDismissing ? "dismissing" : ""
+      }`}
       onAnimationEnd={handleAnimationEnd}
     >
-      <div className="message-content">
-        {children}
-      </div>
+      <div className="message-content">{children}</div>
       <div className="dismiss-button-container">
-        <button 
+        <button
           onClick={handleDismiss}
           className="dismiss-message-btn"
           aria-label="Dismiss message"

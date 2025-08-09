@@ -1,14 +1,14 @@
 // src/components/utils/colorUtils.ts
 const presetColors = [
-    "#1f77b4",
-    "#ff7f0e",
-    "#2ca02c",
-    "#d62728",
-    "#9467bd",
-    "#e1ee2eff",
-    "#e377c2",
-    "#7f7f7f",
-  ];
+  "#1f77b4",
+  "#ff7f0e",
+  "#2ca02c",
+  "#d62728",
+  "#9467bd",
+  "#e1ee2eff",
+  "#e377c2",
+  "#7f7f7f",
+];
 
 /**
  * Generate a random color in HSL space with constraints to ensure it's visually pleasant
@@ -16,10 +16,10 @@ const presetColors = [
  * @returns A hex color string (e.g., "#ff0000")
  */
 export function generateRandomColor(): string {
-    Math.random(); // Seed the random number generator
-    return presetColors[Math.floor(Math.random() * presetColors.length)];
+  Math.random(); // Seed the random number generator
+  return presetColors[Math.floor(Math.random() * presetColors.length)];
 }
 
 export function getExistingColors(): string[] {
-    return presetColors;
+  return presetColors;
 }

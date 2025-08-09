@@ -15,8 +15,8 @@ export async function loadSvgContent(url: string): Promise<string> {
     }
     return await response.text();
   } catch (error) {
-    console.error('Error loading SVG:', error);
-    return '';
+    console.error("Error loading SVG:", error);
+    return "";
   }
 }
 
@@ -35,7 +35,7 @@ export async function getSvgContent(url: string): Promise<string> {
   if (svgContentCache[url]) {
     return svgContentCache[url];
   }
-  
+
   // Load and cache the content
   const content = await loadSvgContent(url);
   svgContentCache[url] = content;

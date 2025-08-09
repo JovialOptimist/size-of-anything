@@ -3,13 +3,13 @@ import type { Feature, Polygon, MultiPolygon } from "geojson";
 import proj4 from "proj4";
 
 /**
- * Utility functions for handling geometric transformations 
+ * Utility functions for handling geometric transformations
  * that keeps rotation and translation as separate operations
  */
 
 /**
  * Apply rotation to a feature's coordinates without modifying the original feature
- * 
+ *
  * @param feature - The GeoJSON feature to rotate
  * @param angleDegrees - Rotation angle in degrees
  * @param baseCoordinates - Base coordinates to use (optional, defaults to feature.geometry.coordinates)
@@ -21,11 +21,12 @@ export function applyRotation(
   baseCoordinates?: any
 ): Feature<Polygon | MultiPolygon> {
   // Skip if no rotation
-  if (!angleDegrees || angleDegrees === 0) return JSON.parse(JSON.stringify(feature));
+  if (!angleDegrees || angleDegrees === 0)
+    return JSON.parse(JSON.stringify(feature));
 
   // Create a deep copy of the feature to avoid modifying the original
   let featureToRotate = JSON.parse(JSON.stringify(feature));
-  
+
   // Determine which coordinates to use as the base for rotation:
   // 1. Use explicitly provided baseCoordinates if available
   // 2. Use currentCoordinates if available (position after movement)
@@ -34,12 +35,14 @@ export function applyRotation(
     featureToRotate.geometry.coordinates = baseCoordinates;
   } else if (featureToRotate.geometry.currentCoordinates) {
     // Use current position (after any dragging) as base
-    featureToRotate.geometry.coordinates = featureToRotate.geometry.currentCoordinates;
+    featureToRotate.geometry.coordinates =
+      featureToRotate.geometry.currentCoordinates;
   } else if (featureToRotate.geometry.originalCoordinates) {
     // Fall back to original coordinates if needed
-    featureToRotate.geometry.coordinates = featureToRotate.geometry.originalCoordinates;
+    featureToRotate.geometry.coordinates =
+      featureToRotate.geometry.originalCoordinates;
   }
-  
+
   // Compute centroid
   const centroid = turf.centroid(featureToRotate);
   const [centerLng, centerLat] = centroid.geometry.coordinates;
@@ -55,10 +58,7 @@ export function applyRotation(
   function rotateXY([x, y]: [number, number]): [number, number] {
     const cosA = Math.cos(angleRad);
     const sinA = Math.sin(angleRad);
-    return [
-      x * cosA - y * sinA,
-      x * sinA + y * cosA,
-    ];
+    return [x * cosA - y * sinA, x * sinA + y * cosA];
   }
 
   // Project → Rotate → Unproject
@@ -74,8 +74,12 @@ export function applyRotation(
   }
 
   // Apply the rotation to the coordinates
-  const rotatedFeature: Feature<Polygon | MultiPolygon> = JSON.parse(JSON.stringify(feature));
-  rotatedFeature.geometry.coordinates = rotateCoordinates(featureToRotate.geometry.coordinates);
+  const rotatedFeature: Feature<Polygon | MultiPolygon> = JSON.parse(
+    JSON.stringify(feature)
+  );
+  rotatedFeature.geometry.coordinates = rotateCoordinates(
+    featureToRotate.geometry.coordinates
+  );
 
   return rotatedFeature;
 }
