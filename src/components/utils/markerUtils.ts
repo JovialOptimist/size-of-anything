@@ -4,6 +4,7 @@ import {
   transformPolygonCoordinates, 
   convertLatLngsToCoords,
   projectAndTranslateGeometry,
+  hybridProjectAndTranslateGeometry,
   convertCoordsToLatLngs
 } from "./geometryUtils";
 
@@ -119,8 +120,8 @@ export function attachMarkerDragHandlers(
           originalCentroid.geometry.coordinates[1] + latDiff
         ];
         
-        // Use our projection-based transformation for accurate shape preservation
-        const transformedFeature = projectAndTranslateGeometry(featureToTransform, targetCoordinates);
+        // Use our hybrid transformation for accurate shape preservation
+        const transformedFeature = hybridProjectAndTranslateGeometry(featureToTransform, targetCoordinates);
         
         // Convert GeoJSON coordinates to Leaflet LatLngs and update the polygon
         if ("coordinates" in transformedFeature.geometry) {

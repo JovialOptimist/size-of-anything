@@ -151,9 +151,12 @@ export function isValidGeometry(coordinates: any[]): boolean {
 }
 
 /**
- * Transform polygon coordinates using projection-based method.
- * This function maintains the existing API for backward compatibility,
- * but uses the more accurate projection-based approach internally.
+ * Transform polygon coordinates using the hybrid method.
+ * - Horizontal movement (longitude): Direct translation
+ * - Vertical movement (latitude): Rotation-based transformation
+ * 
+ * This prevents the "spinning" effect when moving shapes horizontally while
+ * still maintaining proper north-south distortion.
  */
 export function transformPolygonCoordinates(
   latLngs: any,
@@ -200,8 +203,8 @@ export function transformPolygonCoordinates(
     const [centroidLng, centroidLat] = centroid.geometry.coordinates;
     const targetCoords: [number, number] = [centroidLng + lngDiff, centroidLat + latDiff];
     
-    // Use our new projection method to get accurately transformed coordinates
-    const transformedFeature = projectAndTranslateGeometry(
+    // Use our hybrid approach to get accurately transformed coordinates
+    const transformedFeature = hybridProjectAndTranslateGeometry(
       feature as GeoJSON.Feature<GeoJSON.Polygon | GeoJSON.MultiPolygon>,
       targetCoords
     );
@@ -217,7 +220,7 @@ export function transformPolygonCoordinates(
   } catch (error) {
     console.error("Error in transformPolygonCoordinates:", error);
     
-    // Fall back to the original simple translation method if the projection approach fails
+    // Fall back to the original simple translation method if the hybrid approach fails
     function translateCoords(coords: any): any {
       if (typeof coords[0] === "number" && typeof coords[1] === "number") {
         // Base case: single [lng, lat]
@@ -316,8 +319,8 @@ export function enablePolygonDragging(geoJsonLayer: L.GeoJSON, map: L.Map | null
               originalCentroid.geometry.coordinates[1] + latDiff
             ];
             
-            // Use our projection-based transformation for accurate shape preservation
-            const transformedFeature = projectAndTranslateGeometry(featureToTransform, targetCoordinates);
+            // Use our hybrid transformation for accurate shape preservation
+            const transformedFeature = hybridProjectAndTranslateGeometry(featureToTransform, targetCoordinates);
             
             // Convert GeoJSON coordinates to Leaflet LatLngs and update the polygon
             if (
@@ -627,4 +630,137 @@ export function projectAndTranslateGeometry(
   rotated.geometry.coordinates = transformCoords(rotated.geometry.coordinates);
 
   return rotated;
+}
+
+/**
+ * Hybrid approach for translating geometries.
+ * - Horizontal movement (longitude): Direct translation
+ * - Vertical movement (latitude): Rotation-based transformation
+ * 
+ * This prevents the "spinning" effect when moving shapes horizontally while
+ * still maintaining proper north-south distortion.
+ */
+export function hybridProjectAndTranslateGeometry(
+  feature: GeoJSON.Feature<GeoJSON.Polygon | GeoJSON.MultiPolygon>,
+  targetCoordinates: [number, number]
+): GeoJSON.Feature<GeoJSON.Polygon | GeoJSON.MultiPolygon> {
+  const originalCentroid = turf.centroid(feature).geometry.coordinates as [number, number];
+  
+  // Calculate longitude and latitude differences
+  const lngDiff = targetCoordinates[0] - originalCentroid[0];
+  const latDiff = targetCoordinates[1] - originalCentroid[1];
+  
+  // Clone feature to avoid modifying original
+  const result = JSON.parse(JSON.stringify(feature));
+
+  // First pass: Apply horizontal translation directly
+  function applyHorizontalTranslation(coords: any[]): any[] {
+    if (typeof coords[0] === "number" && typeof coords[1] === "number") {
+      // Base case: single [lng, lat] coordinate
+      return [coords[0] + lngDiff, coords[1]];
+    }
+    // Recursive case for nested arrays
+    return coords.map(applyHorizontalTranslation);
+  }
+  
+  // Apply horizontal translation
+  result.geometry.coordinates = applyHorizontalTranslation(result.geometry.coordinates);
+  
+  // Second pass: Apply vertical translation using rotation method
+  // Create a target that only changes latitude
+  const verticalOnlyTarget: [number, number] = [
+    targetCoordinates[0],  // Use the target longitude (already translated horizontally)
+    targetCoordinates[1]   // Use the target latitude
+  ];
+  
+  // We need to create a feature that has the horizontally translated coordinates
+  // but only apply the vertical rotation component
+  const radians = (deg: number) => (deg * Math.PI) / 180;
+  const degrees = (rad: number) => (rad * 180) / Math.PI;
+  
+  // Convert [lng, lat] to 3D unit vector
+  function toCartesian([lng, lat]: [number, number]): [number, number, number] {
+    const φ = radians(lat);
+    const λ = radians(lng);
+    return [
+      Math.cos(φ) * Math.cos(λ),
+      Math.cos(φ) * Math.sin(λ),
+      Math.sin(φ),
+    ];
+  }
+  
+  // Convert 3D vector to [lng, lat]
+  function toLngLat([x, y, z]: [number, number, number]): [number, number] {
+    const hyp = Math.sqrt(x * x + y * y);
+    const lng = degrees(Math.atan2(y, x));
+    const lat = degrees(Math.atan2(z, hyp));
+    return [lng, lat];
+  }
+  
+  // Normalize a 3D vector
+  function normalize([x, y, z]: [number, number, number]): [number, number, number] {
+    const mag = Math.sqrt(x * x + y * y + z * z);
+    return [x / mag, y / mag, z / mag];
+  }
+  
+  // For vertical-only transformation, we need a special approach
+  // We'll create vectors that only differ in their vertical component
+  const horizontallyTranslatedCentroid = turf.centroid(result).geometry.coordinates as [number, number];
+  
+  // Create unit vectors for vertical-only transformation
+  const fromVector = normalize(toCartesian(horizontallyTranslatedCentroid));
+  // For the target vector, we want to keep the same horizontal component but change the vertical
+  const toVector = normalize(toCartesian([horizontallyTranslatedCentroid[0], horizontallyTranslatedCentroid[1] + latDiff]));
+  
+  // Only if there's vertical movement to apply
+  if (Math.abs(latDiff) > 0.000001) {
+    // This is the vertical-only rotation logic
+    
+    // Cross product and dot product for rotation
+    function cross(a: [number, number, number], b: [number, number, number]): [number, number, number] {
+      return [
+        a[1] * b[2] - a[2] * b[1],
+        a[2] * b[0] - a[0] * b[2],
+        a[0] * b[1] - a[1] * b[0],
+      ];
+    }
+    
+    function dot(a: [number, number, number], b: [number, number, number]): number {
+      return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+    }
+    
+    // Rodrigues' rotation formula for the vertical component
+    function rotateVector(v: [number, number, number], axis: [number, number, number], angle: number): [number, number, number] {
+      const cosA = Math.cos(angle);
+      const sinA = Math.sin(angle);
+      const dotAV = dot(axis, v);
+      const crossAV = cross(axis, v);
+    
+      return [
+        v[0] * cosA + crossAV[0] * sinA + axis[0] * dotAV * (1 - cosA),
+        v[1] * cosA + crossAV[1] * sinA + axis[1] * dotAV * (1 - cosA),
+        v[2] * cosA + crossAV[2] * sinA + axis[2] * dotAV * (1 - cosA),
+      ];
+    }
+    
+    // Compute rotation axis (should be mostly east-west for vertical movement)
+    const rotationAxis = normalize(cross(fromVector, toVector));
+    const rotationAngle = Math.acos(Math.min(1, Math.max(-1, dot(fromVector, toVector))));
+    
+    // Apply the vertical rotation transformation
+    function applyVerticalRotation(coords: any[]): any[] {
+      if (typeof coords[0] === "number" && typeof coords[1] === "number") {
+        // Convert to cartesian, rotate, then back to lng/lat
+        const cartesian = toCartesian([coords[0], coords[1]] as [number, number]);
+        const rotated = rotateVector(cartesian, rotationAxis, rotationAngle);
+        return toLngLat(rotated);
+      }
+      return coords.map(applyVerticalRotation);
+    }
+    
+    // Apply vertical rotation to already horizontally translated coordinates
+    result.geometry.coordinates = applyVerticalRotation(result.geometry.coordinates);
+  }
+  
+  return result;
 }
