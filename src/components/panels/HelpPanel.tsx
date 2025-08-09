@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import "../../styles/HelpPanel.css";
+import FeedbackButton from "../feedback/FeedbackButton";
 
 /**
  * Panel for help and documentation with interactive collapsible sections

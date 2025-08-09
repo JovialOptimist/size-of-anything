@@ -8,6 +8,7 @@ import { useSettings, applyTheme } from "./state/settingsStore";
 import ThemeInitializer from "./components/ThemeInitializer";
 import KeyboardHandler from "./components/KeyboardHandler";
 import ShareButton from "./components/map/ShareButton";
+import FeedbackButton from "./components/feedback/FeedbackButton";
 
 function App() {
   // Use the URL sync hook to synchronize state with URL
@@ -50,6 +51,7 @@ function App() {
         <MapView />
         <ActiveElementDisplay />
         <ShareButton />
+        <FeedbackButton />
       </div>
     </div>
   );

@@ -30,7 +30,7 @@ export default function ShareButton() {
       <button
         className="share-button map-controls icon-button"
         onClick={handleShare}
-        aria-label="Share this view"
+        aria-label="Share link"
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => !copied && setShowTooltip(false)}
       >
@@ -53,8 +53,8 @@ export default function ShareButton() {
         </svg>
       </button>
       {showTooltip && (
-        <div className={`share-tooltip ${copied ? "copied" : ""}`}>
-          {copied ? "Link copied!" : "Share this view"}
+        <div className={`tooltip ${copied ? "success" : ""}`}>
+          {copied ? "Link copied!" : "Share link"}
         </div>
       )}
     </div>

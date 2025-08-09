@@ -905,3 +905,50 @@ input:checked + .toggle-slider:before {
     border-color: rgba(255, 255, 255, 0.1);
     border-top-color: var(--icon-sidebar-button-active-bg);
 }
+
+.feedback-button {
+    background-color: var(--icon-sidebar-button-active-bg);
+    color: white;
+
+}
+
+.feedback-button:hover {
+    background-color: var(--icon-sidebar-button-hover-bg);
+    color: var(--icon-sidebar-button-hover-text-color);
+}
+
+.tooltip {
+    position: absolute;
+    bottom: -5px;
+    right: 10px;
+    transform: translateX(-50%);
+    background-color: var(--active-element-display-bg);
+    color: var(--control-sidebar-text-color);
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 14px;
+    white-space: nowrap;
+    opacity: 0;
+    animation: fadeIn 0.3s forwards;
+    z-index: 999999999999999999999999999999999999999999999999999;
+}
+
+.tooltip.success {
+    background-color: #4caf50;
+}
+
+.tooltip.dark-mode {
+    background-color: rgba(0, 0, 0, 0.8);
+    color: var(--control-sidebar-text-color);
+}
+
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}

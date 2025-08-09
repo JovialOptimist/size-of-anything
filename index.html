@@ -5,9 +5,22 @@
         <link rel="icon" type="image/svg+xml" href="/arrows.png" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>The Size of Anything</title>
+        <meta name="description"
+            content="Drag and drop any country, city, building, park, or other feature in the entire world!" />
     </head>
     <body>
         <div id="root"></div>
+        
+        <!-- Hidden Netlify Form for pre-rendering -->
+        <form name="feedback" data-netlify="true" hidden>
+            <input type="hidden" name="form-name" value="feedback" />
+            <input type="radio" name="feedbackType" value="major-bug" />
+            <input type="radio" name="feedbackType" value="minor-bug" />
+            <input type="radio" name="feedbackType" value="feature-request" />
+            <textarea name="details"></textarea>
+            <input type="email" name="email" />
+        </form>
+        
         <script type="module" src="/src/main.tsx"></script>
     </body>
 </html>

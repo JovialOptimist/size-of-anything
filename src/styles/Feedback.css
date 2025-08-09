@@ -1,0 +1,278 @@
+/* Feedback Button Styles */
+.feedback-button-container {
+  position: absolute;
+  bottom: 85px;
+  right: 40px;
+  z-index: 1000;
+}
+
+.feedback-button {
+  background-color: white;
+  color: #333;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.feedback-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Modal Backdrop */
+.feedback-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  animation: fadeIn 0.3s ease;
+}
+
+/* Modal Container */
+.feedback-modal {
+  background-color: white;
+  width: 100%;
+  max-width: 600px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  padding: 20px;
+  position: relative;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+}
+
+/* Close Button */
+.feedback-close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.feedback-close-button:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Form Styles */
+.feedback-modal h2 {
+  margin-top: 0;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.feedback-form-group {
+  margin-bottom: 20px;
+}
+
+.feedback-label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #555;
+}
+
+.feedback-radio-group {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.feedback-radio-group label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+
+textarea, input[type="email"] {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+textarea:focus, input[type="email"]:focus {
+  outline: none;
+  border-color: #646cff;
+  box-shadow: 0 0 0 2px rgba(100, 108, 255, 0.2);
+}
+
+/* Required field */
+.required {
+  color: #e53935;
+}
+
+/* Button Styles */
+.feedback-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.feedback-submit-btn, .feedback-cancel-btn {
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: background-color 0.2s ease;
+}
+
+.feedback-submit-btn {
+  background-color: #646cff;
+  color: white;
+}
+
+.feedback-submit-btn:hover:not(:disabled) {
+  background-color: #535bf2;
+}
+
+.feedback-submit-btn:disabled {
+  background-color: #a5a9ff;
+  cursor: not-allowed;
+}
+
+.feedback-cancel-btn {
+  background-color: #f1f1f1;
+  color: #333;
+}
+
+.feedback-cancel-btn:hover {
+  background-color: #e4e4e4;
+}
+
+/* Error message */
+.feedback-error {
+  color: #e53935;
+  margin-bottom: 15px;
+  padding: 8px 12px;
+  background-color: rgba(229, 57, 53, 0.1);
+  border-left: 3px solid #e53935;
+  border-radius: 4px;
+}
+
+/* Success message */
+.feedback-success {
+  color: #43a047;
+  padding: 15px;
+  text-align: center;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .feedback-button {
+    background-color: #333;
+    color: white;
+  }
+  
+  .feedback-modal {
+    background-color: #1f1f1f;
+    color: #f1f1f1;
+  }
+  
+  .feedback-modal h2 {
+    color: #f1f1f1;
+  }
+  
+  .feedback-label {
+    color: #ccc;
+  }
+  
+  textarea, input[type="email"] {
+    background-color: #2d2d2d;
+    border-color: #444;
+    color: #f1f1f1;
+  }
+  
+  textarea:focus, input[type="email"]:focus {
+    border-color: #646cff;
+  }
+  
+  .feedback-cancel-btn {
+    background-color: #383838;
+    color: #f1f1f1;
+  }
+  
+  .feedback-cancel-btn:hover {
+    background-color: #444;
+  }
+  
+  .feedback-close-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Style for users with active dark mode setting */
+:root.dark .feedback-button {
+  background-color: #333;
+  color: white;
+}
+
+:root.dark .feedback-modal {
+  background-color: #1f1f1f;
+  color: #f1f1f1;
+}
+
+:root.dark .feedback-modal h2 {
+  color: #f1f1f1;
+}
+
+:root.dark .feedback-label {
+  color: #ccc;
+}
+
+:root.dark textarea, 
+:root.dark input[type="email"] {
+  background-color: #2d2d2d;
+  border-color: #444;
+  color: #f1f1f1;
+}
+
+:root.dark .feedback-cancel-btn {
+  background-color: #383838;
+  color: #f1f1f1;
+}
+
+:root.dark .feedback-close-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
