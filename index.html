@@ -5,10 +5,23 @@
         <link rel="icon" type="image/svg+xml" href="/size-of-anything/arrows.png" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>The Size of Anything</title>
-      <script type="module" crossorigin src="/size-of-anything/assets/index-DzC3BqoR.js"></script>
-      <link rel="stylesheet" crossorigin href="/size-of-anything/assets/index-J39Oirtu.css">
+        <meta name="description"
+            content="Drag and drop any country, city, building, park, or other feature in the entire world!" />
+      <script type="module" crossorigin src="/size-of-anything/assets/index-DXlaIaJ0.js"></script>
+      <link rel="stylesheet" crossorigin href="/size-of-anything/assets/index-DI0lQMq3.css">
     </head>
     <body>
         <div id="root"></div>
+        
+        <!-- Hidden Netlify Form for pre-rendering -->
+        <form name="feedback" data-netlify="true" hidden>
+            <input type="hidden" name="form-name" value="feedback" />
+            <input type="radio" name="feedbackType" value="major-bug" />
+            <input type="radio" name="feedbackType" value="minor-bug" />
+            <input type="radio" name="feedbackType" value="feature-request" />
+            <textarea name="details"></textarea>
+            <input type="email" name="email" />
+        </form>
+        
     </body>
 </html>
