@@ -3,7 +3,6 @@ import * as turf from "@turf/turf";
 import { 
   transformPolygonCoordinates, 
   convertLatLngsToCoords,
-  projectAndTranslateGeometry,
   hybridProjectAndTranslateGeometry,
   convertCoordsToLatLngs
 } from "./geometryUtils";

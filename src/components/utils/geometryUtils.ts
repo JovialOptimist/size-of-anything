@@ -666,13 +666,6 @@ export function hybridProjectAndTranslateGeometry(
   // Apply horizontal translation
   result.geometry.coordinates = applyHorizontalTranslation(result.geometry.coordinates);
   
-  // Second pass: Apply vertical translation using rotation method
-  // Create a target that only changes latitude
-  const verticalOnlyTarget: [number, number] = [
-    targetCoordinates[0],  // Use the target longitude (already translated horizontally)
-    targetCoordinates[1]   // Use the target latitude
-  ];
-  
   // We need to create a feature that has the horizontally translated coordinates
   // but only apply the vertical rotation component
   const radians = (deg: number) => (deg * Math.PI) / 180;
