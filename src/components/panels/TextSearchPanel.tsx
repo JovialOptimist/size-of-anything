@@ -5,10 +5,9 @@ import { OSM_Type } from "../../state/mapStoreTypes";
 import type { GeoJSONFeature } from "../../state/mapStoreTypes";
 import GeoCandidatePicker from "../map/GeoCandidatePicker";
 import { describeOsmObject } from "../utils/describeOsmObject";
-import fixMultiPolygon from "../utils/fixMultipolygon";
 import { InformationBubble } from "../ui/informationBubble";
 import { DismissableMessage } from "../ui/DismissableMessage";
-import { countCoordinates } from "../utils/geometryUtils";
+import { countCoordinates, fixMultiPolygon } from "../utils/geometryUtils";
 
 export default function TextSearchPanel() {
   const [query, setQuery] = useState("");

@@ -21,7 +21,7 @@ const CustomAreaIcon: React.FC<IconProps> = ({
       strokeLinejoin="round"
       className={className}
     >
-      <polygon points="5,5 19,5 19,12 12,19 5,12" />
+      <polygon points="5,5 19,5 19,19 5,19" />
     </svg>
   );
 };

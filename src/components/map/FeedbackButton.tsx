@@ -1,5 +1,5 @@
 import { useState } from "react";
-import FeedbackModal from "./FeedbackModal";
+import FeedbackModal from "../ui/FeedbackModal";
 import "../../styles/Feedback.css";
 
 export default function FeedbackButton() {

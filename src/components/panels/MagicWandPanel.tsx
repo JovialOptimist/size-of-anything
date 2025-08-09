@@ -2,13 +2,12 @@
 import { useState } from "react";
 import { useMapStore } from "../../state/mapStore";
 import GeoCandidatePicker from "../map/GeoCandidatePicker";
-import fixMultiPolygon from "../utils/fixMultipolygon";
 import { describeOsmObject } from "../utils/describeOsmObject";
 import type { GeoJSONFeature } from "../../state/mapStoreTypes";
 import "../../styles/MagicWandPanel.css";
 import { InformationBubble } from "../ui/informationBubble";
 import { DismissableMessage } from "../ui/DismissableMessage";
-import { countCoordinates } from "../utils/geometryUtils";
+import { countCoordinates, fixMultiPolygon } from "../utils/geometryUtils";
 
 export default function MagicWandPanel() {
   const [candidates, setCandidates] = useState<GeoJSONFeature[]>([]);
