@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import SvgCard from "./SvgCard";
-import { getSvgContent } from "./assetUtils";
+import { getSvgContent } from "../utils/assetUtils";
 
 interface SpecialShapeProps {
   svgUrl: string;

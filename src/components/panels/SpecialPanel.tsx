@@ -1,5 +1,5 @@
 import React from "react";
-import SpecialShape from "../utils/SpecialShape";
+import SpecialShape from "../ui/SpecialShape";
 import blueWhaleSvg from "../../assets/bluewhale.svg";
 import boeingPlane from "../../assets/boeing-737.svg";
 import { InformationBubble } from "../ui/informationBubble";

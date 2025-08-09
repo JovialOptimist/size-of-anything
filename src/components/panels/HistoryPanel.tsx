@@ -1,6 +1,6 @@
 import React from "react";
 import { useMapStore } from "../../state/mapStore";
-import Card from "../utils/Card";
+import Card from "../ui/Card";
 import { InformationBubble } from "../ui/informationBubble";
 import { DismissableMessage } from "../ui/DismissableMessage";
 

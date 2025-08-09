@@ -1,8 +1,8 @@
 import React from "react";
 import { useMapStore } from "../../state/mapStore";
 import type { GeoJSONFeature } from "../../state/mapStoreTypes";
-import { generateRandomColor } from "./colorUtils";
-import { countCoordinates } from "./geometryUtils";
+import { generateRandomColor } from "../utils/colorUtils";
+import { countCoordinates } from "../utils/geometryUtils";
 
 interface CardProps {
   // Either provide a complete GeoJSONFeature

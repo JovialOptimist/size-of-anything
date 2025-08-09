@@ -4,11 +4,11 @@ import {
   extractPathsFromSvg,
   getLongestPath,
   extractViewBox,
-} from "./svgUtils";
+} from "../utils/svgUtils";
 import type { GeoJSONFeature } from "../../state/mapStoreTypes";
 import { useMapStore } from "../../state/mapStore";
 import { svgPathProperties } from "svg-path-properties";
-import { countCoordinates } from "./geometryUtils";
+import { countCoordinates } from "../utils/geometryUtils";
 
 interface SvgCardProps {
   svgUrl: string;
