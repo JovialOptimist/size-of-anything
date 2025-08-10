@@ -104,7 +104,7 @@ export const useMapStore = create<MapState>((set) => ({
       const totalPoints = countCoordinates(coordinates);
 
       // If there are 10,000+ points, simplify the geometry
-      if (totalPoints >= 10000) {
+      if (totalPoints >= 100000) {
         // Turf simplify works on Feature<Polygon|MultiPolygon>
         console.warn(
           `Simplifying geometry with ${totalPoints} points to improve performance`

@@ -1,7 +1,7 @@
 /* Feedback Button Styles */
 .feedback-button-container {
   position: absolute;
-  bottom: 85px;
+  bottom: 105px;
   right: 40px;
   z-index: 1000;
 }
@@ -11,8 +11,8 @@
   color: #333;
   border: none;
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
+  width: 60px;
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
