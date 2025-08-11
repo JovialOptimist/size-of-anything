@@ -22,6 +22,33 @@ import ShareButton from "./ShareButton";
 
 const POLYGON_SIZE_THRESHOLD_PERCENT = 0.01; //TODO: Make this configurable
 
+// improved findUserLocation with timeout + async/await
+async function findUserLocation(timeout = 3000) {
+  const defaultCenter: [number, number] = [47.615, -122.035];
+  try {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+
+    const res = await fetch("https://geolocation-db.com/json/", {
+      signal: controller.signal,
+    });
+    clearTimeout(id);
+
+    if (!res.ok) return defaultCenter;
+    const data = await res.json();
+    if (data?.latitude && data?.longitude) {
+      return [Number(data.latitude), Number(data.longitude)] as [
+        number,
+        number
+      ];
+    }
+    return defaultCenter;
+  } catch (e) {
+    // fallback to default on error/timeout
+    return defaultCenter;
+  }
+}
+
 export default function MapView() {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -59,90 +86,94 @@ export default function MapView() {
 
   const [currentZoomLevel, setCurrentZoomLevel] = useState<number>(13);
 
+  // single init effect — create map once and use the store getState() inside handlers
   useEffect(() => {
-    if (!mapRef.current || mapInstanceRef.current) return;
+    if (!mapRef.current) return;
 
-    // Find user location or default to a central point
-    const defaultCenter: [number, number] = [47.615, -122.035]; // Seattle coordinates
-    // use https://geolocation-db.com/json/
-    fetch("https://geolocation-db.com/json/")
-      .then((response) => response.json())
-      .then((data) => {
-        if (data && data.latitude && data.longitude) {
-          defaultCenter[0] = data.latitude;
-          defaultCenter[1] = data.longitude;
-        }
-      });
+    let cancelled = false;
 
-    // Based on whether or not the control panel is open, we can adjust the default center
-    const isPanelOpen = usePanel.getState().activePanel !== null;
-    if (isPanelOpen) {
-      defaultCenter[1] -= 0.15;
-    }
+    const initMap = async () => {
+      const center = await findUserLocation();
+      console.log(center);
+      if (cancelled) return;
 
-    const map = L.map(mapRef.current, {
-      zoomControl: false,
-      worldCopyJump: false,
-    }).setView(defaultCenter, 11);
-    setCurrentMapCenter(defaultCenter);
-    mapInstanceRef.current = map;
+      // account for the control panel if open
+      const isPanelOpen = usePanel.getState().activePanel !== null;
+      if (isPanelOpen) center[1] -= 0.15;
 
-    L.control.zoom({ position: "bottomright" }).addTo(map);
+      // If map not created yet, create it. Otherwise just setView.
+      if (!mapInstanceRef.current) {
+        const map = L.map(mapRef.current!, {
+          zoomControl: false,
+          worldCopyJump: false,
+        }).setView(center, 11);
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/">OSM</a> contributors',
-      maxNativeZoom: 19,
-      maxZoom: 22,
-      minZoom: 2,
-      noWrap: true,
-      bounds: [
-        [-90, -180],
-        [90, 180],
-      ],
-    }).addTo(map);
+        mapInstanceRef.current = map;
 
-    map.on("click", (e) => {
-      if (isSelectingArea) {
-        setClickedPosition([e.latlng.lat, e.latlng.lng]);
+        L.control.zoom({ position: "bottomright" }).addTo(map);
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution:
+            '&copy; <a href="https://www.openstreetmap.org/">OSM</a> contributors',
+          maxNativeZoom: 19,
+          maxZoom: 22,
+          minZoom: 2,
+          noWrap: true,
+          bounds: [
+            [-90, -180],
+            [90, 180],
+          ],
+        }).addTo(map);
+
+        // use getState() inside handlers so they always see the latest store values
+        map.on("click", (e: L.LeafletMouseEvent) => {
+          const isSelecting = useMapStore.getState().isSelectingArea;
+          if (isSelecting) {
+            setClickedPosition([e.latlng.lat, e.latlng.lng]);
+          }
+          const onMapClick = useMapStore.getState().onMapClick;
+          if (onMapClick) onMapClick(e.latlng);
+          setActiveArea(null);
+        });
+
+        map.on("zoomend", () => {
+          setCurrentZoomLevel(map.getZoom());
+          const c = map.getBounds().pad(0.1).getCenter();
+          setCurrentMapCenter([c.lat, c.lng]);
+          updateMarkers();
+        });
+
+        map.on("moveend", () => {
+          // safer: always update markers on moveend
+          updateMarkers();
+          const c = map.getBounds().pad(0.1).getCenter();
+          setCurrentMapCenter([c.lat, c.lng]);
+        });
+
+        markersLayerGroupRef.current = L.layerGroup().addTo(map);
+        hoveredCandidateLayerRef.current = L.layerGroup().addTo(map);
+
+        (window as any).markersLayerGroupRef = markersLayerGroupRef;
+        (window as any).markerToLayerMap = markerToLayerMap;
+        (window as any).mapInstanceRef = mapInstanceRef;
+      } else {
+        // if map exists, just move it
+        mapInstanceRef.current.setView(center, 11);
       }
-      const onMapClick = useMapStore.getState().onMapClick;
-      if (onMapClick) onMapClick(e.latlng);
+    };
 
-      // When user clicks the map background (not a layer or marker),
-      // the event will reach here since we stop propagation on layers and markers
-      setActiveArea(null);
-      console.log("Map background clicked, clearing active area");
-    });
-
-    map.on("zoomend", () => {
-      setCurrentZoomLevel(map.getZoom());
-
-      const center = map.getBounds().pad(0.1).getCenter(); // Add some padding to the bounds
-      setCurrentMapCenter([center.lat, center.lng]);
-      updateMarkers();
-    });
-
-    map.on("moveend", () => {
-      if (map.getZoom() === currentZoomLevel) updateMarkers();
-      const center = map.getBounds().pad(0.1).getCenter(); // Add some padding to the bounds
-      setCurrentMapCenter([center.lat, center.lng]);
-    });
-
-    markersLayerGroupRef.current = L.layerGroup().addTo(map);
-    hoveredCandidateLayerRef.current = L.layerGroup().addTo(map);
-
-    // Expose the layer refs to the window for access from marker utils and share functionality
-    (window as any).markersLayerGroupRef = markersLayerGroupRef;
-    (window as any).markerToLayerMap = markerToLayerMap;
-    (window as any).mapInstanceRef = mapInstanceRef;
+    initMap();
 
     return () => {
-      map.off();
-      map.remove();
-      mapInstanceRef.current = null;
+      cancelled = true;
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.off();
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
     };
-  }, [isSelectingArea, setClickedPosition]);
+    // we reference stable setters — include them to keep eslint happy
+  }, [setClickedPosition, setActiveArea, setCurrentMapCenter]);
 
   useEffect(() => {
     const map = mapInstanceRef.current;
