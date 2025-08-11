@@ -4,7 +4,7 @@
  * Handles rendering the map, area polygons, and associated interactive elements.
  * Enables functionality for dragging, selecting, and manipulating map areas.
  */
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "../../styles/mapDarkMode.css";
