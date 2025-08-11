@@ -204,30 +204,51 @@ export default function MapView() {
     });
 
     if (geojsonAreas.length > numShapesRef.current) {
-      // Go find the newest shape
-      const newShape = geojsonAreas[geojsonAreas.length - 1];
-      // Create a temporary GeoJSON layer to get bounds
-      const tempLayer = L.geoJSON(newShape.geometry);
-      const bounds = tempLayer.getBounds();
-      if (bounds.isValid()) {
-        //console.log(`MapView: Fitting bounds because new shape added (${geojsonAreas.length} vs old total of ${numShapesRef.current})`);
-        if (usePanel.getState().activePanel) {
+      // Find the newest shape(s) - those that were just added
+      const newShapes = geojsonAreas.slice(numShapesRef.current);
+
+      // Check if any new shape should be brought into focus
+      const shapesToFocus = newShapes.filter(
+        (shape) => shape.properties.shouldBringToFocus === true
+      );
+
+      if (shapesToFocus.length > 0) {
+        // Focus on the first shape that should be brought into focus
+        const shapeToFocus = shapesToFocus[0];
+
+        // Create a temporary GeoJSON layer to get bounds
+        const tempLayer = L.geoJSON(shapeToFocus.geometry);
+        const bounds = tempLayer.getBounds();
+
+        if (bounds.isValid()) {
+          console.log(
+            `MapView: Fitting bounds to shape "${shapeToFocus.properties.name}" (shouldBringToFocus=true)`
+          );
+
+          // Apply appropriate padding based on panel state
+          const paddingOptions = usePanel.getState().activePanel
+            ? { paddingTopLeft: [560, 120], paddingBottomRight: [120, 120] }
+            : { paddingTopLeft: [120, 120], paddingBottomRight: [120, 120] };
+
           map.fitBounds(bounds, {
-            paddingTopLeft: [420, 20], // Updated padding now that map starts after IconSidebar
-            paddingBottomRight: [20, 20],
+            paddingTopLeft: paddingOptions.paddingTopLeft as [number, number],
+            paddingBottomRight: paddingOptions.paddingBottomRight as [
+              number,
+              number
+            ],
           });
         } else {
-          map.fitBounds(bounds, {
-            paddingTopLeft: [20, 20], // Updated padding now that map starts after IconSidebar
-            paddingBottomRight: [20, 20],
-          });
+          console.warn("MapView: Bounds are not valid, skipping fitBounds");
         }
-        console.warn("MapView: Bounds are not valid, skipping fitBounds");
+      } else {
+        // console.log(
+        //   "MapView: New shape added but shouldBringToFocus=false, not fitting bounds"
+        // );
       }
     } else if (geojsonAreas.length < numShapesRef.current) {
-      //console.log("MapView: A shape has been removed, not fitting bounds");
+      console.log("MapView: A shape has been removed, not fitting bounds");
     } else {
-      //console.log("MapView: No new shapes, not fitting bounds");
+      console.log("MapView: No new shapes, not fitting bounds");
     }
     numShapesRef.current = geojsonAreas.length;
   }, [geojsonAreas, activeAreaId]);

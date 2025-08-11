@@ -128,6 +128,10 @@ export const useMapStore = create<MapState>((set) => ({
 
       // Add the color, index, and initialize current coordinates
       const index = state.geojsonAreas.length;
+      
+      // Check if this is a special shape based on osmType
+      const isSpecialShape = feature.properties?.osmType?.includes("special-") || false;
+      
       const featureWithColor = {
         ...feature,
         geometry: {
@@ -140,6 +144,7 @@ export const useMapStore = create<MapState>((set) => ({
           ...feature.properties,
           color,
           index,
+          shouldBringToFocus: !isSpecialShape, // Set focus flag (false for Special shapes)
         },
       };
 
@@ -200,6 +205,7 @@ export const useMapStore = create<MapState>((set) => ({
           ...featureToDuplicate.properties,
           index: newIndex,
           color: generateRandomColor(),
+          shouldBringToFocus: false, // Duplicated areas should not trigger zooming
         },
       };
 

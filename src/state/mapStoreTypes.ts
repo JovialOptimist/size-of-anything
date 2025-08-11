@@ -26,6 +26,7 @@ export interface GeoJSONFeature {
     osmClass: string;
     color?: string; // Add color property
     rotation?: number; // Rotation angle in degrees
+    shouldBringToFocus?: boolean; // Whether this shape should be zoomed to when added
     [key: string]: any;
     whatIsIt: string;
   };
