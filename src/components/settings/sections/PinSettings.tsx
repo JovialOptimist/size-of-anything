@@ -2,7 +2,6 @@ import React from "react";
 import { useSettings } from "../../../state/settingsStore";
 import type { PinMode } from "../../../state/settingsStore";
 import SliderSetting from "../controls/SliderSetting";
-import RadioSetting from "../controls/RadioSetting";
 import { InformationBubble } from "../../ui/informationBubble";
 import { refreshAllMarkers } from "../../utils/markerUtils";
 import DropdownSetting from "../controls/DropdownSetting";
