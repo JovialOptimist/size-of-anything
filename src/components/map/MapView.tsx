@@ -84,8 +84,6 @@ export default function MapView() {
     (state: MapState) => state.magicWandMode
   );
 
-  const [currentZoomLevel, setCurrentZoomLevel] = useState<number>(13);
-
   // single init effect — create map once and use the store getState() inside handlers
   useEffect(() => {
     if (!mapRef.current) return;
@@ -137,7 +135,6 @@ export default function MapView() {
         });
 
         map.on("zoomend", () => {
-          setCurrentZoomLevel(map.getZoom());
           const c = map.getBounds().pad(0.1).getCenter();
           setCurrentMapCenter([c.lat, c.lng]);
           updateMarkers();
