@@ -2,6 +2,7 @@ import L, { LatLng } from "leaflet";
 import * as turf from "@turf/turf";
 import type { Feature, Polygon, MultiPolygon } from "geojson";
 import type { GeoJSONFeature } from "../../state/mapStoreTypes";
+import { useSettings } from "../../state/settingsStore";
 
 /**
  * Geometry Utilities for Size of Anything
@@ -130,17 +131,47 @@ export function findCenterForMarker(polygon: L.Polygon): LatLng {
 export function shouldShowMarkerForPolygon(
   polygon: L.Polygon,
   map: L.Map,
-  threshold: number
+  threshold: number = 1.0 // Default threshold, will be overridden by settings
 ): boolean {
-  const bounds = polygon.getBounds();
-  if (!map.getBounds().intersects(bounds)) return false;
+  try {
+    // Get pin settings from the store
+    const { pinSettings } = useSettings.getState();
 
-  const ne = map.latLngToContainerPoint(bounds.getNorthEast());
-  const sw = map.latLngToContainerPoint(bounds.getSouthWest());
-  const polygonArea = Math.abs(ne.x - sw.x) * Math.abs(ne.y - sw.y);
-  const mapSize = map.getSize();
-  const screenArea = mapSize.x * mapSize.y;
-  return (polygonArea / screenArea) * 100 < threshold;
+    // If pins are disabled, never show markers
+    if (pinSettings.mode === "disabled") return false;
+
+    // If pins are always enabled, always show markers
+    if (pinSettings.mode === "always") return true;
+
+    // For adaptive mode, use the configured threshold
+    const bounds = polygon.getBounds();
+    if (!map.getBounds().intersects(bounds)) return false;
+
+    const ne = map.latLngToContainerPoint(bounds.getNorthEast());
+    const sw = map.latLngToContainerPoint(bounds.getSouthWest());
+    const polygonArea = Math.abs(ne.x - sw.x) * Math.abs(ne.y - sw.y);
+    const mapSize = map.getSize();
+    const screenArea = mapSize.x * mapSize.y;
+
+    // Use the appearance threshold from settings
+    return (polygonArea / screenArea) * 100 < pinSettings.appearanceThreshold;
+  } catch (error) {
+    // Fallback to the provided threshold if settings are not accessible
+    console.warn("Error accessing pin settings, using fallback threshold", error);
+    
+    // Basic bounds check
+    const bounds = polygon.getBounds();
+    if (!map.getBounds().intersects(bounds)) return false;
+
+    // Use the provided threshold parameter as fallback
+    const ne = map.latLngToContainerPoint(bounds.getNorthEast());
+    const sw = map.latLngToContainerPoint(bounds.getSouthWest());
+    const polygonArea = Math.abs(ne.x - sw.x) * Math.abs(ne.y - sw.y);
+    const mapSize = map.getSize();
+    const screenArea = mapSize.x * mapSize.y;
+    
+    return (polygonArea / screenArea) * 100 < threshold;
+  }
 }
 
 export function isValidGeometry(coordinates: any[]): boolean {

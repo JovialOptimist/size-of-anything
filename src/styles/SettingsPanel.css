@@ -1,7 +1,11 @@
 /* Settings Panel Specific Styles */
+@import "./SettingsSection.css";
+@import "./SliderSetting.css";
+
 .settings-panel {
   padding: 1rem;
   max-width: 100%;
+  overflow-y: auto;
 }
 
 /* Additional settings for responsive layout */

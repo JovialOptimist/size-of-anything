@@ -19,8 +19,7 @@ import {
 import { createMarker, attachMarkerDragHandlers } from "../utils/markerUtils";
 import type { GeoJSONFeature, MapState } from "../../state/mapStoreTypes";
 import ShareButton from "./ShareButton";
-
-const POLYGON_SIZE_THRESHOLD_PERCENT = 0.01; //TODO: Make this configurable
+import { setupAutoRefreshOnSettingsChange } from "../utils/markerUtils";
 
 // improved findUserLocation with timeout + async/await
 async function findUserLocation(timeout = 3000) {
@@ -150,9 +149,11 @@ export default function MapView() {
         markersLayerGroupRef.current = L.layerGroup().addTo(map);
         hoveredCandidateLayerRef.current = L.layerGroup().addTo(map);
 
+        // Expose the layer refs and functions to the window for access from marker utils and share functionality
         (window as any).markersLayerGroupRef = markersLayerGroupRef;
         (window as any).markerToLayerMap = markerToLayerMap;
         (window as any).mapInstanceRef = mapInstanceRef;
+        (window as any).updateAllMapMarkers = updateMarkers;
       } else {
         // if map exists, just move it
         mapInstanceRef.current.setView(center, 11);
@@ -281,21 +282,27 @@ export default function MapView() {
     numShapesRef.current = geojsonAreas.length;
   }, [geojsonAreas, activeAreaId]);
 
+  // Update all markers on the map based on current settings and state
+  const POLYGON_SIZE_THRESHOLD_PERCENT = 0.2; // Default threshold for showing markers
   function updateMarkers() {
     const map = mapInstanceRef.current;
     const geoLayerGroup = geoJSONLayerGroupRef.current;
     const markerLayerGroup = markersLayerGroupRef.current;
     if (!map || !geoLayerGroup || !markerLayerGroup) return;
 
+    // Clear existing markers
     markerLayerGroup.clearLayers();
     markerToLayerMap.current.clear();
 
+    // Re-evaluate each polygon for marker display
     geoLayerGroup.eachLayer((layer) => {
       if (!(layer instanceof L.GeoJSON)) return;
 
       layer.eachLayer((poly) => {
         if (!(poly instanceof L.Polygon)) return;
 
+        // Check if this polygon should have a marker based on current settings
+        // Pass POLYGON_SIZE_THRESHOLD_PERCENT as the default threshold (will be overridden by settings)
         if (
           shouldShowMarkerForPolygon(poly, map, POLYGON_SIZE_THRESHOLD_PERCENT)
         ) {
@@ -319,9 +326,21 @@ export default function MapView() {
     });
   }
 
+  // Update markers when geojson areas or active area changes
   useEffect(() => {
     if (mapInstanceRef.current) updateMarkers();
   }, [geojsonAreas, activeAreaId]);
+
+  // Set up auto-refresh of markers when pin settings change
+  useEffect(() => {
+    // Start listening for settings changes
+    const unsubscribe = setupAutoRefreshOnSettingsChange();
+
+    // Clean up subscription on unmount
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, []);
 
   // Effect for handling the hover highlight
   useEffect(() => {

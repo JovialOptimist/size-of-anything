@@ -11,13 +11,76 @@ import {
   hybridProjectAndTranslateGeometry,
   convertCoordsToLatLngs,
 } from "./geometryUtils";
+import { useSettings } from "../../state/settingsStore";
+// Get marker size from settings
+const getMarkerSize = (): number => {
+  const { pinSettings } = useSettings.getState();
+  return pinSettings.size || 1.5;
+};
 
-const markerSize = 1.5; // TODO: make this configurable
+// Add a utility to refresh all markers on settings change
+export function refreshAllMarkers(): void {
+  // Access the map instance and update markers function from the global scope
+  // These are set in MapView.tsx for external access
+  if ((window as any).mapInstanceRef?.current) {
+    // Find the MapView component's updateMarkers function
+    if ((window as any).updateAllMapMarkers) {
+      console.log("Refreshing all map markers due to settings change");
+      (window as any).updateAllMapMarkers();
+    } else {
+      console.warn("updateAllMapMarkers function not available");
+    }
+  } else {
+    console.warn("Map instance not available for refreshing markers");
+  }
+}
+
+// Set up a listener for pin settings changes if needed in other components
+let unsubscribeFromSettings: (() => void) | null = null;
+
+// Call this from a component to start auto-refreshing markers on settings changes
+export function setupAutoRefreshOnSettingsChange(): () => void {
+  if (unsubscribeFromSettings) {
+    // Already subscribed, return the existing unsubscribe function
+    return unsubscribeFromSettings || (() => {});
+  }
+
+  // Import settings without circular dependencies
+
+  // Subscribe to settings changes
+  interface PinSettings {
+    mode: string;
+    size: number;
+    appearanceThreshold: number;
+  }
+
+  interface SettingsState {
+    pinSettings: PinSettings;
+    // Add other settings properties here if needed
+  }
+
+  unsubscribeFromSettings = useSettings.subscribe(
+    (state: SettingsState, prevState: SettingsState): void => {
+      // Only refresh if pin settings changed
+      if (
+        state.pinSettings.mode !== prevState.pinSettings.mode ||
+        state.pinSettings.size !== prevState.pinSettings.size ||
+        state.pinSettings.appearanceThreshold !==
+          prevState.pinSettings.appearanceThreshold
+      ) {
+        refreshAllMarkers();
+      }
+    }
+  );
+
+  return unsubscribeFromSettings || (() => {});
+}
 
 export function createMarker(
   center: L.LatLng,
   color: string = "blue"
 ): L.Marker {
+  const markerSize = getMarkerSize();
   const width = 18 * markerSize;
   const height = 24 * markerSize;
 
