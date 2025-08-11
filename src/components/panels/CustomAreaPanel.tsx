@@ -20,10 +20,10 @@ const CustomAreaPanel: React.FC = () => {
   // Define conversion factors to square meters
   const unitConversions: Record<string, number> = {
     m2: 1,
-    km2: 1000000,
-    acres: 4046.86,
-    hectares: 10000,
-    miles2: 2589988,
+    km2: 1000000, // 1 km² = 1,000,000 m²
+    acres: 4046.85642, // 1 acre = 4046.85642 m²
+    hectares: 10000, // 1 hectare = 10,000 m²
+    miles2: 2589988.110336, // 1 mile² = 2,589,988.110336 m²
   };
 
   // Unit labels for display
