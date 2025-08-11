@@ -211,11 +211,17 @@ export default function MapView() {
       const bounds = tempLayer.getBounds();
       if (bounds.isValid()) {
         //console.log(`MapView: Fitting bounds because new shape added (${geojsonAreas.length} vs old total of ${numShapesRef.current})`);
-        map.fitBounds(bounds, {
-          //   paddingTopLeft: [20, 20], // Updated padding now that map starts after IconSidebar
-          paddingBottomRight: [20, 20],
-        });
-      } else {
+        if (usePanel.getState().activePanel) {
+          map.fitBounds(bounds, {
+            paddingTopLeft: [420, 20], // Updated padding now that map starts after IconSidebar
+            paddingBottomRight: [20, 20],
+          });
+        } else {
+          map.fitBounds(bounds, {
+            paddingTopLeft: [20, 20], // Updated padding now that map starts after IconSidebar
+            paddingBottomRight: [20, 20],
+          });
+        }
         console.warn("MapView: Bounds are not valid, skipping fitBounds");
       }
     } else if (geojsonAreas.length < numShapesRef.current) {

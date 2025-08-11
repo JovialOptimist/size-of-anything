@@ -435,10 +435,6 @@ export function enablePolygonDragging(
               if (!hasMoved) {
                 store.setActiveArea(`geojson-${featureIndex}`);
               }
-
-              console.log(
-                "Updated area position using projection-based transformation"
-              );
             }
           }
         } catch (error) {

@@ -214,10 +214,6 @@ export function attachMarkerDragHandlers(
 
           // Note: We don't set the area as active after a marker drag
           // This keeps the behavior consistent with polygon dragging
-
-          console.log(
-            "Updated area position using projection-based transformation"
-          );
         }
       }
     } catch (error) {
