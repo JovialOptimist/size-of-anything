@@ -100,8 +100,6 @@ export default function MapView() {
         [-90, -180],
         [90, 180],
       ],
-      errorTileUrl:
-        "https://en.wikipedia.org/wiki/Color#/media/File:Colouring_pencils.jpg",
     }).addTo(map);
 
     map.on("click", (e) => {
@@ -214,7 +212,7 @@ export default function MapView() {
       if (bounds.isValid()) {
         //console.log(`MapView: Fitting bounds because new shape added (${geojsonAreas.length} vs old total of ${numShapesRef.current})`);
         map.fitBounds(bounds, {
-          paddingTopLeft: [420, 20],
+          //   paddingTopLeft: [20, 20], // Updated padding now that map starts after IconSidebar
           paddingBottomRight: [20, 20],
         });
       } else {

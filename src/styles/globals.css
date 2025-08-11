@@ -352,7 +352,9 @@ body {
 .map-container, .map-view-container {
     width: 100%;
     height: 100%;
-    position: relative;
+    position: absolute;
+    left: var(--sidebar-width / 2);
+    top: 0;
 }
 
 /* Magic Wand cursor style */
@@ -366,6 +368,7 @@ body {
 #map {
     height: 100%;
     width: 100%;
+    position: relative;
 }
 
 /* Optional: override leaflet default font if desired */
