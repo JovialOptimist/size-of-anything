@@ -270,8 +270,15 @@ const HelpPanel: React.FC = () => {
 
         {expandedSections.donate && (
           <div className="section-content">
-            Well that's mighty kind of you! There will be a link here in the
-            future.
+            Well that's mighty kind of you! If you want to help out, you can
+            check out my{" "}
+            <a
+              href="https://buymeacoffee.com/thesizeofanything"
+              target="_blank"
+            >
+              buy me a coffee page
+            </a>
+            .
           </div>
         )}
       </div>
