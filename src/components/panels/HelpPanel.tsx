@@ -72,7 +72,7 @@ const HelpPanel: React.FC = () => {
             <div className="help-method">
               <div className="method-icon text-search"></div>
               <div className="method-content">
-                <h4>Text Search</h4>
+                <h4>Search</h4>
                 <p>
                   Search for a place by name, like "Washington State" or
                   "Central Park". Also works for addresses.
@@ -105,7 +105,7 @@ const HelpPanel: React.FC = () => {
             <div className="help-method">
               <div className="method-icon special-shapes"></div>
               <div className="method-content">
-                <h4>Special Shapes</h4>
+                <h4>Treasure</h4>
                 <p>
                   Choose from a list of special shapes, like Blue Whales and
                   planes.

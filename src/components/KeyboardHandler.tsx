@@ -63,8 +63,8 @@ export function KeyboardHandler() {
           }
           break;
 
-        case "t":
-        case "T":
+        case "s":
+        case "S":
           // Open TextSearchPanel
           usePanel.getState().togglePanel("text-search");
           event.preventDefault();
@@ -98,8 +98,8 @@ export function KeyboardHandler() {
           event.preventDefault();
           break;
 
-        case "s":
-        case "S":
+        case "t":
+        case "T":
           // Open SpecialPanel
           usePanel.getState().togglePanel("special");
           event.preventDefault();

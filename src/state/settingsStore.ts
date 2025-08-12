@@ -67,7 +67,7 @@ export const useSettings = create<SettingsState>()(
       pinSettings: {
         mode: "adaptive",
         size: 1.5,
-        appearanceThreshold: 0.5,
+        appearanceThreshold: 0.01,
       },
       setPinMode: (mode) =>
         set((state) => ({

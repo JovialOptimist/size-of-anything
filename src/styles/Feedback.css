@@ -7,8 +7,8 @@
 }
 
 .feedback-button {
-  background-color: white;
-  color: #333;
+  background-color: var(--map-button-bg);
+  color: var(--map-button-fg);
   border: none;
   border-radius: 50%;
   width: 60px;
@@ -198,52 +198,9 @@ textarea:focus, input[type="email"]:focus {
   to { transform: translateY(0); opacity: 1; }
 }
 
-/* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-  .feedback-button {
-    background-color: #333;
-    color: white;
-  }
-  
-  .feedback-modal {
-    background-color: #1f1f1f;
-    color: #f1f1f1;
-  }
-  
-  .feedback-modal h2 {
-    color: #f1f1f1;
-  }
-  
-  .feedback-label {
-    color: #ccc;
-  }
-  
-  textarea, input[type="email"] {
-    background-color: #2d2d2d;
-    border-color: #444;
-    color: #f1f1f1;
-  }
-  
-  textarea:focus, input[type="email"]:focus {
-    border-color: #646cff;
-  }
-  
-  .feedback-cancel-btn {
-    background-color: #383838;
-    color: #f1f1f1;
-  }
-  
-  .feedback-cancel-btn:hover {
-    background-color: #444;
-  }
-  
-  .feedback-close-button:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-  }
-}
 
 /* Style for users with active dark mode setting */
-:root.dark .feedback-button {
+.feedback-button.darkMode {
   background-color: #333;
   color: white;
 }

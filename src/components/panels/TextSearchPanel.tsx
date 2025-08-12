@@ -394,7 +394,7 @@ export default function TextSearchPanel() {
     <div className="panel">
       <div className="panel-header">
         <h2>
-          Text Search<span className="keybind-text">T</span>
+          Search<span className="keybind-text">S</span>
         </h2>
         <InformationBubble
           message={
@@ -416,7 +416,7 @@ export default function TextSearchPanel() {
           ref={inputRef}
           type="text"
           value={query}
-          placeholder="Search for a place..."
+          placeholder="Search for anything..."
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
           className={`text-search-input ${magicWandMode ? "disabled" : ""}`}
