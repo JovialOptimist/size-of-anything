@@ -1,11 +1,10 @@
 // src/components/sidebar/IconSidebar.tsx
 /**
  * Left sidebar component that displays tool icons.
- * Provides navigation between different panels like search, magic wand, custom area, etc.
+ * Provides navigation between different panels like search, help, custom area, etc.
  */
 import {
   SearchIcon,
-  MagicWandIcon,
   CustomAreaIcon,
   HistoryIcon,
   HelpIcon,
@@ -17,8 +16,6 @@ import { usePanel } from "../../state/panelStore";
 
 const ICONS = [
   { key: "text-search", label: "Search", icon: <SearchIcon /> },
-  // Magic Wand functionality has been moved into TextSearchPanel
-  { key: "magic-wand", label: "Magic Wand", icon: <MagicWandIcon /> },
   { key: "custom-area", label: "Custom", icon: <CustomAreaIcon /> },
   { key: "special", label: "Treasure", icon: <PuzzlePieceIcon /> },
   { key: "history", label: "History", icon: <HistoryIcon /> },

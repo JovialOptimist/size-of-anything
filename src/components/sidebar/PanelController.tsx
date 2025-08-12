@@ -5,7 +5,6 @@
  */
 import {
   TextSearchPanel,
-  MagicWandPanel,
   CustomAreaPanel,
   SpecialPanel,
   HistoryPanel,
@@ -15,7 +14,6 @@ import {
 
 const PANEL_COMPONENTS = {
   "text-search": TextSearchPanel,
-  "magic-wand": MagicWandPanel,
   "custom-area": CustomAreaPanel,
   special: SpecialPanel,
   history: HistoryPanel,
