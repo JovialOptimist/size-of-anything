@@ -75,7 +75,7 @@ const saveHistory = (history: GeoJSONFeature[]) => {
 };
 
 // Bigger is less detail, smaller is more detail
-const simplificationTolerance = 0.02; // TODO: Make this configurable
+const simplifyToNumPoints = 1000; // TODO: Make this configurable
 
 export const useMapStore = create<MapState>((set) => ({
   areas: [],
@@ -101,37 +101,79 @@ export const useMapStore = create<MapState>((set) => ({
           ? coords.reduce((sum: number, c: any) => sum + countCoordinates(c), 0)
           : 1;
 
-      const totalPoints = countCoordinates(coordinates);
+      function simplifyToTargetPoints(
+        feature: GeoJSONFeature,
+        targetPoints = 1000,
+        maxIterations = 20
+      ): GeoJSONFeature {
+        const totalPoints = countCoordinates(feature.geometry.coordinates);
 
-      // If there are 10,000+ points, simplify the geometry
-      if (totalPoints >= 100000) {
-        // Turf simplify works on Feature<Polygon|MultiPolygon>
-        console.warn(
-          `Simplifying geometry with ${totalPoints} points to improve performance`
-        );
-        const simplified = turf.simplify(feature as any, {
-          tolerance: simplificationTolerance, // Bigger is less detail, smaller is more detail
-          highQuality: false, // Faster but less detail retention
+        if (totalPoints < targetPoints * 5) {
+          console.log(
+            `No need to simplify geometry with ${totalPoints} points`
+          );
+          return feature;
+        }
+
+        console.warn(`Simplifying geometry with ${totalPoints} points`);
+
+        let minTol = 0.001; // Start at no simplification
+        let maxTol = 1; // ~5km in degrees, adjust if needed
+        let bestTol = minTol;
+
+        for (let i = 0; i < maxIterations; i++) {
+          const midTol = (minTol + maxTol) / 2;
+          const simplified = turf.simplify(feature, {
+            tolerance: midTol,
+            highQuality: false,
+            mutate: false,
+          });
+
+          const newCount = countCoordinates(simplified.geometry.coordinates);
+
+          if (newCount > targetPoints) {
+            // Still too many points → increase tolerance
+            minTol = midTol;
+          } else {
+            // Under target → maybe too simplified, try lowering tolerance
+            bestTol = midTol;
+            maxTol = midTol;
+          }
+        }
+
+        const finalFeature = turf.simplify(feature, {
+          tolerance: bestTol,
+          highQuality: false,
           mutate: false,
         });
-        type = simplified.geometry.type;
-        coordinates = simplified.geometry.coordinates;
+
         console.log(
-          `Simplified geometry from ${totalPoints} to ${countCoordinates(
-            coordinates
-          )} points`
+          `Simplified geometry from ${totalPoints} → ${countCoordinates(
+            finalFeature.geometry.coordinates
+          )} points (tolerance=${bestTol})`
         );
+
+        return finalFeature;
       }
+
+      const simplified = simplifyToTargetPoints(
+        feature,
+        simplifyToNumPoints,
+        200
+      );
+      type = simplified.geometry.type;
+      coordinates = simplified.geometry.coordinates;
 
       // Generate a unique color for this feature
       const color = generateRandomColor();
 
       // Add the color, index, and initialize current coordinates
       const index = state.geojsonAreas.length;
-      
+
       // Check if this is a special shape based on osmType
-      const isSpecialShape = feature.properties?.osmType?.includes("special-") || false;
-      
+      const isSpecialShape =
+        feature.properties?.osmType?.includes("special-") || false;
+
       const featureWithColor = {
         ...feature,
         geometry: {
