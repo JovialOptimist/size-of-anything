@@ -1,5 +1,5 @@
 export { default as CustomAreaPanel } from "./CustomAreaPanel";
-export { default as MagicWandPanel } from "./MagicWandPanel";
+// MagicWand functionality has been moved to TextSearchPanel
 export { default as SpecialPanel } from "./SpecialPanel";
 export { default as TextSearchPanel } from "./TextSearchPanel";
 export { default as HistoryPanel } from "./HistoryPanel";

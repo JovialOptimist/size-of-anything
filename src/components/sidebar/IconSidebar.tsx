@@ -17,7 +17,7 @@ import { usePanel } from "../../state/panelStore";
 
 const ICONS = [
   { key: "text-search", label: "Search", icon: <SearchIcon /> },
-  { key: "magic-wand", label: "Magic Wand", icon: <MagicWandIcon /> },
+  // Magic Wand functionality has been moved into TextSearchPanel
   { key: "custom-area", label: "Custom Area", icon: <CustomAreaIcon /> },
   { key: "special", label: "Special", icon: <PuzzlePieceIcon /> },
   { key: "history", label: "History", icon: <HistoryIcon /> },

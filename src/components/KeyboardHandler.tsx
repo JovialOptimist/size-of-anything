@@ -72,8 +72,22 @@ export function KeyboardHandler() {
 
         case "w":
         case "W":
-          // Open MagicWandPanel
-          usePanel.getState().togglePanel("magic-wand");
+          // Toggle magic wand mode in TextSearchPanel
+          usePanel.getState().setActivePanel("text-search");
+          // If TextSearchPanel is already open, toggle magic wand mode
+          if (activePanel === "text-search") {
+            const mapStore = useMapStore.getState();
+            if (mapStore.magicWandMode) {
+              // Deactivate magic wand
+              mapStore.setMagicWandMode(false);
+              mapStore.setOnMapClick(null);
+              mapStore.setHoveredCandidate(null);
+            } else {
+              // Activate magic wand
+              mapStore.setMagicWandMode(true);
+              // We can't directly set the click handler here as that's managed by TextSearchPanel
+            }
+          }
           event.preventDefault();
           break;
 
