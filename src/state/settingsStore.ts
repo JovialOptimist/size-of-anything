@@ -23,6 +23,7 @@ export interface SettingsState {
   // Theme settings
   theme: ThemeMode;
   setTheme: (theme: ThemeMode) => void;
+  getSystemPreference: () => "light" | "dark";
 
   // Pin/marker settings
   pinSettings: PinSettings;
@@ -31,7 +32,7 @@ export interface SettingsState {
 }
 
 // Check for system preference
-const getSystemPreference = (): "light" | "dark" => {
+export const getSystemPreference = (): "light" | "dark" => {
   if (typeof window === "undefined") return "light";
   return window.matchMedia("(prefers-color-scheme: dark)").matches
     ? "dark"
@@ -55,12 +56,18 @@ export const useSettings = create<SettingsState>()(
         localStorage.setItem("theme", theme);
         set({ theme });
       },
+      getSystemPreference: () => {
+        if (typeof window === "undefined") return "light";
+        return window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light";
+      },
 
       // Pin settings with defaults
       pinSettings: {
         mode: "adaptive",
         size: 1.5,
-        appearanceThreshold: 1.0,
+        appearanceThreshold: 0.5,
       },
       setPinMode: (mode) =>
         set((state) => ({

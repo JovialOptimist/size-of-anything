@@ -435,7 +435,13 @@ export default function TextSearchPanel() {
             height="24"
             viewBox="0 0 24 24"
             fill="none"
-            stroke={useSettings.getState().theme === "dark" ? "#fff" : "#222"}
+            stroke={
+              useSettings.getState().theme === "dark" ||
+              (useSettings.getState().theme === "system" &&
+                useSettings.getState().getSystemPreference() === "dark")
+                ? "#fff"
+                : "#222"
+            }
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
