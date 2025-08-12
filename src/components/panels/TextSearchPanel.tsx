@@ -10,6 +10,7 @@ import { DismissableMessage } from "../ui/DismissableMessage";
 import { countCoordinates, fixMultiPolygon } from "../utils/geometryUtils";
 import "../../styles/MagicWandPanel.css";
 import "../../styles/TextSearchPanel.css";
+import { useSettings } from "../../state/settingsStore";
 
 export default function TextSearchPanel() {
   const [query, setQuery] = useState("");
@@ -434,7 +435,7 @@ export default function TextSearchPanel() {
             height="24"
             viewBox="0 0 24 24"
             fill="none"
-            stroke={"white"}
+            stroke={useSettings.getState().theme === "dark" ? "#fff" : "#222"}
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -443,7 +444,6 @@ export default function TextSearchPanel() {
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
         </button>
-
         {/* Magic wand button */}
         <button
           onClick={magicWandMode ? deactivateWand : activateWand}
