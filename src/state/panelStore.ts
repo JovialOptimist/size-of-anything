@@ -4,6 +4,7 @@
  * Controls which panel is currently active and handles panel toggling.
  */
 import { create } from "zustand";
+import { isMobileDevice } from "../utils/deviceDetection";
 
 interface PanelState {
   activePanel: string | null;
@@ -15,7 +16,8 @@ interface PanelState {
  * Zustand store for managing active panel state
  */
 export const usePanel = create<PanelState>((set) => ({
-  activePanel: "text-search", // Start with text-search panel open
+  // Start with text-search panel open, unless we're on mobile
+  activePanel: isMobileDevice() ? null : "text-search",
   setActivePanel: (panel) => set({ activePanel: panel }),
   togglePanel: (panel) =>
     set((state) => ({

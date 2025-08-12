@@ -14,7 +14,6 @@ import {
 
 const PANEL_COMPONENTS = {
   "text-search": TextSearchPanel,
-  // Magic wand functionality has been moved into TextSearchPanel
   "custom-area": CustomAreaPanel,
   special: SpecialPanel,
   history: HistoryPanel,

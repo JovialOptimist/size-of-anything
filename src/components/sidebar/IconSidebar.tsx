@@ -5,7 +5,6 @@
  */
 import {
   SearchIcon,
-  MagicWandIcon,
   CustomAreaIcon,
   HistoryIcon,
   HelpIcon,

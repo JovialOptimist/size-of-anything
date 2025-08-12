@@ -30,7 +30,6 @@ export default function ControlSidebar() {
             panelKey={
               activePanel as
                 | "text-search"
-                | "magic-wand"
                 | "custom-area"
                 | "history"
                 | "special"

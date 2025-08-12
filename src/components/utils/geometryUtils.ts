@@ -128,6 +128,9 @@ export function findCenterForMarker(polygon: L.Polygon): LatLng {
   }
 }
 
+// Import device detection utility
+import { isMobileDevice } from "../../utils/deviceDetection";
+
 export function shouldShowMarkerForPolygon(
   polygon: L.Polygon,
   map: L.Map,
@@ -136,9 +139,15 @@ export function shouldShowMarkerForPolygon(
   try {
     // Get pin settings from the store
     const { pinSettings } = useSettings.getState();
+    
+    // Check if this is a mobile device
+    const isMobile = isMobileDevice();
 
-    // If pins are disabled, never show markers
+    // If pins are disabled, never show markers (even on mobile)
     if (pinSettings.mode === "disabled") return false;
+
+    // On mobile devices, always show markers regardless of other settings
+    if (isMobile) return true;
 
     // If pins are always enabled, always show markers
     if (pinSettings.mode === "always") return true;
