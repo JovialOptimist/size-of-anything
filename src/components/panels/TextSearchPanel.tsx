@@ -114,152 +114,134 @@ export default function TextSearchPanel() {
    * 1. Use Overpass API to identify candidates
    * 2. Use Nominatim API to get proper GeoJSON for those candidates
    */
+  /**
+   * Fetch both nearby features and containing areas using a two-step approach:
+   * 1. Use Overpass API to identify candidates
+   * 2. Use Nominatim API to get proper GeoJSON for those candidates
+   */
   const fetchFeaturesUsingOverpass = async (lat: number, lng: number) => {
     try {
-      const distance = 25; // meters
-      const overpassUrl = "https://overpass-api.de/api/interpreter";
-
-      // Step 1: Get all candidates near the click point
+      // Construct the Overpass QL query to get both nearby features and containing areas
+      // This uses both around() for nearby features and is_in() for containing areas
+      const distance = 25; // meters radius for nearby features
       const query = `
-      [out:json][timeout:25];
-      (
-        is_in(${lat}, ${lng});
-        way(around:${distance},${lat},${lng});
-        relation(around:${distance},${lat},${lng});
-      );
-      out body;
-      (._;>;);
-      out geom;
-    `;
+                [out:json][timeout:25];
+                (
+                    is_in(${lat}, ${lng});
+                    way(around:${distance},${lat},${lng});
+                    relation(around:${distance},${lat},${lng});
+                );
+                out body;
+                `;
+      console.log("Overpass API query:", query);
 
+      const overpassUrl = "https://overpass-api.de/api/interpreter";
       const response = await fetch(overpassUrl, {
         method: "POST",
         body: `data=${encodeURIComponent(query)}`,
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
       });
 
-      if (!response.ok)
+      if (!response.ok) {
         throw new Error(`Overpass API error: ${response.statusText}`);
+      }
 
       const data = await response.json();
       console.log("Overpass API response:", data);
 
-      // Filter out ways & relations only
+      // Filter out valid candidates (ways and relations only)
       const candidates = data.elements.filter(
-        (el: any) => (el.type === "way" || el.type === "relation") && el.tags
+        (element: any) =>
+          (element.type === "way" || element.type === "relation") &&
+          element.tags
       );
-      console.log("Overpass API candidates:", candidates);
 
-      if (candidates.length === 0) return [];
+      // If no candidates found, return empty array
+      if (candidates.length === 0) {
+        return [];
+      }
 
-      // Step 2: Try Nominatim for nice metadata + GeoJSON
-      const nominatimIds = candidates.map(
-        (el: any) => `${el.type[0].toUpperCase()}${el.id}`
-      );
+      // Step 2: Use Nominatim to get proper GeoJSON for each candidate
+      const nominatimIds = candidates.map((element: any) => {
+        const prefix = element.type === "way" ? "W" : "R";
+        return `${prefix}${element.id}`;
+      });
+
+      // Split into batches of 50 as Nominatim has a limit
       const batchSize = 50;
-      const features: GeoJSONFeature[] = [];
+      const batches = [];
 
       for (let i = 0; i < nominatimIds.length; i += batchSize) {
-        const batch = nominatimIds.slice(i, i + batchSize);
+        batches.push(nominatimIds.slice(i, i + batchSize));
+      }
+      console.log("Nominatim batches:", batches);
+
+      // Process each batch and combine results
+      const features: GeoJSONFeature[] = [];
+
+      for (const batch of batches) {
         const nominatimUrl = `https://nominatim.openstreetmap.org/lookup?osm_ids=${batch.join(
           ","
         )}&format=json&polygon_geojson=1&extratags=1`;
 
-        const nomResp = await fetch(nominatimUrl);
-        if (!nomResp.ok) continue;
+        const nominatimResponse = await fetch(nominatimUrl);
 
-        const nomData = await nomResp.json();
-
-        // Track IDs that came back from Nominatim
-        const foundIds = new Set(
-          nomData.map((p: any) => `${p.osm_type[0].toUpperCase()}${p.osm_id}`)
-        );
-
-        // Convert Nominatim results to features
-        features.push(
-          ...nomData
-            .filter(
-              (p: any) =>
-                p.geojson &&
-                (p.geojson.type === "Polygon" ||
-                  p.geojson.type === "MultiPolygon")
-            )
-            .map((p: any) =>
-              fixMultiPolygon({
-                type: "Feature",
-                geometry: {
-                  type: p.geojson.type,
-                  coordinates: p.geojson.coordinates,
-                  coordinateCount: countCoordinates(p.geojson.coordinates),
-                },
-                properties: {
-                  name: p.display_name,
-                  osmType: p.osm_type,
-                  osmId: p.osm_id.toString(),
-                  osmClass: p.class,
-                  whatIsIt: describeOsmObject(p),
-                  source:
-                    p.address &&
-                    (p.address.city || p.address.county || p.address.state)
-                      ? "containing"
-                      : "nearby",
-                  adminLevel: p.extratags?.admin_level
-                    ? parseInt(p.extratags.admin_level, 10)
-                    : 0,
-                  tags: p.extratags || {},
-                },
-              })
-            )
-        );
-
-        // Step 3: Fallback for any IDs not found in Nominatim
-        const missingIds = batch.filter((id: string) => !foundIds.has(id));
-        if (missingIds.length > 0) {
-          for (const missingId of missingIds) {
-            const typeLetter = missingId[0];
-            const osmType = typeLetter === "W" ? "way" : "relation";
-            const osmId = missingId.slice(1);
-
-            // Small Overpass query for just this object
-            const objQuery = `
-            [out:json][timeout:25];
-            ${osmType}(${osmId});
-            (._;>;);
-            out geom;
-          `;
-            const objResp = await fetch(overpassUrl, {
-              method: "POST",
-              body: `data=${encodeURIComponent(objQuery)}`,
-              headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            });
-            if (!objResp.ok) continue;
-
-            const objData = await objResp.json();
-            const obj = objData.elements.find(
-              (el: any) => el.type === osmType && el.id == osmId
-            );
-            if (obj && obj.geometry) {
-              features.push(
-                fixMultiPolygon({
-                  type: "Feature",
-                  geometry: convertOverpassGeometryToGeoJSON(obj.geometry),
-                  properties: {
-                    name: obj.tags.name || "(unnamed)",
-                    osmType: typeLetter,
-                    osmId: osmId,
-                    osmClass: obj.class,
-                    whatIsIt: describeOsmObject(obj),
-                    source: "nearby",
-                    adminLevel: obj.tags.admin_level
-                      ? parseInt(obj.tags.admin_level, 10)
-                      : 0,
-                    tags: obj.tags,
-                  },
-                })
-              );
-            }
-          }
+        if (!nominatimResponse.ok) {
+          console.warn(
+            `Nominatim API error for batch: ${nominatimResponse.statusText}`
+          );
+          continue;
         }
+
+        const nominatimData = await nominatimResponse.json();
+        console.log("Nominatim data:", nominatimData);
+
+        // Process each Nominatim result into a GeoJSON feature
+        const batchFeatures = nominatimData
+          .filter(
+            (place: any) =>
+              // Ensure it has valid GeoJSON
+              place.geojson &&
+              (place.geojson.type === "Polygon" ||
+                place.geojson.type === "MultiPolygon")
+          )
+          .map((place: any) => {
+            // Create a GeoJSON feature similar to TextSearchPanel
+            const feature: GeoJSONFeature = {
+              type: "Feature" as "Feature",
+              geometry: {
+                type:
+                  place.geojson.type === "Polygon" ? "Polygon" : "MultiPolygon",
+                coordinates: place.geojson.coordinates,
+                coordinateCount: countCoordinates(place.geojson.coordinates),
+              },
+              properties: {
+                name: place.display_name,
+                osmType: place.osm_type,
+                osmId: place.osm_id.toString(),
+                osmClass: place.class,
+                whatIsIt: describeOsmObject(place),
+                // Determine if this is nearby or containing (similar logic as before)
+                source:
+                  place.address &&
+                  (place.address.city ||
+                    place.address.county ||
+                    place.address.state)
+                    ? "containing"
+                    : "nearby",
+                adminLevel: place.extratags?.admin_level
+                  ? parseInt(place.extratags.admin_level, 10)
+                  : 0,
+                tags: place.extratags || {},
+              },
+            };
+
+            return fixMultiPolygon(feature);
+          });
+
+        features.push(...batchFeatures);
       }
 
       return features;
@@ -268,22 +250,6 @@ export default function TextSearchPanel() {
       throw error;
     }
   };
-
-  /**
-   * Helper: Convert Overpass geometry array to GeoJSON polygon
-   */
-  function convertOverpassGeometryToGeoJSON(geometry: any[]): {
-    type: "Polygon";
-    coordinates: any;
-    coordinateCount: number;
-  } {
-    const coords = geometry.map((pt) => [pt.lon, pt.lat]);
-    return {
-      type: "Polygon",
-      coordinates: [coords],
-      coordinateCount: countCoordinates([coords]),
-    };
-  }
 
   /**
    * Sort and organize features by relevance
