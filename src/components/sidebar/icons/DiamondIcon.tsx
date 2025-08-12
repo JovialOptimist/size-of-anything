@@ -5,7 +5,7 @@ interface IconProps {
   className?: string;
 }
 
-const PuzzlePieceIcon: React.FC<IconProps> = ({
+const DiamondIcon: React.FC<IconProps> = ({
   active = false,
   className = "",
 }) => {
@@ -21,7 +21,7 @@ const PuzzlePieceIcon: React.FC<IconProps> = ({
       strokeLinejoin="round"
       className={className}
     >
-      {/* Puzzle piece outline */}
+      {/* Diamond outline */}
       <path d="M62,18 L31,60 L0,18 L10.7,0 L51.3,0 L62,18 Z" />
       <path d="M0,18 L62,18" />
       <path d="M21.5,0 L15.5,18 L31,58.8" />
@@ -30,4 +30,4 @@ const PuzzlePieceIcon: React.FC<IconProps> = ({
   );
 };
 
-export default PuzzlePieceIcon;
+export default DiamondIcon;

@@ -39,7 +39,7 @@ const SpecialPanel: React.FC = () => {
         <InformationBubble message="These are special shapes that you can add to the map. If you have suggestions for a special shape you'd like to see added to the Size of Anything, use the Feature Request option!" />
       </div>
       <div className="panel-description">
-        Notable shapes and areas that you've unlocked so far.
+        Cool shapes and areas that you've unlocked so far!
       </div>
 
       <div className="special-areas-list">
@@ -56,8 +56,7 @@ const SpecialPanel: React.FC = () => {
       </div>
       <DismissableMessage messageId="special-area-center-info">
         <p>
-          The special area will be placed at the center of your current map
-          view.
+          The new area will be placed at the center of your current map view.
         </p>
       </DismissableMessage>
     </div>

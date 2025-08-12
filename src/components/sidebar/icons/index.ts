@@ -5,4 +5,4 @@ export { default as CustomAreaIcon } from "./CustomAreaIcon";
 export { default as HistoryIcon } from "./HistoryIcon";
 export { default as HelpIcon } from "./HelpIcon";
 export { default as SettingsIcon } from "./SettingsIcon";
-export { default as PuzzlePieceIcon } from "./PuzzlePieceIcon";
+export { default as PuzzlePieceIcon } from "./DiamondIcon";
