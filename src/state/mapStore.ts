@@ -3,6 +3,7 @@ import { create } from "zustand";
 import { generateRandomColor } from "../components/utils/colorUtils";
 import type { MapArea, GeoJSONFeature, MapState } from "./mapStoreTypes";
 import * as turf from "@turf/turf"; // TODO: what does this import other than simplify?
+import { useSettings } from "./settingsStore";
 
 /**
  * Zustand store for managing map areas and active area
@@ -75,7 +76,24 @@ const saveHistory = (history: GeoJSONFeature[]) => {
 };
 
 // Bigger is less detail, smaller is more detail
-const simplifyToNumPoints = 1000; // TODO: Make this configurable
+// Function to get the current simplify points setting from the SettingsStore
+const getSimplifyToNumPoints = (): number => {
+  const { outlineQuality } = useSettings.getState();
+
+  // Map the quality setting to an actual number of points
+  switch (outlineQuality) {
+    case "perfect": // Perfect quality
+      return -1;
+    case "great": // Great quality
+      return 5000;
+    case "good": // Good quality
+      return 1000;
+    case "low": // Low quality
+      return 200;
+    default:
+      return 1000; // Default to good quality
+  }
+};
 
 export const useMapStore = create<MapState>((set) => ({
   areas: [],
@@ -156,13 +174,19 @@ export const useMapStore = create<MapState>((set) => ({
         return finalFeature;
       }
 
-      const simplified = simplifyToTargetPoints(
-        feature,
-        simplifyToNumPoints,
-        200
-      );
-      type = simplified.geometry.type;
-      coordinates = simplified.geometry.coordinates;
+      const targetPoints = getSimplifyToNumPoints();
+      if (targetPoints == -1) {
+        type = feature.geometry.type;
+        coordinates = feature.geometry.coordinates;
+      } else {
+        const simplified = simplifyToTargetPoints(
+          feature,
+          getSimplifyToNumPoints(),
+          200
+        );
+        type = simplified.geometry.type;
+        coordinates = simplified.geometry.coordinates;
+      }
 
       // Generate a unique color for this feature
       const color = generateRandomColor();

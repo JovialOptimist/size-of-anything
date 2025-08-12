@@ -181,6 +181,7 @@ const countryToContinentMap: Record<string, string> = {
   "dominican republic": "North America",
   "el salvador": "North America",
   grenada: "North America",
+  greenland: "North America",
   guatemala: "North America",
   haiti: "North America",
   honduras: "North America",

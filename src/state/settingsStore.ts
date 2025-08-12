@@ -18,6 +18,9 @@ export interface PinSettings {
   appearanceThreshold: number;
 }
 
+// Outline quality setting (for shape simplification)
+export type OutlineQuality = "perfect" | "great" | "good" | "low";
+
 // Complete settings state interface
 export interface SettingsState {
   // Theme settings
@@ -29,6 +32,10 @@ export interface SettingsState {
   pinSettings: PinSettings;
   setPinMode: (mode: PinMode) => void;
   setPinSize: (size: number) => void;
+
+  // Map display settings
+  outlineQuality: OutlineQuality;
+  setOutlineQuality: (quality: OutlineQuality) => void;
 }
 
 // Check for system preference
@@ -77,6 +84,10 @@ export const useSettings = create<SettingsState>()(
         set((state) => ({
           pinSettings: { ...state.pinSettings, size },
         })),
+
+      // Map display settings
+      outlineQuality: "great", // Default to "Great" quality
+      setOutlineQuality: (quality) => set({ outlineQuality: quality }),
     }),
     {
       name: "size-of-anything-settings",
@@ -84,6 +95,7 @@ export const useSettings = create<SettingsState>()(
       partialize: (state) => ({
         theme: state.theme,
         pinSettings: state.pinSettings,
+        outlineQuality: state.outlineQuality,
       }),
     }
   )
