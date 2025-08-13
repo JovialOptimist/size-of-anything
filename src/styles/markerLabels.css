@@ -14,7 +14,7 @@
   transform: translateY(-50%);
   color: white;
   padding: 4px 8px;
-  font-size: 12px;
+  font-size: 14px;
   white-space: nowrap;
   margin-left: 0px;
   font-weight: bold;
@@ -28,6 +28,7 @@
   max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
+letter-spacing: 1px;
 }
 
 /* Style for shape names when displayed in the center */
@@ -57,4 +58,5 @@
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
+  letter-spacing: 1px;
 }

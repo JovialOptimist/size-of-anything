@@ -32,7 +32,7 @@ const MapSettings: React.FC = () => {
         onChange={(value) => setOutlineQuality(value as typeof outlineQuality)}
         options={[
           { label: "Perfect", value: "perfect" },
-          { label: "Great", value: "great" },
+          { label: "Great (recommended)", value: "great" },
           { label: "Good", value: "good" },
           { label: "Low", value: "low" },
         ]}
