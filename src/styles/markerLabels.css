@@ -38,19 +38,23 @@
 .shape-center-name-text {
   color: white;
   padding: 4px 8px;
+  top: -16px;
   font-size: 14px;
   text-align: center;
   white-space: nowrap;
   max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
-font-weight: bold;
-    color: #fff;
-    text-shadow:
-        1px 1px 0 #000,
-        -1px 1px 0 #000,
-        -1px -1px 0 #000,
-        1px -1px 0 #000;
-  margin: 0 auto;
-  display: inline-block;
+  font-weight: bold;
+  color: #fff;
+  text-shadow:
+      1px 1px 0 #000,
+      -1px 1px 0 #000,
+      -1px -1px 0 #000,
+      1px -1px 0 #000;
+  margin: 0;
+  display: block;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
 }
