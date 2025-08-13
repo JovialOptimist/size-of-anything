@@ -1,69 +1,18 @@
-# React + TypeScript + Vite
+# The Size of Anything
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The Size of Anything is an interactive, educational web application that allows users to click, drag, and drop any area in the real world (and a few that aren't). For example, a user could compare the sizes of Moscow and London. Another user could try to fit Disneyland into their city's biggest park. And for those that want a bit more silliness, users can generate special shapes called Treasures. These are shapes that don't truly "exist" in the real world in the sense that a building or country border does, but include more "instantiatable" objects like whales, airplanes, and (soon) football fields.
 
-Currently, two official plugins are available:
+## Instructions to Build and Run
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Motivation
 
-## Expanding the ESLint configuration
+A couple of months ago now, I was wondering to myself, "how big is a Costco? But like actually? Is it 100 swimming pools? 10 houses?" So I did a bit of measuring in Google Maps and came to the conclusion that Costco is about 168,000 square feet. But I couldn't help but feel disappointed by that number. How big is that, really? I just had no idea. But then I was messing around with a site called thetruesize.com. It allows users to drag and drop countries and US states - explicitly designed for educational use by teachers, and particularly concerned with the size of Africa (usually shrunken by most map projections). And then I realized that I could make thetreusize for anything! Using OpenStreetMap data, I could query for literally anything in the world, get their coordinates, and just drag and drop entire buildings, or parks, or forests! And so, the Size of Anything was born.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Contact
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+This project was written and developed by Jac Chambers (that's me!), a student at the University of Washington - Bothell, for my capstone course. Inquiries can be sent to my email: contact@jachambers.xyz.
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+## Known Issues
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- Duplicate is really buggy when you remove shapes from the map, because duplicated shapes will share IDs.
+- Mobile technically is a valid platform, but it's not great. There should be a hamburger menu for options at the very least.
