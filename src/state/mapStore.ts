@@ -381,6 +381,31 @@ export const useMapStore = create<MapState>((set) => ({
       return { geojsonAreas: updatedAreas };
     });
   },
+  
+  updateElementName: (id, name) => {
+    set((state) => {
+      const idNumber = id.replace("geojson-", "");
+      const index = parseInt(idNumber, 10);
+
+      // Find the element by index property instead of array position
+      const featureIndex = state.geojsonAreas.findIndex(
+        (feature) => feature.properties.index === index
+      );
+
+      if (featureIndex < 0) return state;
+
+      const updatedAreas = [...state.geojsonAreas];
+      updatedAreas[featureIndex] = {
+        ...updatedAreas[featureIndex],
+        properties: {
+          ...updatedAreas[featureIndex].properties,
+          name,
+        },
+      };
+
+      return { geojsonAreas: updatedAreas };
+    });
+  },
 
   updateCurrentCoordinates: (id, coordinates) => {
     set((state) => {

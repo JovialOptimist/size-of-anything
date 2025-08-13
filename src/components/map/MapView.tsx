@@ -9,8 +9,10 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "../../styles/mapDarkMode.css";
 import "../../styles/ShareButton.css";
+import "../../styles/markerLabels.css";
 import { useMapStore } from "../../state/mapStore";
 import { usePanel } from "../../state/panelStore";
+import { useSettings } from "../../state/settingsStore";
 import {
   enablePolygonDragging,
   shouldShowMarkerForPolygon,
@@ -55,6 +57,7 @@ export default function MapView() {
   const markersLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const hoveredCandidateLayerRef = useRef<L.LayerGroup | null>(null);
   const markerToLayerMap = useRef<Map<L.Marker, L.GeoJSON>>(new Map());
+  const labelToLayerMap = useRef<Map<L.Marker, L.GeoJSON>>(new Map());
   const numShapesRef = useRef(0);
 
   const geojsonAreas: GeoJSONFeature[] = useMapStore(
@@ -282,6 +285,58 @@ export default function MapView() {
     numShapesRef.current = geojsonAreas.length;
   }, [geojsonAreas, activeAreaId]);
 
+  // Function to update a specific polygon's marker or centered label
+  function updatePolygonLabels(polygon: L.Polygon, layer: L.GeoJSON) {
+    const map = mapInstanceRef.current;
+    const markerLayerGroup = markersLayerGroupRef.current;
+    if (!map || !markerLayerGroup) return;
+    
+    // Get current pin settings
+    const { pinSettings } = useSettings.getState();
+    
+    // Calculate the new center position
+    const centerPosition = findCenterForMarker(polygon);
+    
+    // Get the shape's name
+    let shapeName = "Unnamed Area";
+    try {
+      const feature = (layer as any).feature;
+      if (feature && feature.properties && feature.properties.name) {
+        shapeName = feature.properties.name;
+      }
+    } catch (error) {
+      console.error("Error accessing shape name:", error);
+    }
+    
+    // Format name for display
+    const displayName = shapeName.includes(',') ? shapeName.split(',')[0] : shapeName;
+    
+    // Check if this polygon has a marker
+    let foundMarker = false;
+    markerToLayerMap.current.forEach((markerLayer, marker) => {
+      if (markerLayer === layer) {
+        // Update existing marker position
+        marker.setLatLng(centerPosition);
+        foundMarker = true;
+      }
+    });
+    
+    // Check if this polygon has a centered label
+    labelToLayerMap.current.forEach((labelLayer, label) => {
+      if (labelLayer === layer) {
+        // Update existing centered label position
+        label.setLatLng(centerPosition);
+        foundMarker = true;
+      }
+    });
+    
+    // If no marker or label was found and updated, this might be during initial
+    // drag before updateMarkers has run, so we don't need to do anything
+  }
+  
+  // Expose the function globally for access from geometryUtils
+  (window as any).updatePolygonLabels = updatePolygonLabels;
+
   // Update all markers on the map based on current settings and state
   const POLYGON_SIZE_THRESHOLD_PERCENT = 0.2; // Default threshold for showing markers
   function updateMarkers() {
@@ -289,10 +344,14 @@ export default function MapView() {
     const geoLayerGroup = geoJSONLayerGroupRef.current;
     const markerLayerGroup = markersLayerGroupRef.current;
     if (!map || !geoLayerGroup || !markerLayerGroup) return;
+    
+    // Get current pin settings
+    const { pinSettings } = useSettings.getState();
 
-    // Clear existing markers
+    // Clear existing markers and labels
     markerLayerGroup.clearLayers();
     markerToLayerMap.current.clear();
+    labelToLayerMap.current.clear();
 
     // Re-evaluate each polygon for marker display
     geoLayerGroup.eachLayer((layer) => {
@@ -300,6 +359,30 @@ export default function MapView() {
 
       layer.eachLayer((poly) => {
         if (!(poly instanceof L.Polygon)) return;
+
+        // Get the shape's name if available
+        let shapeName = "Unnamed Area";
+        
+        try {
+          // Access feature properties with a more direct approach
+          const feature = (layer as any).feature;
+          if (feature && typeof feature === 'object') {
+            const properties = feature.properties;
+            if (properties && properties.name) {
+              shapeName = properties.name;
+              console.log("Found shape name:", shapeName);
+            } else {
+              console.log("No name in properties:", properties);
+            }
+          } else {
+            console.log("No valid feature on layer");
+          }
+        } catch (error) {
+          console.error("Error accessing shape name:", error);
+        }
+
+        // Get the position for the marker/label
+        const centerPosition = findCenterForMarker(poly);
 
         // Check if this polygon should have a marker based on current settings
         // Pass POLYGON_SIZE_THRESHOLD_PERCENT as the default threshold (will be overridden by settings)
@@ -309,11 +392,9 @@ export default function MapView() {
           // Get the color directly from the polygon's style options
           const polygonColor = poly.options.color || "blue";
 
-          // Get the exact center of the polygon for the marker
-          const markerPosition = findCenterForMarker(poly);
-
-          // Create the marker at the exact polygon center
-          const marker = createMarker(markerPosition, polygonColor);
+          // Create the marker at the exact polygon center with the shape name
+          console.log("Creating marker with name:", shapeName);
+          const marker = createMarker(centerPosition, polygonColor, shapeName);
           marker.addTo(markerLayerGroup);
 
           // Store the association between marker and layer
@@ -321,6 +402,26 @@ export default function MapView() {
 
           // Attach drag handlers to the marker
           attachMarkerDragHandlers(marker, layer, map);
+        } else if (shapeName && pinSettings.mode !== "disabled") {
+          // If no marker is shown but we have a shape name, show a centered label
+          // Create a simple centered label without the pin
+          // Format the name for display - use first part before any comma, or the full name if no comma
+          const displayName = shapeName.includes(',') ? shapeName.split(',')[0] : shapeName;
+          console.log("Creating center label with name:", displayName);
+          
+          const nameLabel = L.marker(centerPosition, {
+            interactive: false, // Not clickable or draggable
+            icon: L.divIcon({
+              className: "shape-center-name",
+              html: `<div class="shape-center-name-text">${displayName}</div>`,
+              iconSize: [200, 30],
+              iconAnchor: [100, 15],
+            }),
+          });
+          nameLabel.addTo(markerLayerGroup);
+          
+          // Store the association between label and layer
+          labelToLayerMap.current.set(nameLabel, layer);
         }
       });
     });

@@ -33,6 +33,7 @@ const ActiveElementDisplay: React.FC = () => {
   useEffect(() => {
     if (activeElement) {
       setRotationAngle(activeElement.properties?.rotation || 0);
+      setElementName(activeElement.properties?.name || "Unnamed Area");
     }
   }, [activeElement]);
   const [selectedColor, setSelectedColor] = useState(currentColor);
@@ -41,9 +42,17 @@ const ActiveElementDisplay: React.FC = () => {
   const [rotationAngle, setRotationAngle] = useState(
     activeElement?.properties?.rotation || 0
   );
+  const [displayName, setElementName] = useState(
+    activeElement?.properties?.name || "Unnamed Area"
+  );
+  const [isEditingName, setIsEditingName] = useState(false);
+  const nameInputRef = useRef<HTMLInputElement>(null);
   const duplicateArea = useMapStore((state: any) => state.duplicateArea);
   const updateElementRotation = useMapStore(
     (state: any) => state.updateElementRotation
+  );
+  const updateElementName = useMapStore(
+    (state: any) => state.updateElementName
   );
 
   const colorPickerRef = useRef<HTMLDivElement>(null);
@@ -126,7 +135,58 @@ const ActiveElementDisplay: React.FC = () => {
       <div className="element-info">
         <div className="element-header">
           <div className="element-title">
-            <h3>{elementName.split(",")[0]}</h3>
+            {isEditingName ? (
+              <div className="element-name-edit">
+                <input
+                  ref={nameInputRef}
+                  type="text"
+                  value={displayName}
+                  onChange={(e) => setElementName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      updateElementName(activeAreaId, displayName);
+                      setIsEditingName(false);
+                    } else if (e.key === "Escape") {
+                      setElementName(
+                        activeElement.properties?.name || "Unnamed Area"
+                      );
+                      setIsEditingName(false);
+                    }
+                  }}
+                  onBlur={() => {
+                    updateElementName(activeAreaId, displayName);
+                    setIsEditingName(false);
+                  }}
+                  autoFocus
+                />
+              </div>
+            ) : (
+              <div className="element-name-display">
+                <h3>{displayName.split(",")[0]}</h3>
+                <button
+                  className="edit-name-button"
+                  onClick={() => {
+                    setIsEditingName(true);
+                    setTimeout(() => nameInputRef.current?.focus(), 0);
+                  }}
+                  title="Edit name"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                  </svg>
+                </button>
+              </div>
+            )}
           </div>
           <div className="element-controls">
             <RotationWheel
@@ -256,13 +316,13 @@ const ActiveElementDisplay: React.FC = () => {
           <i>
             {elementType.replace("_", " ")} in{" "}
             {(elementType.toLowerCase() !== "country"
-              ? elementName
+              ? displayName
                   .split(",")
                   .slice(1)
                   .filter(Boolean)
                   .slice(-5)
                   .join(", ")
-              : getContinent(elementName.split(",")[0])) || "Unknown"}
+              : getContinent(displayName.split(",")[0])) || "Unknown"}
           </i>
         </p>
         <p>

@@ -67,6 +67,7 @@ export interface MapState {
     rotation: number,
     rotatedCoordinates?: any | null
   ) => void;
+  updateElementName: (id: string, name: string) => void;
   updateCurrentCoordinates: (id: string, coordinates: any) => void;
   setHoveredCandidate: (candidate: GeoJSONFeature | null) => void;
   addToHistory: (feature: GeoJSONFeature) => void;

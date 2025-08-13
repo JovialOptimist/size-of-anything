@@ -78,22 +78,43 @@ export function setupAutoRefreshOnSettingsChange(): () => void {
 
 export function createMarker(
   center: L.LatLng,
-  color: string = "blue"
+  color: string = "blue",
+  name: string = ""
 ): L.Marker {
   const markerSize = getMarkerSize();
   const width = 18 * markerSize;
   const height = 24 * markerSize;
+  
+  // Create the SVG pin
+  const pinSvg = `<svg width="${width}" height="${height}" viewBox="-1 -1 19 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="9" cy="8" rx="7" ry="7" fill="${color}" stroke="white" stroke-width="2"/>
+    <path d="M9 23C9 23 16 13.5 16 8C16 3.58172 12.4183 0 8 0C3.58172 0 0 3.58172 0 8C0 13.5 9 23 9 23Z" fill="${color}" stroke="white" stroke-width="2"/>
+    <circle cx="8" cy="8" r="3" fill="white"/>
+  </svg>`;
+  
+  // Log what name we received
+  console.log("Creating marker label with name:", name);
+  
+  // Format the name for display - use first part before any comma, or the full name if no comma
+  const displayName = name ? (name.includes(',') ? name.split(',')[0] : name) : 'Unnamed Area';
+  
+  // Add name label if provided
+  const nameLabel = `<div class="marker-name-label">${displayName}</div>`;
+  
+  // Combine pin and label
+  const html = `
+    <div class="marker-container">
+      ${pinSvg}
+      ${nameLabel}
+    </div>
+  `;
 
   return L.marker(center, {
     draggable: true,
-    title: "Drag to move area",
+    title: name || "Drag to move area",
     icon: L.divIcon({
       className: "area-marker",
-      html: `<svg width="${width}" height="${height}" viewBox="-1 -1 19 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <ellipse cx="9" cy="8" rx="7" ry="7" fill="${color}" stroke="white" stroke-width="2"/>
-        <path d="M9 23C9 23 16 13.5 16 8C16 3.58172 12.4183 0 8 0C3.58172 0 0 3.58172 0 8C0 13.5 9 23 9 23Z" fill="${color}" stroke="white" stroke-width="2"/>
-        <circle cx="8" cy="8" r="3" fill="white"/>
-      </svg>`,
+      html: html,
       iconSize: [width, height],
       iconAnchor: [width / 2 + 1, height],
     }),

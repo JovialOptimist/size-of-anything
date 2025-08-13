@@ -402,6 +402,11 @@ export function enablePolygonDragging(
                 );
                 associatedMarker.setLatLng(newMarkerPosition);
               }
+              
+              // Update all labels for this polygon (marker or centered text)
+              if ((window as any).updatePolygonLabels) {
+                (window as any).updatePolygonLabels(innerLayer, geoJsonLayer);
+              }
             }
           } else {
             // Fallback to the legacy method if feature is not available
@@ -420,6 +425,11 @@ export function enablePolygonDragging(
                 innerLayer as L.Polygon
               );
               associatedMarker.setLatLng(newMarkerPosition);
+            }
+            
+            // Update all labels for this polygon (marker or centered text)
+            if ((window as any).updatePolygonLabels) {
+              (window as any).updatePolygonLabels(innerLayer, geoJsonLayer);
             }
           }
         } catch (error) {
@@ -441,6 +451,11 @@ export function enablePolygonDragging(
               innerLayer as L.Polygon
             );
             associatedMarker.setLatLng(newMarkerPosition);
+          }
+          
+          // Update all labels for this polygon (marker or centered text)
+          if ((window as any).updatePolygonLabels) {
+            (window as any).updatePolygonLabels(innerLayer, geoJsonLayer);
           }
         }
       };
