@@ -20,7 +20,8 @@ export interface GeoJSONFeature {
     readonly coordinateCount: number;
   };
   properties: {
-    name: string;
+    name: string; // Name of the place/shape
+    location?: string; // Location information (e.g., city, country, etc.)
     osmType: string;
     osmId: string | null;
     osmClass: string;

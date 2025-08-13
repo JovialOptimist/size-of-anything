@@ -57,7 +57,7 @@ const CustomAreaPanel: React.FC = () => {
     const feature = createSquareFeature(
       currentMapCenter,
       sideLength,
-      `${areaValue} ${unitLabels[areaUnit]} Square`
+      `${areaValue} ${unitLabels[areaUnit]}`
     );
 
     // Add the feature to the map

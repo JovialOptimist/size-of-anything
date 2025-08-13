@@ -291,9 +291,6 @@ export default function MapView() {
     const markerLayerGroup = markersLayerGroupRef.current;
     if (!map || !markerLayerGroup) return;
 
-    // Get current pin settings
-    const { pinSettings } = useSettings.getState();
-
     // Calculate the new center position
     const centerPosition = findCenterForMarker(polygon);
 
@@ -307,11 +304,6 @@ export default function MapView() {
     } catch (error) {
       console.error("Error accessing shape name:", error);
     }
-
-    // Format name for display
-    const displayName = shapeName.includes(",")
-      ? shapeName.split(",")[0]
-      : shapeName;
 
     // Check if this polygon has a marker
     let foundMarker = false;
@@ -364,14 +356,18 @@ export default function MapView() {
 
         // Get the shape's name if available
         let shapeName = "Unnamed Area";
-        
+
         try {
           // Try getting feature from the polygon first (most direct approach)
           const polygonFeature = (poly as any).feature;
-          if (polygonFeature && polygonFeature.properties && polygonFeature.properties.name) {
+          if (
+            polygonFeature &&
+            polygonFeature.properties &&
+            polygonFeature.properties.name
+          ) {
             shapeName = polygonFeature.properties.name;
             console.log("Found shape name from polygon:", shapeName);
-          } 
+          }
           // If that fails, try getting from the layer
           else {
             const layerFeature = (layer as any).feature;
@@ -403,7 +399,9 @@ export default function MapView() {
           const polygonColor = poly.options.color || "blue";
 
           // Create the marker at the exact polygon center with the shape name
-          console.log(`Creating marker for shape with name: "${shapeName}" and color: ${polygonColor}`);
+          console.log(
+            `Creating marker for shape with name: "${shapeName}" and color: ${polygonColor}`
+          );
           const marker = createMarker(centerPosition, polygonColor, shapeName);
           marker.addTo(markerLayerGroup);
 
@@ -415,10 +413,8 @@ export default function MapView() {
         } else if (shapeName && pinSettings.mode !== "disabled") {
           // If no marker is shown but we have a shape name, show a centered label
           // Create a simple centered label without the pin
-          // Format the name for display - use first part before any comma, or the full name if no comma
-          const displayName = shapeName.includes(",")
-            ? shapeName.split(",")[0]
-            : shapeName;
+          // Use the name directly, as it's already been split from location
+          const displayName = shapeName;
           console.log("Creating center label with name:", displayName);
 
           const nameLabel = L.marker(centerPosition, {

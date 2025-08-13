@@ -95,10 +95,8 @@ export function createMarker(
   // Log what name we received
   console.log("Creating marker label with name:", name);
   
-  // Format the name for display - use first part before any comma, or the full name if no comma
   // Make sure we handle null, undefined, or empty strings properly
-  const cleanName = name && name.trim ? name.trim() : '';
-  const displayName = cleanName ? (cleanName.includes(',') ? cleanName.split(',')[0] : cleanName) : 'Unnamed Area';
+  const displayName = (name && name.trim ? name.trim() : '') || 'Unnamed Area';
   
   // Add name label if provided (always add it, but it might show "Unnamed Area")
   const nameLabel = `<div class="marker-name-label">${displayName}</div>`;

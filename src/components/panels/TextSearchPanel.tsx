@@ -56,6 +56,7 @@ export default function TextSearchPanel() {
             osmType: place.type,
             osmId,
             osmClass: place.class,
+            location: place.location,
             whatIsIt: describeOsmObject(place),
           },
         };

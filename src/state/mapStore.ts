@@ -198,6 +198,16 @@ export const useMapStore = create<MapState>((set) => ({
       const isSpecialShape =
         feature.properties?.osmType?.includes("special-") || false;
 
+      // Split name into name and location if it contains a comma
+      let shapeName = feature.properties?.name || "Unnamed Area";
+      let shapeLocation = "";
+      
+      if (shapeName && shapeName.includes(",")) {
+        const nameParts = shapeName.split(",");
+        shapeName = nameParts[0].trim();
+        shapeLocation = nameParts.slice(1).join(",").trim();
+      }
+
       const featureWithColor = {
         ...feature,
         geometry: {
@@ -208,6 +218,8 @@ export const useMapStore = create<MapState>((set) => ({
         },
         properties: {
           ...feature.properties,
+          name: shapeName, // Set the name to just the first part
+          location: shapeLocation, // Set the location to everything after the first comma
           color,
           index,
           shouldBringToFocus: !isSpecialShape, // Set focus flag (false for Special shapes)
@@ -399,7 +411,7 @@ export const useMapStore = create<MapState>((set) => ({
         ...updatedAreas[featureIndex],
         properties: {
           ...updatedAreas[featureIndex].properties,
-          name,
+          name, // Update only the name, keep location intact
         },
       };
 

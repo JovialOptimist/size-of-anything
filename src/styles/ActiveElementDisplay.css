@@ -100,11 +100,11 @@
 }
 
 .element-name-edit {
-    width: 100%;
+    width: calc(100% - 14px);
 }
 
 .element-name-edit input {
-    width: 100%;
+    width: calc(100% - 14px);
     padding: 8px;
     border: 1px solid var(--panel-heading-border-color);
     border-radius: 4px;

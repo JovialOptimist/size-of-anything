@@ -29,7 +29,7 @@ const ActiveElementDisplay: React.FC = () => {
 
   const activeElement = getActiveElement();
   const currentColor = activeElement?.properties?.color || "#1f77b4";
-  // Update rotation angle when active element changes
+  // Update rotation angle and name when active element changes
   useEffect(() => {
     if (activeElement) {
       setRotationAngle(activeElement.properties?.rotation || 0);
@@ -104,7 +104,6 @@ const ActiveElementDisplay: React.FC = () => {
       ? (areaSizeNum * 1e6).toFixed(0) + " m²"
       : areaSizeNum.toFixed(2) + " km²";
 
-  const elementName = activeElement.properties?.name || "Unnamed Area";
   const elementType =
     activeElement.properties?.whatIsIt ||
     activeElement.properties?.osmClass ||
@@ -162,7 +161,15 @@ const ActiveElementDisplay: React.FC = () => {
               </div>
             ) : (
               <div className="element-name-display">
-                <h3>{displayName.split(",")[0]}</h3>
+                <h3
+                  onClick={() => {
+                    setIsEditingName(true);
+                    setTimeout(() => nameInputRef.current?.focus(), 0);
+                  }}
+                  style={{ cursor: "pointer" }}
+                >
+                  {displayName}
+                </h3>
                 <button
                   className="edit-name-button"
                   onClick={() => {
@@ -316,13 +323,8 @@ const ActiveElementDisplay: React.FC = () => {
           <i>
             {elementType.replace("_", " ")} in{" "}
             {(elementType.toLowerCase() !== "country"
-              ? displayName
-                  .split(",")
-                  .slice(1)
-                  .filter(Boolean)
-                  .slice(-5)
-                  .join(", ")
-              : getContinent(displayName.split(",")[0])) || "Unknown"}
+              ? activeElement?.properties?.location || "Unknown"
+              : getContinent(displayName)) || "Unknown"}
           </i>
         </p>
         <p>
