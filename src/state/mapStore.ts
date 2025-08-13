@@ -4,6 +4,7 @@ import { generateRandomColor } from "../components/utils/colorUtils";
 import type { MapArea, GeoJSONFeature, MapState } from "./mapStoreTypes";
 import * as turf from "@turf/turf"; // TODO: what does this import other than simplify?
 import { useSettings } from "./settingsStore";
+import { generateShapeId } from "../utils/idUtils";
 
 /**
  * Zustand store for managing map areas and active area
@@ -191,8 +192,11 @@ export const useMapStore = create<MapState>((set) => ({
       // Generate a unique color for this feature
       const color = generateRandomColor();
 
-      // Add the color, index, and initialize current coordinates
-      const index = state.geojsonAreas.length;
+      // Generate a unique ID for this feature
+      const uniqueId = generateShapeId();
+      
+      // Store the sequential index for backward compatibility
+      const sequentialIndex = state.geojsonAreas.length;
 
       // Check if this is a special shape based on osmType
       const isSpecialShape =
@@ -201,7 +205,7 @@ export const useMapStore = create<MapState>((set) => ({
       // Split name into name and location if it contains a comma
       let shapeName = feature.properties?.name || "Unnamed Area";
       let shapeLocation = "";
-      
+
       if (shapeName && shapeName.includes(",")) {
         const nameParts = shapeName.split(",");
         shapeName = nameParts[0].trim();
@@ -221,13 +225,14 @@ export const useMapStore = create<MapState>((set) => ({
           name: shapeName, // Set the name to just the first part
           location: shapeLocation, // Set the location to everything after the first comma
           color,
-          index,
+          index: sequentialIndex, // Keep the index for backward compatibility
+          id: uniqueId, // Store the unique ID in properties too
           shouldBringToFocus: !isSpecialShape, // Set focus flag (false for Special shapes)
         },
       };
 
       const newArea: MapArea = {
-        id: `geojson-${state.geojsonAreas.length}`,
+        id: uniqueId,
         name: feature.properties?.name || "Unnamed Area",
         coordinates: coordinates as any, // trust GeoJSON is well-formed
         type: type === "MultiPolygon" ? "multipolygon" : "polygon",
@@ -259,8 +264,12 @@ export const useMapStore = create<MapState>((set) => ({
       areas: state.areas.filter((area) => area.id !== id),
       activeAreaId: state.activeAreaId === id ? null : state.activeAreaId,
       geojsonAreas: state.geojsonAreas.filter(
-        (feature) =>
-          feature.properties.index !== parseInt(id.replace("geojson-", ""))
+        (feature) => 
+          // Remove by matching the ID stored in properties
+          feature.properties.id !== id && 
+          // For backward compatibility, also check the old index-based approach
+          !(id.startsWith("geojson-") && 
+            feature.properties.index === parseInt(id.replace("geojson-", ""), 10))
       ),
     })),
   duplicateArea: (id: string) =>
@@ -268,20 +277,31 @@ export const useMapStore = create<MapState>((set) => ({
       const areaToDuplicate = state.areas.find((area) => area.id === id);
       if (!areaToDuplicate) return state;
 
-      // Duplicate the corresponding GeoJSONFeature
-      const idNumber = id.replace("geojson-", "");
-      const index = parseInt(idNumber, 10);
+      // Find the feature to duplicate using the unique ID
       const featureToDuplicate = state.geojsonAreas.find(
-        (feature) => feature.properties.index === index
+        (feature) => feature.properties.id === id || 
+                      // Fallback for backward compatibility
+                      (id.startsWith("geojson-") && 
+                       feature.properties.index === parseInt(id.replace("geojson-", ""), 10))
       );
-      if (!featureToDuplicate) return state;
+      
+      if (!featureToDuplicate) {
+        console.warn(`No feature found to duplicate for area: ${id}`);
+        return state;
+      }
 
-      const newIndex = state.geojsonAreas.length;
+      // Generate a unique ID for the duplicate
+      const uniqueId = generateShapeId();
+      
+      // Keep a sequential index for backward compatibility
+      const newSequentialIndex = state.geojsonAreas.length;
+      
       const newFeature = {
         ...featureToDuplicate,
         properties: {
           ...featureToDuplicate.properties,
-          index: newIndex,
+          index: newSequentialIndex, // Update the sequential index
+          id: uniqueId, // Assign the new unique ID
           color: generateRandomColor(),
           shouldBringToFocus: false, // Duplicated areas should not trigger zooming
         },
@@ -289,7 +309,7 @@ export const useMapStore = create<MapState>((set) => ({
 
       const newArea = {
         ...areaToDuplicate,
-        id: `geojson-${newIndex}`,
+        id: uniqueId, // Use the new unique ID
         properties: newFeature.properties,
       };
 
@@ -314,26 +334,45 @@ export const useMapStore = create<MapState>((set) => ({
     if (!state.activeAreaId) return null;
 
     const activeId = state.activeAreaId;
-    const idNumber = activeId.replace("geojson-", "");
-    const index = parseInt(idNumber, 10);
-
-    // Find the element by its index property rather than assuming array position matches
-    return (
-      state.geojsonAreas.find(
-        (feature: GeoJSONFeature) => feature.properties.index === index
-      ) || null
+    
+    // First try to find the element by the ID stored in properties (new approach)
+    let element = state.geojsonAreas.find(
+      (feature: GeoJSONFeature) => feature.properties.id === activeId
     );
+    
+    // If not found and it looks like a legacy ID, try the old index-based approach
+    if (!element && activeId.startsWith("geojson-")) {
+      const idNumber = activeId.replace("geojson-", "");
+      // Only parse as int if it's a numeric string
+      if (/^\d+$/.test(idNumber)) {
+        const index = parseInt(idNumber, 10);
+        element = state.geojsonAreas.find(
+          (feature: GeoJSONFeature) => feature.properties.index === index
+        );
+      }
+    }
+    
+    return element || null;
   },
 
   updateElementColor: (id, color) => {
     set((state) => {
-      const idNumber = id.replace("geojson-", "");
-      const index = parseInt(idNumber, 10);
-
-      // Find the element by index property instead of array position
-      const featureIndex = state.geojsonAreas.findIndex(
-        (feature) => feature.properties.index === index
+      // Find the element by ID first (new approach)
+      let featureIndex = state.geojsonAreas.findIndex(
+        (feature) => feature.properties.id === id
       );
+      
+      // If not found and it looks like a legacy ID, try the old index-based approach
+      if (featureIndex < 0 && id.startsWith("geojson-")) {
+        const idNumber = id.replace("geojson-", "");
+        // Only parse as int if it's a numeric string
+        if (/^\d+$/.test(idNumber)) {
+          const index = parseInt(idNumber, 10);
+          featureIndex = state.geojsonAreas.findIndex(
+            (feature) => feature.properties.index === index
+          );
+        }
+      }
 
       if (featureIndex < 0) return state;
 
@@ -352,13 +391,22 @@ export const useMapStore = create<MapState>((set) => ({
 
   updateElementRotation: (id, rotation, rotatedCoordinates = null) => {
     set((state) => {
-      const idNumber = id.replace("geojson-", "");
-      const index = parseInt(idNumber, 10);
-
-      // Find the element by index property instead of array position
-      const featureIndex = state.geojsonAreas.findIndex(
-        (feature) => feature.properties.index === index
+      // Find the element by ID first (new approach)
+      let featureIndex = state.geojsonAreas.findIndex(
+        (feature) => feature.properties.id === id
       );
+      
+      // If not found and it looks like a legacy ID, try the old index-based approach
+      if (featureIndex < 0 && id.startsWith("geojson-")) {
+        const idNumber = id.replace("geojson-", "");
+        // Only parse as int if it's a numeric string
+        if (/^\d+$/.test(idNumber)) {
+          const index = parseInt(idNumber, 10);
+          featureIndex = state.geojsonAreas.findIndex(
+            (feature) => feature.properties.index === index
+          );
+        }
+      }
 
       if (featureIndex < 0) return state;
 
@@ -393,16 +441,25 @@ export const useMapStore = create<MapState>((set) => ({
       return { geojsonAreas: updatedAreas };
     });
   },
-  
+
   updateElementName: (id, name) => {
     set((state) => {
-      const idNumber = id.replace("geojson-", "");
-      const index = parseInt(idNumber, 10);
-
-      // Find the element by index property instead of array position
-      const featureIndex = state.geojsonAreas.findIndex(
-        (feature) => feature.properties.index === index
+      // Find the element by ID first (new approach)
+      let featureIndex = state.geojsonAreas.findIndex(
+        (feature) => feature.properties.id === id
       );
+      
+      // If not found and it looks like a legacy ID, try the old index-based approach
+      if (featureIndex < 0 && id.startsWith("geojson-")) {
+        const idNumber = id.replace("geojson-", "");
+        // Only parse as int if it's a numeric string
+        if (/^\d+$/.test(idNumber)) {
+          const index = parseInt(idNumber, 10);
+          featureIndex = state.geojsonAreas.findIndex(
+            (feature) => feature.properties.index === index
+          );
+        }
+      }
 
       if (featureIndex < 0) return state;
 
@@ -421,13 +478,22 @@ export const useMapStore = create<MapState>((set) => ({
 
   updateCurrentCoordinates: (id, coordinates) => {
     set((state) => {
-      const idNumber = id.replace("geojson-", "");
-      const index = parseInt(idNumber, 10);
-
-      // Find the element by index property instead of array position
-      const featureIndex = state.geojsonAreas.findIndex(
-        (feature) => feature.properties.index === index
+      // Find the element by ID first (new approach)
+      let featureIndex = state.geojsonAreas.findIndex(
+        (feature) => feature.properties.id === id
       );
+      
+      // If not found and it looks like a legacy ID, try the old index-based approach
+      if (featureIndex < 0 && id.startsWith("geojson-")) {
+        const idNumber = id.replace("geojson-", "");
+        // Only parse as int if it's a numeric string
+        if (/^\d+$/.test(idNumber)) {
+          const index = parseInt(idNumber, 10);
+          featureIndex = state.geojsonAreas.findIndex(
+            (feature) => feature.properties.index === index
+          );
+        }
+      }
 
       if (featureIndex < 0) return state;
 

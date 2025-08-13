@@ -472,8 +472,11 @@ export function enablePolygonDragging(
             | GeoJSON.Feature
             | undefined;
           if (feature && feature.properties && feature.geometry) {
+            // Try to get the unique ID first, fall back to legacy index approach
+            const featureId = feature.properties.id;
             const featureIndex = feature.properties.index;
-            if (featureIndex !== undefined) {
+            
+            if (featureId !== undefined || featureIndex !== undefined) {
               // Save the new coordinates after projection-based transformation
               const currentCoords = innerLayer.getLatLngs();
               const convertedCoords = convertLatLngsToCoords(currentCoords);
@@ -481,14 +484,17 @@ export function enablePolygonDragging(
 
               const { useMapStore } = await import("../../state/mapStore");
               const store = useMapStore.getState();
+              
+              // Use the unique ID if available, otherwise fall back to legacy approach
+              const idToUse = featureId || `geojson-${featureIndex}`;
               store.updateCurrentCoordinates(
-                `geojson-${featureIndex}`,
+                idToUse,
                 convertedCoords
               );
 
               // Only set as active if it was a click (not a drag)
               if (!hasMoved) {
-                store.setActiveArea(`geojson-${featureIndex}`);
+                store.setActiveArea(idToUse);
               }
             }
           }

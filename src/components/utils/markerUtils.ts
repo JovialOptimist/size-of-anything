@@ -159,16 +159,29 @@ export function attachMarkerDragHandlers(
 
       if (
         feature &&
-        feature.properties &&
-        feature.properties.index !== undefined
+        feature.properties
       ) {
-        const featureIndex = feature.properties.index;
-        // Set active area - we don't need to set wasLayerClickedRef since we're stopping propagation
-        const { useMapStore } = await import("../../state/mapStore");
-        useMapStore.getState().setActiveArea(`geojson-${featureIndex}`);
-        console.log(
-          `MarkerUtils: Marker clicked, setting active area to geojson-${featureIndex}`
-        );
+        // Try to get ID from properties first, fall back to index-based approach
+        let areaId;
+        
+        // Use the unique ID if available
+        if (feature.properties.id !== undefined) {
+          areaId = feature.properties.id;
+        } 
+        // Fall back to the legacy index-based approach
+        else if (feature.properties.index !== undefined) {
+          const featureIndex = feature.properties.index;
+          areaId = `geojson-${featureIndex}`;
+        }
+        
+        if (areaId) {
+          // Set active area - we don't need to set wasLayerClickedRef since we're stopping propagation
+          const { useMapStore } = await import("../../state/mapStore");
+          useMapStore.getState().setActiveArea(areaId);
+          console.log(
+            `MarkerUtils: Marker clicked, setting active area to ${areaId}`
+          );
+        }
       }
     }
   });
@@ -277,9 +290,20 @@ export function attachMarkerDragHandlers(
       // Get feature from the active polygon
       const feature = activePolygon.feature as GeoJSON.Feature | undefined;
       if (feature && feature.properties && feature.geometry) {
-        const featureIndex = feature.properties.index;
+        // Try to get ID from properties first, fall back to index-based approach
+        let areaId;
+        
+        // Use the unique ID if available
+        if (feature.properties.id !== undefined) {
+          areaId = feature.properties.id;
+        } 
+        // Fall back to the legacy index-based approach
+        else if (feature.properties.index !== undefined) {
+          const featureIndex = feature.properties.index;
+          areaId = `geojson-${featureIndex}`;
+        }
 
-        if (featureIndex !== undefined) {
+        if (areaId) {
           // Get the final coordinates from the polygon after projection-based transformation
           const currentCoords = activePolygon.getLatLngs();
           const convertedCoords = convertLatLngsToCoords(currentCoords);
@@ -292,7 +316,7 @@ export function attachMarkerDragHandlers(
           useMapStore
             .getState()
             .updateCurrentCoordinates(
-              `geojson-${featureIndex}`,
+              areaId,
               convertedCoords
             );
 
