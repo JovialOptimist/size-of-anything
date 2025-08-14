@@ -52,6 +52,7 @@ export function setupAutoRefreshOnSettingsChange(): () => void {
     mode: string;
     size: number;
     appearanceThreshold: number;
+    labelMode: string;
   }
 
   interface SettingsState {
@@ -61,12 +62,13 @@ export function setupAutoRefreshOnSettingsChange(): () => void {
 
   unsubscribeFromSettings = useSettings.subscribe(
     (state: SettingsState, prevState: SettingsState): void => {
-      // Only refresh if pin settings changed
+      // Only refresh if pin settings or label settings changed
       if (
         state.pinSettings.mode !== prevState.pinSettings.mode ||
         state.pinSettings.size !== prevState.pinSettings.size ||
         state.pinSettings.appearanceThreshold !==
-          prevState.pinSettings.appearanceThreshold
+          prevState.pinSettings.appearanceThreshold ||
+        state.pinSettings.labelMode !== prevState.pinSettings.labelMode
       ) {
         refreshAllMarkers();
       }
@@ -81,7 +83,9 @@ export function createMarker(
   color: string = "blue",
   name: string = ""
 ): L.Marker {
+  // Get marker size and label mode from settings
   const markerSize = getMarkerSize();
+  const { labelMode } = useSettings.getState().pinSettings;
   const width = 18 * markerSize;
   const height = 24 * markerSize;
 
@@ -102,8 +106,15 @@ export function createMarker(
       words.slice(0, mid).join(" ") + "<br>" + words.slice(mid).join(" ");
   }
 
-  // Add name label if provided (always add it, but it might show "Unnamed Area")
-  const nameLabel = `<div class="marker-name-label">${displayName}</div>`;
+  // Check if we should show the label based on settings
+  // For "disabled", don't show labels
+  // For "always" or "onlyMarker", show labels on markers
+  const shouldShowLabel = labelMode !== "disabled";
+  
+  // Add name label if provided and if labels are enabled
+  const nameLabel = shouldShowLabel 
+    ? `<div class="marker-name-label">${displayName}</div>`
+    : '';
 
   // Combine pin and label
   const html = `

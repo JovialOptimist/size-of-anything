@@ -367,33 +367,34 @@ export default function MapView() {
           // Attach drag handlers to the marker
           attachMarkerDragHandlers(marker, layer, map);
         } else if (shapeName && pinSettings.mode !== "disabled") {
-          // If no marker is shown but we have a shape name, show a centered label
-          // Create a simple centered label without the pin
-          // Use the name directly, as it's already been split from location
-          // Split the shapeName into two lines if it has multiple words
-          let displayName = shapeName;
-          const words = shapeName.trim().split(/\s+/);
-          if (words.length > 1 && displayName.length > 10) {
-            const mid = Math.ceil(words.length / 2);
-            displayName =
-              words.slice(0, mid).join(" ") +
-              "<br>" +
-              words.slice(mid).join(" ");
+          // If no marker is shown but we have a shape name, check if we should show a centered label
+          // Only show centered labels if labelMode is set to "always" (not for "onlyMarker" or "disabled")
+          if (pinSettings.labelMode === "always") {
+            // Split the shapeName into two lines if it has multiple words
+            let displayName = shapeName;
+            const words = shapeName.trim().split(/\s+/);
+            if (words.length > 1 && displayName.length > 10) {
+              const mid = Math.ceil(words.length / 2);
+              displayName =
+                words.slice(0, mid).join(" ") +
+                "<br>" +
+                words.slice(mid).join(" ");
+            }
+
+            const nameLabel = L.marker(centerPosition, {
+              interactive: false, // Not clickable or draggable
+              icon: L.divIcon({
+                className: "shape-center-name",
+                html: `<div class="shape-center-name-text">${displayName}</div>`,
+                iconSize: [0, 0], // Minimal size to avoid affecting the text positioning
+                iconAnchor: [0, 0], // Center point - CSS will handle the centering
+              }),
+            });
+            nameLabel.addTo(markerLayerGroup);
+
+            // Store the association between label and layer
+            labelToLayerMap.current.set(nameLabel, layer);
           }
-
-          const nameLabel = L.marker(centerPosition, {
-            interactive: false, // Not clickable or draggable
-            icon: L.divIcon({
-              className: "shape-center-name",
-              html: `<div class="shape-center-name-text">${displayName}</div>`,
-              iconSize: [0, 0], // Minimal size to avoid affecting the text positioning
-              iconAnchor: [0, 0], // Center point - CSS will handle the centering
-            }),
-          });
-          nameLabel.addTo(markerLayerGroup);
-
-          // Store the association between label and layer
-          labelToLayerMap.current.set(nameLabel, layer);
         }
       });
     });

@@ -11,11 +11,13 @@ export type ThemeMode = "light" | "dark" | "system";
 
 // Pin marker settings
 export type PinMode = "disabled" | "adaptive" | "always";
+export type LabelMode = "disabled" | "always" | "onlyMarker";
 
 export interface PinSettings {
   mode: PinMode;
   size: number;
   appearanceThreshold: number;
+  labelMode: LabelMode;
 }
 
 // Outline quality setting (for shape simplification)
@@ -32,6 +34,7 @@ export interface SettingsState {
   pinSettings: PinSettings;
   setPinMode: (mode: PinMode) => void;
   setPinSize: (size: number) => void;
+  setLabelMode: (labelMode: LabelMode) => void;
 
   // Map display settings
   outlineQuality: OutlineQuality;
@@ -75,6 +78,7 @@ export const useSettings = create<SettingsState>()(
         mode: "adaptive",
         size: 1.5,
         appearanceThreshold: 0.01,
+        labelMode: "always", // Default to always show labels (current behavior)
       },
       setPinMode: (mode) =>
         set((state) => ({
@@ -83,6 +87,10 @@ export const useSettings = create<SettingsState>()(
       setPinSize: (size) =>
         set((state) => ({
           pinSettings: { ...state.pinSettings, size },
+        })),
+      setLabelMode: (labelMode) =>
+        set((state) => ({
+          pinSettings: { ...state.pinSettings, labelMode },
         })),
 
       // Map display settings

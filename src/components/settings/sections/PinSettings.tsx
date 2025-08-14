@@ -1,6 +1,6 @@
 import React from "react";
 import { useSettings } from "../../../state/settingsStore";
-import type { PinMode } from "../../../state/settingsStore";
+import type { PinMode, LabelMode } from "../../../state/settingsStore";
 import SliderSetting from "../controls/SliderSetting";
 import { InformationBubble } from "../../ui/informationBubble";
 import { refreshAllMarkers } from "../../utils/markerUtils";
@@ -10,7 +10,7 @@ import DropdownSetting from "../controls/DropdownSetting";
  * Pin/marker settings section component with interdependent controls
  */
 const PinSettings: React.FC = () => {
-  const { pinSettings, setPinMode, setPinSize } = useSettings();
+  const { pinSettings, setPinMode, setPinSize, setLabelMode } = useSettings();
 
   // Calculate if controls should be disabled based on current mode
   const isPinSizeDisabled = pinSettings.mode === "disabled";
@@ -52,6 +52,22 @@ const PinSettings: React.FC = () => {
           refreshAllMarkers();
         }}
         formatValue={(val) => `${val.toFixed(1)}x`}
+      />
+
+      <DropdownSetting
+        title="Label Visibility"
+        description="Control when shape labels are visible on the map"
+        value={pinSettings.labelMode}
+        options={[
+          { label: "Always", value: "always" },
+          { label: "Only With Markers", value: "onlyMarker" },
+          { label: "Disabled", value: "disabled" },
+        ]}
+        onChange={(value) => {
+          setLabelMode(value as LabelMode);
+          // Immediately refresh all markers when the label mode changes
+          refreshAllMarkers();
+        }}
       />
     </div>
   );
