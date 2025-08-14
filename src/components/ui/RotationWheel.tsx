@@ -103,6 +103,19 @@ const RotationWheel: React.FC<RotationWheelProps> = ({
     }
   };
 
+  // Handle rotation button clicks
+  const handleRotateClockwise = () => {
+    const newRotation = normalizeAngle(rotationAngle - 30);
+    lastReportedAngle.current = newRotation;
+    onChange(newRotation);
+  };
+
+  const handleRotateCounterClockwise = () => {
+    const newRotation = normalizeAngle(rotationAngle + 30);
+    lastReportedAngle.current = newRotation;
+    onChange(newRotation);
+  };
+
   // Add and remove event listeners
   useEffect(() => {
     if (isDragging) {
@@ -158,55 +171,102 @@ const RotationWheel: React.FC<RotationWheelProps> = ({
     size / 2 + size * 0.38 * Math.sin(indicatorAngle - Math.PI / 2);
 
   return (
-    <div className="rotation-wheel-container">
-      <svg
-        ref={wheelRef}
-        width={size}
-        height={size}
-        viewBox={`0 0 ${size} ${size}`}
-        onMouseDown={handleMouseDown}
-        onWheel={handleWheel}
-        className="rotation-wheel"
+    <div className="rotation-controls-container">
+      {/* Counter-clockwise button */}
+      <button
+        className="rotation-button counter-clockwise"
+        onClick={handleRotateCounterClockwise}
+        title="Rotate 15° counter-clockwise"
       >
-        {/* Outer circle */}
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={size / 2 - 1}
-          fill="transparent"
-          stroke="#aaa"
-          strokeWidth="1"
-        />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <polyline points="1 4 1 10 7 10"></polyline>
+          <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+        </svg>
+      </button>
 
-        {/* Tick marks */}
-        {tickMarks}
+      {/* Rotation wheel */}
+      <div className="rotation-wheel-container">
+        <svg
+          ref={wheelRef}
+          width={size}
+          height={size}
+          viewBox={`0 0 ${size} ${size}`}
+          onMouseDown={handleMouseDown}
+          onWheel={handleWheel}
+          className="rotation-wheel"
+        >
+          {/* Outer circle */}
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={size / 2 - 1}
+            fill="transparent"
+            stroke="#aaa"
+            strokeWidth="1"
+          />
 
-        {/* Inner circle */}
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={size * 0.2}
-          fill="#4287f5"
-          className="rotation-wheel-inner"
-        />
+          {/* Tick marks */}
+          {tickMarks}
 
-        {/* Indicator */}
-        <circle
-          cx={indicatorX}
-          cy={indicatorY}
-          r={size * 0.08}
-          fill="var(--default-fg)"
-        />
+          {/* Inner circle */}
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={size * 0.2}
+            fill="#4287f5"
+            className="rotation-wheel-inner"
+          />
 
-        {/* Invisible overlay for better mouse interaction */}
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={size / 2}
-          fill="transparent"
-          className="rotation-wheel-overlay"
-        />
-      </svg>
+          {/* Indicator */}
+          <circle
+            cx={indicatorX}
+            cy={indicatorY}
+            r={size * 0.08}
+            fill="var(--default-fg)"
+          />
+
+          {/* Invisible overlay for better mouse interaction */}
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={size / 2}
+            fill="transparent"
+            className="rotation-wheel-overlay"
+          />
+        </svg>
+      </div>
+
+      {/* Clockwise button */}
+      <button
+        className="rotation-button clockwise"
+        onClick={handleRotateClockwise}
+        title="Rotate 15° clockwise"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+        </svg>
+      </button>
     </div>
   );
 };

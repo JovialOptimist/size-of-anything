@@ -196,75 +196,6 @@ const ActiveElementDisplay: React.FC = () => {
             )}
           </div>
           <div className="element-controls">
-            <RotationWheel
-              rotationAngle={rotationAngle}
-              onChange={(angle) => {
-                // Only update if the angle has actually changed by a significant amount
-                if (Math.abs(angle - rotationAngle) >= 1) {
-                  setRotationAngle(angle);
-
-                  // Get the active element to apply rotation to its current position
-                  const element = getActiveElement();
-                  if (element && activeAreaId) {
-                    // Apply rotation to the current position and store the result
-                    // This ensures rotation is only applied when explicitly changed
-                    try {
-                      // Only rotate if we have an element and a valid angle
-                      if (angle !== 0) {
-                        // Make sure we use the current coordinates as the base for rotation
-                        // This ensures the shape rotates in place instead of teleporting
-                        const baseCoordinates =
-                          element.geometry.currentCoordinates ||
-                          element.geometry.coordinates;
-
-                        // Apply rotation using the current position as the base
-                        const rotated = applyRotation(
-                          element,
-                          angle,
-                          baseCoordinates
-                        );
-                        // Store both the rotation angle and the pre-calculated rotated coordinates
-                        updateElementRotation(
-                          activeAreaId,
-                          angle,
-                          rotated.geometry.coordinates
-                        );
-                      } else {
-                        // For zero rotation, just clear any rotation
-                        updateElementRotation(activeAreaId, 0);
-                      }
-                    } catch (error) {
-                      console.error("Error applying rotation:", error);
-                      updateElementRotation(activeAreaId, angle);
-                    }
-                  } else {
-                    updateElementRotation(activeAreaId, angle);
-                  }
-                }
-              }}
-              size={36}
-            />
-            <div className="rotation-angle-display">
-              {/* <button
-                className="rotation-btn"
-                onMouseDown={() => startHold(-1)}
-                onMouseUp={stopHold}
-                onMouseLeave={stopHold}
-              >
-                –
-              </button> */}
-
-              <span className="rotation-value">{rotationAngle}°</span>
-
-              {/* <button
-                className="rotation-btn"
-                onMouseDown={() => startHold(1)}
-                onMouseUp={stopHold}
-                onMouseLeave={stopHold}
-              >
-                +
-              </button> */}
-            </div>
             <button
               className="close-button"
               onClick={() => setActiveArea(null)}
@@ -319,31 +250,139 @@ const ActiveElementDisplay: React.FC = () => {
           </div>
         )}
 
-        <p>
-          <i>
-            {elementType.replace("_", " ")} in{" "}
-            {(elementType.toLowerCase() !== "country"
-              ? activeElement?.properties?.location || "Unknown"
-              : getContinent(displayName)) || "Unknown"}
-          </i>
-        </p>
-        <p>
-          <strong>Area:</strong> {areaSize}
-        </p>
+        {/* New layout for description and rotation wheel */}
+        <div className="description-rotation-container">
+          <div className="element-description">
+            <p>
+              <i>
+                {elementType.replace("_", " ")} in{" "}
+                {(elementType.toLowerCase() !== "country"
+                  ? activeElement?.properties?.location || "Unknown"
+                  : getContinent(displayName)) || "Unknown"}
+              </i>
+            </p>
+            <p>
+              <strong>Area:</strong> {areaSize}
+            </p>
+          </div>
+          
+          <RotationWheel
+            rotationAngle={rotationAngle}
+            onChange={(angle) => {
+              // Only update if the angle has actually changed by a significant amount
+              if (Math.abs(angle - rotationAngle) >= 1) {
+                setRotationAngle(angle);
 
+                // Get the active element to apply rotation to its current position
+                const element = getActiveElement();
+                if (element && activeAreaId) {
+                  // Apply rotation to the current position and store the result
+                  // This ensures rotation is only applied when explicitly changed
+                  try {
+                    // Only rotate if we have an element and a valid angle
+                    if (angle !== 0) {
+                      // Make sure we use the current coordinates as the base for rotation
+                      // This ensures the shape rotates in place instead of teleporting
+                      const baseCoordinates =
+                        element.geometry.currentCoordinates ||
+                        element.geometry.coordinates;
+
+                      // Apply rotation using the current position as the base
+                      const rotated = applyRotation(
+                        element,
+                        angle,
+                        baseCoordinates
+                      );
+                      // Store both the rotation angle and the pre-calculated rotated coordinates
+                      updateElementRotation(
+                        activeAreaId,
+                        angle,
+                        rotated.geometry.coordinates
+                      );
+                    } else {
+                      // For zero rotation, just clear any rotation
+                      updateElementRotation(activeAreaId, 0);
+                    }
+                  } catch (error) {
+                    console.error("Error applying rotation:", error);
+                    updateElementRotation(activeAreaId, angle);
+                  }
+                } else {
+                  updateElementRotation(activeAreaId, angle);
+                }
+              }
+            }}
+            size={60}
+          />
+        </div>
+
+        {/* Updated button group with all buttons in a single row */}
         <div className="button-group">
-          <button onClick={handleDuplicate}>Duplicate</button>
-          <button onClick={() => setIsColorPickerOpen((prev) => !prev)}>
-            Color
+          <button
+            className="icon-action-button"
+            onClick={handleDuplicate}
+            title="Duplicate"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
           </button>
-        </div>
-        <div className="button-group remove-button">
-          <button onClick={handleRemove} className="remove-btn">
-            Remove
-          </button>
-        </div>
 
-        {/* Rotation control now implemented as wheel in the header */}
+          <button
+            className="icon-action-button"
+            onClick={() => setIsColorPickerOpen((prev) => !prev)}
+            title="Change Color"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="12" cy="12" r="10"></circle>
+              <circle cx="12" cy="12" r="4" fill="currentColor"></circle>
+            </svg>
+          </button>
+
+          <button
+            className="icon-action-button remove-btn"
+            onClick={handleRemove}
+            title="Remove"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M3 6h18"></path>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              <line x1="10" y1="11" x2="10" y2="17"></line>
+              <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   );

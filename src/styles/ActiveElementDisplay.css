@@ -8,7 +8,7 @@
   box-shadow: var(--active-element-display-shadow);
   padding: 15px;
   width: 100px;
-  max-width: 350px; /* Increased to accommodate the rotation wheel */
+  max-width: 400px; /* Increased to accommodate the new layout */
 }
 
 .active-element-empty {
@@ -127,15 +127,35 @@
     margin-top: 10px;
     padding-bottom: 3px;
     margin-bottom: 5px;
+    gap: 8px;
 }
 
-.button-group.remove-button {
-    margin-top: 5px;
+.icon-action-button {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    background-color: #4287f5;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
 }
 
-.remove-btn {
-    width: 100%;
-    background-color: #e74c3c !important;
+.icon-action-button:hover {
+    background-color: #3476e0;
+    transform: translateY(-1px);
+}
+
+.icon-action-button:active {
+    transform: translateY(0);
+}
+
+.icon-action-button svg {
+    width: 18px;
+    height: 18px;
 }
 
 .button-group button {
@@ -154,6 +174,10 @@
   margin: 8px 0;
   font-size: 14px;
   color: var(--control-sidebar-text-color);
+}
+
+.element-description p {
+  margin: 5px 0;
 }
 
 .color-display {
@@ -224,6 +248,16 @@
     right: 10px;
     width: 200px;
   }
+  
+  .description-rotation-container {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .rotation-controls-container {
+    margin-top: 10px;
+    align-self: center;
+  }
 }
 
 /* Animation for panel appearance */
@@ -275,15 +309,41 @@
 .color-picker-popup {
     position: absolute;
     top: 50px;
-    /* adjust as needed depending on layout */
     right: 20px;
-    background: var(--active-element-display-bg);
-    border: 1px solid var(--panel-heading-border-color);
-    border-radius: 8px;
-    padding: 10px;
-    z-index: 1000;
-    box-shadow: var(--active-element-display-shadow);
+        background: var(--active-element-display-bg);
+        border: 1px solid var(--panel-heading-border-color);
+        border-radius: 8px;
+        padding: 10px;
+        z-index: 1000;
+        box-shadow: var(--active-element-display-shadow);
 }
+
+    /* adjust as needed depending on layout */
+/* New styles for the description and rotation wheel layout */
+.description-rotation-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-direction: row;
+}
+
+.element-description {
+    flex: 1;
+    margin-right: 15px;
+}
+
+.element-description {
+    margin-right: 10px;
+}
+
+.rotation-wheel-container {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+}
+
+    
 
 .color-picker-buttons {
     display: flex;

@@ -74,11 +74,50 @@
 }
 
 /* New Rotation Wheel Styles */
+.rotation-controls-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 120px;
+}
+
 .rotation-wheel-container {
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 8px;
+    min-width: 60px;
+    min-height: 60px;
+}
+
+.rotation-button {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: #4287f5;
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.rotation-button:hover {
+    background-color: #3476e0;
+    transform: scale(1.1);
+}
+
+.rotation-button:active {
+    transform: scale(0.95);
+}
+
+.rotation-button.counter-clockwise {
+    margin-right: 5px;
+}
+
+.rotation-button.clockwise {
+    margin-left: 5px;
 }
 
 .rotation-wheel {
