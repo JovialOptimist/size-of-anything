@@ -107,6 +107,7 @@ export default function MapView() {
           zoomControl: false,
           worldCopyJump: false,
         }).setView(center, 11);
+        setCurrentMapCenter(center);
 
         mapInstanceRef.current = map;
 
