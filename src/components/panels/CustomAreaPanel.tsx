@@ -4,6 +4,7 @@ import type { GeoJSONFeature } from "../../state/mapStoreTypes";
 import { InformationBubble } from "../ui/informationBubble";
 import { DismissableMessage } from "../ui/DismissableMessage";
 import { countCoordinates } from "../utils/geometryUtils";
+import Card from "../ui/Card";
 
 /**
  * Panel for custom area functionality
@@ -16,6 +17,18 @@ const CustomAreaPanel: React.FC = () => {
   const addGeoJSONFromSearch = useMapStore(
     (state) => state.addGeoJSONFromSearch
   );
+
+  // Get history items from the store
+  const historyItems = useMapStore((state) => state.historyItems);
+
+  // Filter history items for custom areas, limited to 5 most recent
+  const customAreaHistory = historyItems
+    .filter(
+      (item) =>
+        item.properties.source === "custom-area" ||
+        (item.properties.osmType && item.properties.osmType.includes("custom-"))
+    )
+    .slice(0, 5);
 
   // Define conversion factors to square meters
   const unitConversions: Record<string, number> = {
@@ -110,6 +123,7 @@ const CustomAreaPanel: React.FC = () => {
         osmId: null,
         customId: `custom-square-${Math.random().toString(36).slice(2)}`,
         osmClass: "custom-shape",
+        source: "custom-area", // Mark as created via CustomAreaPanel
       },
     };
   };
@@ -163,6 +177,27 @@ const CustomAreaPanel: React.FC = () => {
           Generate
         </button>
       </div>
+
+      {/* Display custom area history below controls */}
+      {customAreaHistory.length > 0 && (
+        <div className="custom-area-history">
+          <div className="panel-description">Recent shapes</div>
+          <div className="history-list">
+            {customAreaHistory.map((item, index) => (
+              <Card
+                key={`custom-history-${index}`}
+                feature={{
+                  ...item,
+                  properties: {
+                    ...item.properties,
+                    source: "custom-area", // Ensure source is preserved
+                  },
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       <DismissableMessage messageId="custom-area-center-info">
         <p>

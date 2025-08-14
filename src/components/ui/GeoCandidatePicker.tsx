@@ -13,12 +13,14 @@ export default function GeoCandidatePicker({
   onCancel,
   showOnHover = true,
   isLoading = false,
+  foundText = "default",
 }: {
   candidates: GeoJSONFeature[];
   onSelect: (feature: GeoJSONFeature) => void;
   onCancel?: () => void;
   showOnHover?: boolean;
   isLoading?: boolean;
+  foundText: string;
 }) {
   const setHoveredCandidate = useMapStore((state) => state.setHoveredCandidate);
   return (
@@ -31,9 +33,15 @@ export default function GeoCandidatePicker({
       ) : (
         <>
           <p className="candidate-count">
-            Found {candidates.length} places.{" "}
-            <span className="accent-text">Hover</span> over one of the items
-            below to see their outline on the map.
+            {foundText === "default" ? (
+              <>
+                Found {candidates.length} places.{" "}
+                <span className="accent-text">Hover</span> over one of the items
+                below to see their outline on the map.
+              </>
+            ) : (
+              foundText
+            )}
           </p>
           <ul className="candidate-list">
             {candidates.map((feature, index) => {

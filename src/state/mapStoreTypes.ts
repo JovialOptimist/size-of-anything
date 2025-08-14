@@ -28,6 +28,8 @@ export interface GeoJSONFeature {
     color?: string; // Add color property
     rotation?: number; // Rotation angle in degrees
     shouldBringToFocus?: boolean; // Whether this shape should be zoomed to when added
+    searchMethod: "containing" | "nearby" | "other";
+    source?: "text-search" | "custom-area" | "special"; // Source of the feature creation
     [key: string]: any;
     whatIsIt: string;
   };

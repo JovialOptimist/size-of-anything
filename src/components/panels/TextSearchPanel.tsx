@@ -22,6 +22,17 @@ export default function TextSearchPanel() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Get history items from the store
+  const historyItems = useMapStore((state) => state.historyItems);
+
+  // Filter history items for text search
+  const textSearchHistory = historyItems
+    .filter(
+      (item) =>
+        item.properties.source === "text-search" || !item.properties.source
+    )
+    .slice(0, 5); // Limit to 5 most recent items
+
   // Magic wand state
   const setOnMapClick = useMapStore((s) => s.setOnMapClick);
   const magicWandMode = useMapStore((s) => s.magicWandMode);
@@ -58,6 +69,8 @@ export default function TextSearchPanel() {
             osmClass: place.class,
             location: place.location,
             whatIsIt: describeOsmObject(place),
+            source: "text-search", // Mark as created via TextSearchPanel
+            searchMethod: "other", // Default method, can be updated later
           },
         };
         return fixMultiPolygon(feature);
@@ -224,7 +237,8 @@ export default function TextSearchPanel() {
                 osmClass: place.class,
                 whatIsIt: describeOsmObject(place),
                 // Determine if this is nearby or containing (similar logic as before)
-                source:
+                source: "text-search", // Set source as text-search for history filtering
+                searchMethod:
                   place.address &&
                   (place.address.city ||
                     place.address.county ||
@@ -257,7 +271,7 @@ export default function TextSearchPanel() {
   const organizeFeatures = (features: GeoJSONFeature[]) => {
     // Sort containing features by admin level (country → state → county → city)
     const containingFeatures = features
-      .filter((f) => f.properties.source === "containing")
+      .filter((f) => f.properties.searchMethod === "containing")
       .sort((a, b) => {
         // Sort administrative boundaries by admin_level (lower = larger area)
         const levelA = a.properties.adminLevel || 15;
@@ -267,7 +281,7 @@ export default function TextSearchPanel() {
 
     // Sort nearby features by importance or type
     const nearbyFeatures = features
-      .filter((f) => f.properties.source === "nearby")
+      .filter((f) => f.properties.searchMethod === "nearby")
       .sort((a, b) => {
         // Custom sorting logic for nearby features
         const tagsA = a.properties.tags || {};
@@ -460,12 +474,42 @@ export default function TextSearchPanel() {
         </div>
       )}
 
+      {/* Display history below search controls */}
+      {textSearchHistory.length > 0 && !showPicker && !magicWandMode && (
+        <div className="history-view">
+          <GeoCandidatePicker
+            candidates={textSearchHistory}
+            isLoading={false}
+            foundText="Recent searches"
+            onSelect={(feature) => {
+              addGeoJSONFromSearch({
+                ...feature,
+                properties: {
+                  ...feature.properties,
+                  source: "text-search", // Ensure source is preserved
+                },
+              });
+            }}
+            showOnHover={true}
+          />
+        </div>
+      )}
+
       {showPicker && (
         <GeoCandidatePicker
           candidates={candidates}
           isLoading={isLoading}
+          foundText="default"
           onSelect={(feature) => {
-            addGeoJSONFromSearch(feature);
+            // Make sure the feature has the text-search source
+            const featureWithSource = {
+              ...feature,
+              properties: {
+                ...feature.properties,
+                source: "text-search" as "text-search", // Ensure source is properly set and typed
+              },
+            };
+            addGeoJSONFromSearch(featureWithSource);
             setShowPicker(false);
             useMapStore.getState().setHoveredCandidate(null);
             setCandidates([]);

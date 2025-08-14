@@ -66,3 +66,33 @@
   border-radius: 4px;
   font-size: 0.9em;
 }
+
+/* Custom area history styling */
+.custom-area-history {
+  margin-top: 20px;
+}
+
+.history-heading {
+  font-size: 0.9rem;
+  color: var(--text-color);
+  margin-bottom: 8px;
+  font-weight: 500;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 4px;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.empty-history-message {
+  background-color: #f7fafc;
+  padding: 16px;
+  border-radius: 4px;
+  text-align: center;
+  color: #718096;
+}

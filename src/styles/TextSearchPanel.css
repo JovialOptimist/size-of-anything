@@ -107,3 +107,25 @@
     border-radius: 4px;
     margin: 16px 0;
 }
+
+/* History view styling */
+.history-view {
+    margin-top: 16px;
+}
+
+.history-heading {
+    font-size: 0.9rem;
+    color: var(--text-color);
+    margin-bottom: 8px;
+    font-weight: 500;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 4px;
+}
+
+.empty-history-message {
+    background-color: #f7fafc;
+    padding: 16px;
+    border-radius: 4px;
+    text-align: center;
+    color: #718096;
+}
