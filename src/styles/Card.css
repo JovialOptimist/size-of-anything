@@ -24,11 +24,13 @@
   align-items: center;
 }
 
-.area-card-icon {
+.area-card-icon img {
   margin-right: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 64px;
+  height: 64px;
 }
 
 .area-card-text {
