@@ -23,6 +23,21 @@ const loadHistory = (): GeoJSONFeature[] => {
       if (!savedHistory) return [];
       // Check if the saved history has duplicates
       const parsedHistory = JSON.parse(savedHistory);
+
+      // Process each item to ensure location property is preserved
+      parsedHistory.forEach((item: GeoJSONFeature) => {
+        // If location is missing but name contains a comma, extract the location
+        if (
+          !item.properties.location &&
+          item.properties.name &&
+          item.properties.name.includes(",")
+        ) {
+          const nameParts = item.properties.name.split(",");
+          item.properties.name = nameParts[0].trim();
+          item.properties.location = nameParts.slice(1).join(",").trim();
+        }
+      });
+
       const uniqueHistory = Array.isArray(parsedHistory)
         ? parsedHistory.filter((item, idx, arr) => {
             // Check by osmId if available
@@ -61,6 +76,8 @@ const loadHistory = (): GeoJSONFeature[] => {
           JSON.stringify(uniqueHistory)
         );
       }
+
+      console.log("Actual loaded history:", uniqueHistory);
       return uniqueHistory;
     } catch (e) {
       console.error("Failed to parse history from localStorage:", e);
@@ -73,7 +90,29 @@ const loadHistory = (): GeoJSONFeature[] => {
 // Save history to localStorage
 const saveHistory = (history: GeoJSONFeature[]) => {
   if (typeof window === "undefined") return; // For SSR safety
-  localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history));
+
+  // Ensure all history items have a location property if possible
+  const processedHistory = history.map((item) => {
+    // Create a deep copy to avoid mutating the original
+    const itemCopy = JSON.parse(JSON.stringify(item));
+
+    // If location is missing but name has a comma, extract location
+    if (
+      !itemCopy.properties.location &&
+      itemCopy.properties.name &&
+      itemCopy.properties.name.includes(",")
+    ) {
+      const nameParts = itemCopy.properties.name.split(",");
+      itemCopy.properties.name = nameParts[0].trim();
+      itemCopy.properties.location = nameParts.slice(1).join(",").trim();
+    }
+
+    return itemCopy;
+  });
+
+  console.log("Finall Processed HIstory: ", processedHistory);
+
+  localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(processedHistory));
 };
 
 // Bigger is less detail, smaller is more detail
@@ -201,13 +240,15 @@ export const useMapStore = create<MapState>((set) => ({
 
       // Split name into name and location if it contains a comma
       let shapeName = feature.properties?.name || "Unnamed Area";
-      let shapeLocation = "";
+      let shapeLocation = feature.properties?.location || "";
 
       if (shapeName && shapeName.includes(",")) {
         const nameParts = shapeName.split(",");
         shapeName = nameParts[0].trim();
         shapeLocation = nameParts.slice(1).join(",").trim();
       }
+
+      console.log(shapeLocation);
 
       const featureWithColor = {
         ...feature,
@@ -298,10 +339,24 @@ export const useMapStore = create<MapState>((set) => ({
       // Keep a sequential index for backward compatibility
       const newSequentialIndex = state.geojsonAreas.length;
 
+      // Ensure the location property is preserved in the duplicate
+      const properties = { ...featureToDuplicate.properties };
+
+      // If location is missing but name contains a comma, extract it
+      if (
+        !properties.location &&
+        properties.name &&
+        properties.name.includes(",")
+      ) {
+        const nameParts = properties.name.split(",");
+        properties.name = nameParts[0].trim();
+        properties.location = nameParts.slice(1).join(",").trim();
+      }
+
       const newFeature = {
         ...featureToDuplicate,
         properties: {
-          ...featureToDuplicate.properties,
+          ...properties,
           index: newSequentialIndex, // Update the sequential index
           id: uniqueId, // Assign the new unique ID
           color: generateRandomColor(),
@@ -534,6 +589,24 @@ export const useMapStore = create<MapState>((set) => ({
     set((state) => {
       // Create a copy of the feature to ensure we don't modify the original
       const featureCopy = JSON.parse(JSON.stringify(feature));
+      console.log("Feature copy location: ", featureCopy.properties.location);
+
+      // Make sure location property is preserved
+      // If it's missing but the name has a comma, extract location from name
+      if (
+        !featureCopy.properties.location &&
+        featureCopy.properties.name &&
+        featureCopy.properties.name.includes(",")
+      ) {
+        const nameParts = featureCopy.properties.name.split(",");
+        const shapeName = nameParts[0].trim();
+        const shapeLocation = nameParts.slice(1).join(",").trim();
+
+        // Update the properties
+        featureCopy.properties.name = shapeName;
+        featureCopy.properties.location = shapeLocation;
+      }
+
       if (
         featureCopy.properties.customId &&
         featureCopy.properties.customId.includes("special-shape")
@@ -568,6 +641,10 @@ export const useMapStore = create<MapState>((set) => ({
       if (isAlreadyInHistory) return state;
 
       // Add to history, limiting to last 20 items (increase from 10)
+      console.log(
+        "Feature copy location that is actually being saved: ",
+        featureCopy.properties.location
+      );
       const updatedHistory = [featureCopy, ...state.historyItems].slice(0, 20);
 
       // Save to localStorage
