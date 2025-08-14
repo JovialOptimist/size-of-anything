@@ -1,7 +1,8 @@
 import React from "react";
 import SpecialShape from "../ui/SpecialShape";
 import blueWhaleSvg from "../../assets/bluewhale.svg";
-import boeingPlane from "../../assets/boeing-737.svg";
+import boeingPlane737 from "../../assets/boeing-737.svg";
+import boeingPlane777 from "../../assets/boeing-777-300ER.svg";
 import { InformationBubble } from "../ui/informationBubble";
 import { DismissableMessage } from "../ui/DismissableMessage";
 
@@ -22,11 +23,19 @@ const SpecialPanel: React.FC = () => {
     },
     {
       id: "boeing-737",
-      svgUrl: boeingPlane,
+      svgUrl: boeingPlane737,
       name: "Boeing 737",
-      description: "Popular commercial aircraft",
+      description: "Most popular commercial aircraft",
       widthInMeters: 34.3,
       heightInMeters: 39.37,
+    },
+    {
+      id: "boeing-777-300ER",
+      svgUrl: boeingPlane777,
+      name: "Boeing 777-300ER",
+      description: "Bigger plane meant for long-haul flights",
+      widthInMeters: 73.86,
+      heightInMeters: 64.8,
     },
   ];
 

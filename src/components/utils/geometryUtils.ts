@@ -87,6 +87,19 @@ function centroidsAreClose(centroids: LatLng[], thresholdKm = 200): boolean {
 // -- Use polygon center on the largest of the polygons for a multipolygon for SEPARATED areas
 export function findCenterForMarker(polygon: L.Polygon): LatLng {
   try {
+    // Special handling for Boeing 777 and other complex shapes
+    // Check if this is a special shape that needs stable center handling
+    const feature = (polygon as any).feature;
+    if (feature && 
+        feature.properties && 
+        feature.properties.name === "Boeing 777-300ER") {
+      
+      // For Boeing 777, use a more stable center calculation
+      const bounds = polygon.getBounds();
+      // This is a more stable approach - use the bounds center
+      return bounds.getCenter();
+    }
+
     const latLngs = polygon.getLatLngs();
 
     if (!Array.isArray(latLngs) || latLngs.length === 0) {
@@ -124,6 +137,7 @@ export function findCenterForMarker(polygon: L.Polygon): LatLng {
       return ringCentroid(multi[maxIndex]); // use largest piece
     }
   } catch (error) {
+    console.error("Error in findCenterForMarker:", error);
     return polygon.getBounds().getCenter();
   }
 }
