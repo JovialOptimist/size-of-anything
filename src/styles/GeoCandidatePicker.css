@@ -1,4 +1,62 @@
+body {
+    color: var(--default-fg);
+}
+
 .candidate-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+  text-align: center;
+  color: var(--error-fg);
+  background-color: var(--error-bg);
+}
+
+.candidate-error .error-message {
+  font-weight: bold;
+  margin-bottom: 16px;
+  text-align: center;
+  padding: 10px;
+  border-radius: 6px;
+}
+
+.candidate-error .help {
+  text-align: left;
+font-weight: normal;
+font-size: 14px;
+}
+
+.candidate-error  .error-message.dark {
+    background-color: #2d3748;
+}
+
+.magic-wand-instructions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+  text-align: center;
+background-color: rgba(230, 247, 255, 0.1);
+  border-radius: 8px;
+border: 1px solid rgba(145, 213, 255, 1);
+  margin: 10px 0;
+}
+
+.magic-wand-instructions p {
+  margin-bottom: 12px;
+  font-size: 16px;
+  color: var(--default-fg);
+}
+
+.magic-wand-instructions p.help {
+  color: var(--default-fg);
+  font-size: 14px;
+  font-style: italic;
+  padding: 8px;
+  border-radius: 4px;
+  width: 100%;
+}
+.candidate-loading {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -6,19 +64,38 @@
   text-align: center;
 }
 
-.candidate-error .error-message {
-color: #c53030;
-  font-weight: bold;
-  margin-bottom: 16px;
-  text-align: center;
-  background-color: #fed7d7;
-  padding: 10px;
-  border-radius: 6px;
+.candidate-spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 10px;
+}
+.cancel-candidate-button {
+  padding: 8px 16px;
+  background-color: #f5f5f5;
+  color: #333;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-top: 10px;
+  transition: all 0.3s ease;
 }
 
-.candidate-error .help {
-  text-align: left;
-color: #c53030;
-font-weight: normal;
-font-size: 14px;
+.cancel-candidate-button:hover {
+  background-color: #e6e6e6;
+  border-color: #c9c9c9;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.candidate-loading p {
+  font-weight: 500;
+  color: var(--default-fg);
 }

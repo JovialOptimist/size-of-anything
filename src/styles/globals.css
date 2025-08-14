@@ -65,7 +65,10 @@
     --map-loading-tile-bg: #e5e6e9;
     --map-button-bg: white;
         --map-button-fg: black;
-    
+
+    --error-bg: #fef2f2;
+    --error-fg: #b00020;
+
 }
 
 /* Dark mode variables */
@@ -137,7 +140,10 @@
     --map-loading-tile-bg: #21252e;
 
     --map-button-bg: #333;
-        --map-button-fg: white;
+    --map-button-fg: white;
+    
+    --error-bg: #494040;
+    --error-fg: #fef2f2;
 }
 
 .help-footer a {

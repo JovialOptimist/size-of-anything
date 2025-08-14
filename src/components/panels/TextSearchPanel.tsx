@@ -308,6 +308,7 @@ export default function TextSearchPanel() {
     const { lat, lng } = latlng;
     console.log("Clicked position:", lat, lng);
 
+    // Only now set loading to true when user has actually clicked
     setIsLoading(true);
     setError(null);
     setCandidates([]);
@@ -325,7 +326,7 @@ export default function TextSearchPanel() {
         setError(
           "No recognizable areas found at this location. Try clicking on or near a building, park, or other defined area."
         );
-        setShowPicker(false);
+        // Keep showPicker true to display the error message
         return;
       }
 
@@ -337,16 +338,18 @@ export default function TextSearchPanel() {
           error instanceof Error ? error.message : String(error)
         }`
       );
-      setShowPicker(false);
+      // Keep showPicker true to display the error message
     } finally {
       setIsLoading(false);
     }
   };
 
   const activateWand = () => {
-    setShowPicker(false);
     setCandidates([]);
     setError(null);
+    // Show picker immediately with instructions (not loading)
+    setShowPicker(true);
+    setIsLoading(false); // Ensure loading is off
     setOnMapClick(handleClick);
     useMapStore.getState().setMagicWandMode(true);
   };
@@ -355,6 +358,7 @@ export default function TextSearchPanel() {
     setShowPicker(false);
     setCandidates([]);
     setError(null);
+    setIsLoading(false);
     setOnMapClick(null);
     useMapStore.getState().setMagicWandMode(false);
     useMapStore.getState().setHoveredCandidate(null);
@@ -376,9 +380,8 @@ export default function TextSearchPanel() {
       </div>
 
       <div className="panel-description">
-        {magicWandMode
-          ? "Click on the map to find areas at that location."
-          : "Search for places by name or use magic wand to click on map."}
+        Search for places by name or use the magic wand to click and manually
+        select an area on the map.
       </div>
 
       <div className="text-search-panel">
@@ -389,16 +392,15 @@ export default function TextSearchPanel() {
           placeholder="Search for anything..."
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
-          className={`text-search-input ${magicWandMode ? "disabled" : ""}`}
-          disabled={magicWandMode}
+          onFocus={deactivateWand}
+          className={`text-search-input`}
         />
 
         {/* Search button */}
         <button
           onClick={handleSearch}
-          className={`text-search-button ${magicWandMode ? "disabled" : ""}`}
+          className={`text-search-button`}
           tabIndex={0}
-          disabled={magicWandMode}
         >
           <svg
             width="24"
@@ -451,20 +453,14 @@ export default function TextSearchPanel() {
         </button>
       </div>
 
-      {magicWandMode && !isLoading && !showPicker && (
-        <div className="magic-wand-instructions">
-          <p>
-            Click on the map to select an area. Click the wand button again to
-            cancel.
-          </p>
-        </div>
-      )}
+      {/* Magic wand instructions are now shown through the GeoCandidatePicker */}
 
       {showPicker && (
         <GeoCandidatePicker
           candidates={candidates}
           isLoading={isLoading}
           errorMessage={error}
+          isMagicWandMode={magicWandMode}
           onSelect={(feature) => {
             addGeoJSONFromSearch(feature);
             setShowPicker(false);

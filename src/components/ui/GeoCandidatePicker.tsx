@@ -15,6 +15,7 @@ export default function GeoCandidatePicker({
   showOnHover = true,
   isLoading = false,
   errorMessage = null,
+  isMagicWandMode = false,
 }: {
   candidates: GeoJSONFeature[];
   onSelect: (feature: GeoJSONFeature) => void;
@@ -22,6 +23,7 @@ export default function GeoCandidatePicker({
   showOnHover?: boolean;
   isLoading?: boolean;
   errorMessage?: string | null;
+  isMagicWandMode?: boolean;
 }) {
   const setHoveredCandidate = useMapStore((state) => state.setHoveredCandidate);
   return (
@@ -31,10 +33,48 @@ export default function GeoCandidatePicker({
           <div className="candidate-spinner"></div>
           <p>Searching for areas...</p>
         </div>
+      ) : isMagicWandMode && !errorMessage && candidates.length === 0 ? (
+        <div className="magic-wand-instructions">
+          <svg
+            width="30"
+            height="30"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#0050b3"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ marginBottom: "10px" }}
+          >
+            {/* Wand */}
+            <line x1="18" y1="6" x2="6" y2="18" />
+            {/* Stars */}
+            <path d="M8 2 L9 4 L7 4 Z" />
+            <path d="M16 19 L17 21 L15 21 Z" />
+            <path d="M21 13 L19 14 L19 12 Z" />
+          </svg>
+          <p>
+            <strong>Magic Wand Active</strong>
+          </p>
+          <p>Click on the map to find areas at that location.</p>
+          {onCancel && (
+            <button
+              className="cancel-candidate-button"
+              onClick={onCancel}
+              tabIndex={0}
+            >
+              Cancel
+            </button>
+          )}
+        </div>
       ) : errorMessage ? (
         <div className="candidate-error">
           <div className="error-message">
-            <p>Error: couldn't find any areas matching your search.</p>
+            <p>
+              {isMagicWandMode
+                ? "Error: couldn't find any areas at that location."
+                : "Error: couldn't find any areas matching your search."}
+            </p>
             <p className="help">{errorMessage}</p>
           </div>
           {onCancel && (
