@@ -161,6 +161,7 @@ function svgPathToGeoJSONFeature(
           "special-" + featureDisplayName.toLowerCase().replace(/\s+/g, "-"),
         osmId: `svg-${Math.random().toString(36).slice(2)}`,
         osmClass: "svg-shape",
+        location: "",
       },
     };
   } catch (error) {

@@ -38,6 +38,33 @@ export async function getSvgContent(url: string): Promise<string> {
 
   // Load and cache the content
   const content = await loadSvgContent(url);
-  svgContentCache[url] = content;
-  return content;
+
+  // Increase the stroke-width of SVG paths to make them more visible
+  const enhancedContent = enhanceSvgStrokeWidth(content, 50); // Use 3px stroke width
+
+  svgContentCache[url] = enhancedContent;
+  return enhancedContent;
+}
+
+/**
+ * Enhance SVG content by increasing stroke-width for better visibility
+ * @param svgContent Original SVG content
+ * @param strokeWidth New stroke width in pixels
+ * @returns Enhanced SVG content with thicker strokes
+ */
+function enhanceSvgStrokeWidth(
+  svgContent: string,
+  strokeWidth: number
+): string {
+  // If the SVG has a path with stroke but no stroke-width, add our specified width
+  return svgContent.replace(
+    /(<path[^>]*stroke=["'][^"']*["'][^>]*)(\/?>)/g,
+    (match, beforeClose, closeTag) => {
+      // Only add stroke-width if it doesn't already exist
+      if (!match.includes("stroke-width")) {
+        return `${beforeClose} stroke-width="${strokeWidth}"${closeTag}`;
+      }
+      return match;
+    }
+  );
 }

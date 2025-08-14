@@ -255,17 +255,23 @@ const ActiveElementDisplay: React.FC = () => {
           <div className="element-description">
             <p>
               <i>
-                {elementType.replace("_", " ")} in{" "}
-                {(elementType.toLowerCase() !== "country"
-                  ? activeElement?.properties?.location || "Unknown"
-                  : getContinent(displayName)) || "Unknown"}
+                {elementType.replace("_", " ")}{" "}
+                {(() => {
+                  let location = "";
+                  if (elementType.toLowerCase() !== "country") {
+                    location = activeElement?.properties?.location;
+                  } else {
+                    location = getContinent(displayName) || "";
+                  }
+                  return location ? `in ${location}` : "";
+                })()}
               </i>
             </p>
             <p>
               <strong>Area:</strong> {areaSize}
             </p>
           </div>
-          
+
           <RotationWheel
             rotationAngle={rotationAngle}
             onChange={(angle) => {
