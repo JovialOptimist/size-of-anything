@@ -31,12 +31,19 @@ export default function TextSearchPanel() {
     setCandidates([]);
     setIsLoading(true);
     setShowPicker(true);
+    setError(null); // Clear any previous errors
 
     try {
       const possiblePlaces = await fetchCandidates(query);
       if (possiblePlaces.length === 0) {
-        setShowPicker(false);
-        alert("Couldn't find anything named " + query + ".");
+        const isShortQuery = query.length < 3;
+        const isLongQuery = query.length > 15;
+        const helpMessage = isLongQuery
+          ? "Sometimes longer queries (>15 characters) can be harder for the system to match. Try shortening your query if possible."
+          : isShortQuery
+          ? "Sometimes the system can't handle short queries (<3 characters) well. Try being more specific."
+          : "";
+        setError(helpMessage);
         return;
       }
       console.log("Possible places:", possiblePlaces);
@@ -70,8 +77,7 @@ export default function TextSearchPanel() {
       setCandidates(geojsons);
     } catch (error) {
       console.error("Search error:", error);
-      alert("There was a problem searching.");
-      setShowPicker(false);
+      setError("There was a problem searching.");
     } finally {
       setIsLoading(false);
     }
@@ -454,16 +460,11 @@ export default function TextSearchPanel() {
         </div>
       )}
 
-      {error && (
-        <div className="error-message">
-          <p>{error}</p>
-        </div>
-      )}
-
       {showPicker && (
         <GeoCandidatePicker
           candidates={candidates}
           isLoading={isLoading}
+          errorMessage={error}
           onSelect={(feature) => {
             addGeoJSONFromSearch(feature);
             setShowPicker(false);
@@ -477,6 +478,7 @@ export default function TextSearchPanel() {
             setShowPicker(false);
             useMapStore.getState().setHoveredCandidate(null);
             setCandidates([]);
+            setError(null);
             if (magicWandMode) {
               deactivateWand();
             }

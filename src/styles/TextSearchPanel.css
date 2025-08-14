@@ -98,12 +98,3 @@
     margin: 16px 0;
     color: #2c5282;
 }
-
-/* Error message styling */
-.error-message {
-    background-color: #fed7d7;
-    color: #c53030;
-    padding: 12px;
-    border-radius: 4px;
-    margin: 16px 0;
-}

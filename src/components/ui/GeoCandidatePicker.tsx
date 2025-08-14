@@ -6,6 +6,7 @@
 import type { GeoJSONFeature } from "../../state/mapStoreTypes";
 import reactLogo from "../../assets/react.svg";
 import { useMapStore } from "../../state/mapStore";
+import "../../styles/GeoCandidatePicker.css";
 
 export default function GeoCandidatePicker({
   candidates,
@@ -13,12 +14,14 @@ export default function GeoCandidatePicker({
   onCancel,
   showOnHover = true,
   isLoading = false,
+  errorMessage = null,
 }: {
   candidates: GeoJSONFeature[];
   onSelect: (feature: GeoJSONFeature) => void;
   onCancel?: () => void;
   showOnHover?: boolean;
   isLoading?: boolean;
+  errorMessage?: string | null;
 }) {
   const setHoveredCandidate = useMapStore((state) => state.setHoveredCandidate);
   return (
@@ -27,6 +30,22 @@ export default function GeoCandidatePicker({
         <div className="candidate-loading">
           <div className="candidate-spinner"></div>
           <p>Searching for areas...</p>
+        </div>
+      ) : errorMessage ? (
+        <div className="candidate-error">
+          <div className="error-message">
+            <p>Error: couldn't find any areas matching your search.</p>
+            <p className="help">{errorMessage}</p>
+          </div>
+          {onCancel && (
+            <button
+              className="cancel-candidate-button"
+              onClick={onCancel}
+              tabIndex={0}
+            >
+              OK
+            </button>
+          )}
         </div>
       ) : (
         <>

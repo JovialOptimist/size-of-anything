@@ -1,0 +1,24 @@
+.candidate-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+  text-align: center;
+}
+
+.candidate-error .error-message {
+color: #c53030;
+  font-weight: bold;
+  margin-bottom: 16px;
+  text-align: center;
+  background-color: #fed7d7;
+  padding: 10px;
+  border-radius: 6px;
+}
+
+.candidate-error .help {
+  text-align: left;
+color: #c53030;
+font-weight: normal;
+font-size: 14px;
+}
