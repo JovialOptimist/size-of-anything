@@ -110,15 +110,8 @@ function svgPathToGeoJSONFeature(
     const props = new svgPathProperties(svgPath);
     const totalLength = props.getTotalLength();
 
-    // Special handling for Boeing 777 to ensure stable center calculation
-    const isBoeing777 = featureDisplayName === "Boeing 777-300ER";
-    
-    // Use adaptive sampling - more points for complex shapes
-    const actualSamplePoints = isBoeing777 ? Math.min(samplePoints, 200) : samplePoints;
-
-    // Step 1: Sample points along the SVG path
-    const rawPoints = Array.from({ length: actualSamplePoints }, (_, i) =>
-      props.getPointAtLength((i / (actualSamplePoints - 1)) * totalLength)
+    const rawPoints = Array.from({ length: samplePoints }, (_, i) =>
+      props.getPointAtLength((i / (samplePoints - 1)) * totalLength)
     );
 
     // Step 2: Get bounding box dimensions of the raw SVG path
@@ -128,33 +121,20 @@ function svgPathToGeoJSONFeature(
     const maxY = Math.max(...rawPoints.map((p) => p.y));
     const bboxWidth = maxX - minX;
     const bboxHeight = maxY - minY;
-    
-    // Calculate the center of the bounding box for stability
-    const bboxCenterX = minX + (bboxWidth / 2);
-    const bboxCenterY = minY + (bboxHeight / 2);
 
     // Step 3: Normalize and scale to meters
     const scaledToMeters: [number, number][] = rawPoints.map((p) => {
-      const x = ((p.x - bboxCenterX) / bboxWidth) * widthInMeters; // center at 0
-      const y = ((p.y - bboxCenterY) / bboxHeight) * heightInMeters;
+      const x = ((p.x - minX) / bboxWidth - 0.5) * widthInMeters; // center at 0
+      const y = ((p.y - minY) / bboxHeight - 0.5) * heightInMeters;
       return [x, y]; // in meters
     });
 
-    // Step 4: Convert meters to lat/lng degrees with stable calculation
+    // Step 4: Convert meters to lat/lng degrees
     const metersToLatLng = ([mx, my]: [number, number]): [number, number] => {
       // Use a more stable calculation that's less affected by latitude
       const latOffset = my / 111_320; // meters per degree latitude
-      
-      // For the Boeing 777, ensure a more consistent longitude calculation
-      let lngOffset;
-      if (isBoeing777) {
-        // Use the equator-based calculation which is more stable
-        lngOffset = mx / 111_320;
-      } else {
-        // Regular calculation for other shapes
-        lngOffset = mx / (111_320 * Math.cos((centerLat * Math.PI) / 180));
-      }
-      
+      const lngOffset = mx / (111_320 * Math.cos((centerLat * Math.PI) / 180));
+
       return [centerLng + lngOffset, centerLat + latOffset];
     };
 
@@ -174,9 +154,6 @@ function svgPathToGeoJSONFeature(
         type: "Polygon",
         coordinates: [closedGeoPoints],
         coordinateCount: countCoordinates([closedGeoPoints]),
-        // Add stability flags for Boeing 777
-        isComplex: isBoeing777,
-        stableCenter: isBoeing777 ? [centerLng, centerLat] : undefined
       },
       properties: {
         name: featureDisplayName,
@@ -186,8 +163,6 @@ function svgPathToGeoJSONFeature(
         osmId: `svg-${Math.random().toString(36).slice(2)}`,
         osmClass: "svg-shape",
         location: "",
-        // Flag this as a special shape that needs stable center handling
-        needsStableCenter: isBoeing777
       },
     };
   } catch (error) {
