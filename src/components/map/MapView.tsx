@@ -94,7 +94,7 @@ export default function MapView() {
 
     const initMap = async () => {
       const center = await findUserLocation();
-      console.log(center);
+      console.log(`Map center determined: ${center}`);
       if (cancelled) return;
 
       // account for the control panel if open
@@ -191,9 +191,9 @@ export default function MapView() {
     geoJSONLayerGroupRef.current = group;
 
     geojsonAreas.forEach((feature: GeoJSONFeature) => {
-      const idx = feature.properties?.index;
+      const idx = feature.properties.id;
       const polygonColor = feature.properties?.color || "blue";
-      const isActive = activeAreaId === `geojson-${idx}`;
+      const isActive = activeAreaId === idx;
 
       // Clone the feature to avoid modifying the original
       let featureToRender: GeoJSONFeature = JSON.parse(JSON.stringify(feature));
@@ -253,10 +253,6 @@ export default function MapView() {
         const bounds = tempLayer.getBounds();
 
         if (bounds.isValid()) {
-          console.log(
-            `MapView: Fitting bounds to shape "${shapeToFocus.properties.name}" (shouldBringToFocus=true)`
-          );
-
           // Apply appropriate padding based on panel state
           const paddingOptions = usePanel.getState().activePanel
             ? { paddingTopLeft: [560, 120], paddingBottomRight: [120, 120] }
@@ -272,16 +268,9 @@ export default function MapView() {
         } else {
           console.warn("MapView: Bounds are not valid, skipping fitBounds");
         }
-      } else {
-        // console.log(
-        //   "MapView: New shape added but shouldBringToFocus=false, not fitting bounds"
-        // );
       }
-    } else if (geojsonAreas.length < numShapesRef.current) {
-      console.log("MapView: A shape has been removed, not fitting bounds");
-    } else {
-      console.log("MapView: No new shapes, not fitting bounds");
     }
+
     numShapesRef.current = geojsonAreas.length;
   }, [geojsonAreas, activeAreaId]);
 
@@ -294,33 +283,11 @@ export default function MapView() {
     // Calculate the new center position
     const centerPosition = findCenterForMarker(polygon);
 
-    // Get the shape's name
-    let shapeName = "Unnamed Area";
-    try {
-      const feature = (layer as any).feature;
-      if (feature && feature.properties && feature.properties.name) {
-        shapeName = feature.properties.name;
-      }
-    } catch (error) {
-      console.error("Error accessing shape name:", error);
-    }
-
-    // Check if this polygon has a marker
-    let foundMarker = false;
-    markerToLayerMap.current.forEach((markerLayer, marker) => {
-      if (markerLayer === layer) {
-        // Update existing marker position
-        marker.setLatLng(centerPosition);
-        foundMarker = true;
-      }
-    });
-
     // Check if this polygon has a centered label
     labelToLayerMap.current.forEach((labelLayer, label) => {
       if (labelLayer === layer) {
         // Update existing centered label position
         label.setLatLng(centerPosition);
-        foundMarker = true;
       }
     });
 
@@ -366,7 +333,6 @@ export default function MapView() {
             polygonFeature.properties.name
           ) {
             shapeName = polygonFeature.properties.name;
-            console.log("Found shape name from polygon:", shapeName);
           }
           // If that fails, try getting from the layer
           else {
@@ -375,12 +341,7 @@ export default function MapView() {
               const properties = layerFeature.properties;
               if (properties && properties.name) {
                 shapeName = properties.name;
-                console.log("Found shape name from layer:", shapeName);
-              } else {
-                console.log("No name in layer properties:", properties);
               }
-            } else {
-              console.log("No valid feature on layer or polygon");
             }
           }
         } catch (error) {
@@ -397,11 +358,6 @@ export default function MapView() {
         ) {
           // Get the color directly from the polygon's style options
           const polygonColor = poly.options.color || "blue";
-
-          // Create the marker at the exact polygon center with the shape name
-          console.log(
-            `Creating marker for shape with name: "${shapeName}" and color: ${polygonColor}`
-          );
           const marker = createMarker(centerPosition, polygonColor, shapeName);
           marker.addTo(markerLayerGroup);
 
@@ -414,8 +370,16 @@ export default function MapView() {
           // If no marker is shown but we have a shape name, show a centered label
           // Create a simple centered label without the pin
           // Use the name directly, as it's already been split from location
-          const displayName = shapeName;
-          console.log("Creating center label with name:", displayName);
+          // Split the shapeName into two lines if it has multiple words
+          let displayName = shapeName;
+          const words = shapeName.trim().split(/\s+/);
+          if (words.length > 1 && displayName.length > 10) {
+            const mid = Math.ceil(words.length / 2);
+            displayName =
+              words.slice(0, mid).join(" ") +
+              "<br>" +
+              words.slice(mid).join(" ");
+          }
 
           const nameLabel = L.marker(centerPosition, {
             interactive: false, // Not clickable or draggable

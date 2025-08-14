@@ -128,9 +128,6 @@ export const useMapStore = create<MapState>((set) => ({
         const totalPoints = countCoordinates(feature.geometry.coordinates);
 
         if (totalPoints < targetPoints * 5) {
-          console.log(
-            `No need to simplify geometry with ${totalPoints} points`
-          );
           return feature;
         }
 
@@ -194,7 +191,7 @@ export const useMapStore = create<MapState>((set) => ({
 
       // Generate a unique ID for this feature
       const uniqueId = generateShapeId();
-      
+
       // Store the sequential index for backward compatibility
       const sequentialIndex = state.geojsonAreas.length;
 
@@ -264,12 +261,15 @@ export const useMapStore = create<MapState>((set) => ({
       areas: state.areas.filter((area) => area.id !== id),
       activeAreaId: state.activeAreaId === id ? null : state.activeAreaId,
       geojsonAreas: state.geojsonAreas.filter(
-        (feature) => 
+        (feature) =>
           // Remove by matching the ID stored in properties
-          feature.properties.id !== id && 
+          feature.properties.id !== id &&
           // For backward compatibility, also check the old index-based approach
-          !(id.startsWith("geojson-") && 
-            feature.properties.index === parseInt(id.replace("geojson-", ""), 10))
+          !(
+            id.startsWith("geojson-") &&
+            feature.properties.index ===
+              parseInt(id.replace("geojson-", ""), 10)
+          )
       ),
     })),
   duplicateArea: (id: string) =>
@@ -279,12 +279,14 @@ export const useMapStore = create<MapState>((set) => ({
 
       // Find the feature to duplicate using the unique ID
       const featureToDuplicate = state.geojsonAreas.find(
-        (feature) => feature.properties.id === id || 
-                      // Fallback for backward compatibility
-                      (id.startsWith("geojson-") && 
-                       feature.properties.index === parseInt(id.replace("geojson-", ""), 10))
+        (feature) =>
+          feature.properties.id === id ||
+          // Fallback for backward compatibility
+          (id.startsWith("geojson-") &&
+            feature.properties.index ===
+              parseInt(id.replace("geojson-", ""), 10))
       );
-      
+
       if (!featureToDuplicate) {
         console.warn(`No feature found to duplicate for area: ${id}`);
         return state;
@@ -292,10 +294,10 @@ export const useMapStore = create<MapState>((set) => ({
 
       // Generate a unique ID for the duplicate
       const uniqueId = generateShapeId();
-      
+
       // Keep a sequential index for backward compatibility
       const newSequentialIndex = state.geojsonAreas.length;
-      
+
       const newFeature = {
         ...featureToDuplicate,
         properties: {
@@ -334,12 +336,12 @@ export const useMapStore = create<MapState>((set) => ({
     if (!state.activeAreaId) return null;
 
     const activeId = state.activeAreaId;
-    
+
     // First try to find the element by the ID stored in properties (new approach)
     let element = state.geojsonAreas.find(
       (feature: GeoJSONFeature) => feature.properties.id === activeId
     );
-    
+
     // If not found and it looks like a legacy ID, try the old index-based approach
     if (!element && activeId.startsWith("geojson-")) {
       const idNumber = activeId.replace("geojson-", "");
@@ -351,7 +353,7 @@ export const useMapStore = create<MapState>((set) => ({
         );
       }
     }
-    
+
     return element || null;
   },
 
@@ -361,7 +363,7 @@ export const useMapStore = create<MapState>((set) => ({
       let featureIndex = state.geojsonAreas.findIndex(
         (feature) => feature.properties.id === id
       );
-      
+
       // If not found and it looks like a legacy ID, try the old index-based approach
       if (featureIndex < 0 && id.startsWith("geojson-")) {
         const idNumber = id.replace("geojson-", "");
@@ -395,7 +397,7 @@ export const useMapStore = create<MapState>((set) => ({
       let featureIndex = state.geojsonAreas.findIndex(
         (feature) => feature.properties.id === id
       );
-      
+
       // If not found and it looks like a legacy ID, try the old index-based approach
       if (featureIndex < 0 && id.startsWith("geojson-")) {
         const idNumber = id.replace("geojson-", "");
@@ -448,7 +450,7 @@ export const useMapStore = create<MapState>((set) => ({
       let featureIndex = state.geojsonAreas.findIndex(
         (feature) => feature.properties.id === id
       );
-      
+
       // If not found and it looks like a legacy ID, try the old index-based approach
       if (featureIndex < 0 && id.startsWith("geojson-")) {
         const idNumber = id.replace("geojson-", "");
@@ -482,7 +484,7 @@ export const useMapStore = create<MapState>((set) => ({
       let featureIndex = state.geojsonAreas.findIndex(
         (feature) => feature.properties.id === id
       );
-      
+
       // If not found and it looks like a legacy ID, try the old index-based approach
       if (featureIndex < 0 && id.startsWith("geojson-")) {
         const idNumber = id.replace("geojson-", "");
@@ -537,11 +539,6 @@ export const useMapStore = create<MapState>((set) => ({
         featureCopy.properties.customId.includes("special-shape")
       ) {
         state.historyItems.some((item) => {
-          console.log("Checking history item:", item.properties.customId);
-          console.log(
-            "Against feature customId:",
-            featureCopy.properties.customId
-          );
           if (
             item.properties.customId.includes(featureCopy.properties.customId)
           )
@@ -556,12 +553,6 @@ export const useMapStore = create<MapState>((set) => ({
           (featureCopy.properties.osmType.includes("special-") ||
             featureCopy.properties.osmType.includes("custom-"))
         ) {
-          console.log(
-            "Skipping history check for special/custom type:",
-            featureCopy.properties.osmType
-          );
-          console.log("Feature properties:", featureCopy.properties);
-          console.log("Item properties:", item.properties);
           return true;
         }
         // Check by osmId if available

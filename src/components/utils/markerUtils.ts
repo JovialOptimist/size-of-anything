@@ -84,23 +84,27 @@ export function createMarker(
   const markerSize = getMarkerSize();
   const width = 18 * markerSize;
   const height = 24 * markerSize;
-  
+
   // Create the SVG pin
   const pinSvg = `<svg width="${width}" height="${height}" viewBox="-1 -1 19 25" fill="none" xmlns="http://www.w3.org/2000/svg">
     <ellipse cx="9" cy="8" rx="7" ry="7" fill="${color}" stroke="white" stroke-width="2"/>
     <path d="M9 23C9 23 16 13.5 16 8C16 3.58172 12.4183 0 8 0C3.58172 0 0 3.58172 0 8C0 13.5 9 23 9 23Z" fill="${color}" stroke="white" stroke-width="2"/>
     <circle cx="8" cy="8" r="3" fill="white"/>
   </svg>`;
-  
-  // Log what name we received
-  console.log("Creating marker label with name:", name);
-  
+
   // Make sure we handle null, undefined, or empty strings properly
-  const displayName = (name && name.trim ? name.trim() : '') || 'Unnamed Area';
-  
+  // If the name is long and has multiple words, split into two lines for better display
+  let displayName = name;
+  const words = name.trim().split(/\s+/);
+  if (words.length > 1 && displayName.length > 10) {
+    const mid = Math.ceil(words.length / 2);
+    displayName =
+      words.slice(0, mid).join(" ") + "<br>" + words.slice(mid).join(" ");
+  }
+
   // Add name label if provided (always add it, but it might show "Unnamed Area")
   const nameLabel = `<div class="marker-name-label">${displayName}</div>`;
-  
+
   // Combine pin and label
   const html = `
     <div class="marker-container">
@@ -157,23 +161,20 @@ export function attachMarkerDragHandlers(
         }
       });
 
-      if (
-        feature &&
-        feature.properties
-      ) {
+      if (feature && feature.properties) {
         // Try to get ID from properties first, fall back to index-based approach
         let areaId;
-        
+
         // Use the unique ID if available
         if (feature.properties.id !== undefined) {
           areaId = feature.properties.id;
-        } 
+        }
         // Fall back to the legacy index-based approach
         else if (feature.properties.index !== undefined) {
           const featureIndex = feature.properties.index;
           areaId = `geojson-${featureIndex}`;
         }
-        
+
         if (areaId) {
           // Set active area - we don't need to set wasLayerClickedRef since we're stopping propagation
           const { useMapStore } = await import("../../state/mapStore");
@@ -292,11 +293,11 @@ export function attachMarkerDragHandlers(
       if (feature && feature.properties && feature.geometry) {
         // Try to get ID from properties first, fall back to index-based approach
         let areaId;
-        
+
         // Use the unique ID if available
         if (feature.properties.id !== undefined) {
           areaId = feature.properties.id;
-        } 
+        }
         // Fall back to the legacy index-based approach
         else if (feature.properties.index !== undefined) {
           const featureIndex = feature.properties.index;
@@ -315,10 +316,7 @@ export function attachMarkerDragHandlers(
           const { useMapStore } = await import("../../state/mapStore");
           useMapStore
             .getState()
-            .updateCurrentCoordinates(
-              areaId,
-              convertedCoords
-            );
+            .updateCurrentCoordinates(areaId, convertedCoords);
 
           // Note: We don't set the area as active after a marker drag
           // This keeps the behavior consistent with polygon dragging

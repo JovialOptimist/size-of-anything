@@ -98,14 +98,14 @@ export default function TextSearchPanel() {
       // If magic wand mode is activated externally, set up click handler
       if (!useMapStore.getState().onMapClick) {
         setOnMapClick(handleClick);
-        console.log("Magic Wand activated via external source.");
+        console.log("Magic Wand activated.");
       }
     } else {
       // If magic wand mode is deactivated externally, clean up
       setShowPicker(false);
       setCandidates([]);
       setError(null);
-      console.log("Magic Wand deactivated via external source.");
+      console.log("Magic Wand deactivated.");
     }
   }, [magicWandMode]);
 
@@ -134,7 +134,6 @@ export default function TextSearchPanel() {
                 );
                 out body;
                 `;
-      console.log("Overpass API query:", query);
 
       const overpassUrl = "https://overpass-api.de/api/interpreter";
       const response = await fetch(overpassUrl, {
@@ -344,7 +343,6 @@ export default function TextSearchPanel() {
     setError(null);
     setOnMapClick(handleClick);
     useMapStore.getState().setMagicWandMode(true);
-    console.log("Magic Wand activated. Click on the map to select an area.");
   };
 
   const deactivateWand = () => {
@@ -354,7 +352,6 @@ export default function TextSearchPanel() {
     setOnMapClick(null);
     useMapStore.getState().setMagicWandMode(false);
     useMapStore.getState().setHoveredCandidate(null);
-    console.log("Magic Wand deactivated.");
   };
 
   return (

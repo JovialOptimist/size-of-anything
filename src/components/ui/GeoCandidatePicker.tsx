@@ -54,9 +54,6 @@ export default function GeoCandidatePicker({
                       if (showOnHover) {
                         // Set the hovered candidate to highlight it on the map
                         setHoveredCandidate(feature);
-                        console.log(
-                          `Hovering over candidate: ${feature.properties.name}`
-                        );
                       }
                     }}
                     onMouseLeave={() => {

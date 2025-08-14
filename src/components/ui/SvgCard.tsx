@@ -104,9 +104,6 @@ function svgPathToGeoJSONFeature(
   featureDisplayName = "Custom Shape",
   whatIsIt = "Converted from SVG"
 ): GeoJSONFeature | null {
-  console.log(
-    `svgPathToGeoJSONFeature: Converting SVG path named ${featureDisplayName} to GeoJSON with ${samplePoints} sample points`
-  );
   try {
     const [centerLng, centerLat] = centerLatLng;
 
