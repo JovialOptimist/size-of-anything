@@ -60,9 +60,10 @@ export default function TextSearchPanel() {
           },
           properties: {
             name: place.display_name,
-            osmType: place.type,
-            osmId,
-            osmClass: place.class,
+            osmType: place.osm_type, // Use the actual OSM type (way, relation, node)
+            osmId, // Actual OSM ID
+            customId: null, // Not a custom shape, so this is null
+            osmClass: place.class, // Actual OSM class
             location: place.location,
             whatIsIt: describeOsmObject(place),
           },
@@ -226,8 +227,9 @@ export default function TextSearchPanel() {
               properties: {
                 name: place.display_name,
                 osmType: place.osm_type,
-                osmId: place.osm_id.toString(),
-                osmClass: place.class,
+                osmId: place.osm_id.toString(), // Actual OSM ID
+                customId: null, // Not a custom shape, so this is null
+                osmClass: place.class, // Actual OSM class
                 whatIsIt: describeOsmObject(place),
                 // Determine if this is nearby or containing (similar logic as before)
                 source:

@@ -10,7 +10,7 @@ import {
   getLongestPath,
   extractViewBox,
 } from "../utils/svgUtils";
-import type { GeoJSONFeature } from "../../state/mapStoreTypes";
+import { OSM_Type, type GeoJSONFeature } from "../../state/mapStoreTypes";
 import { useMapStore } from "../../state/mapStore";
 import { svgPathProperties } from "svg-path-properties";
 import { countCoordinates } from "../utils/geometryUtils";
@@ -158,10 +158,10 @@ function svgPathToGeoJSONFeature(
       properties: {
         name: featureDisplayName,
         whatIsIt,
-        osmType:
-          "special-" + featureDisplayName.toLowerCase().replace(/\s+/g, "-"),
-        osmId: `svg-${Math.random().toString(36).slice(2)}`,
-        osmClass: "svg-shape",
+        osmType: OSM_Type.WAY,
+        osmId: null, // SVG shapes are not from OSM
+        customId: `svg-${Math.random().toString(36).slice(2)}`, // Consistent prefix for SVG shapes
+        osmClass: `custom-svg-${featureDisplayName.toLowerCase().replace(/\s+/g, "-")}`,
         location: "",
       },
     };

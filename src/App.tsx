@@ -15,6 +15,7 @@ import ThemeInitializer from "./components/ThemeInitializer";
 import KeyboardHandler from "./components/KeyboardHandler";
 import ShareButton from "./components/map/ShareButton";
 import FeedbackButton from "./components/map/FeedbackButton";
+import ToastContainer from "./components/ui/Toast";
 
 function App() {
   // Use the URL sync hook to synchronize state with URL
@@ -59,6 +60,9 @@ function App() {
         <ShareButton />
         <FeedbackButton />
       </div>
+
+      {/* Toast notifications */}
+      <ToastContainer />
     </div>
   );
 }

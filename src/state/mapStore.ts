@@ -40,8 +40,8 @@ const loadHistory = (): GeoJSONFeature[] => {
 
       const uniqueHistory = Array.isArray(parsedHistory)
         ? parsedHistory.filter((item, idx, arr) => {
-            // Check by osmId if available
-            if (item.properties?.osmId) {
+            // Check by osmId if available (for OSM objects)
+            if (item.properties?.osmId !== null) {
               return (
                 arr.findIndex(
                   (f) => f.properties?.osmId === item.properties.osmId
@@ -50,7 +50,7 @@ const loadHistory = (): GeoJSONFeature[] => {
             }
 
             // For custom shapes, check by customId
-            if (item.properties?.customId) {
+            if (item.properties?.customId !== null) {
               return (
                 arr.findIndex(
                   (f) => f.properties?.customId === item.properties.customId
@@ -150,7 +150,42 @@ export const useMapStore = create<MapState>((set) => ({
   setClickedPosition: (position) => set({ clickedPosition: position }),
   addGeoJSONFromSearch: (feature: GeoJSONFeature) =>
     set((state) => {
+      console.log(
+        "[mapStore] addGeoJSONFromSearch called with feature:",
+        "name:",
+        feature.properties?.name,
+        "id:",
+        feature.properties?.id,
+        "osmId:",
+        feature.properties?.osmId,
+        "type:",
+        feature.geometry?.type
+      );
+
+      // Validate feature has required properties
+      if (!feature.geometry) {
+        console.error("[mapStore] Feature missing geometry:", feature);
+        return state; // Return unchanged state
+      }
+
+      if (!feature.properties.id) {
+        console.log("[mapStore] Feature missing ID, generating one");
+        feature.properties.id = `feature-${Math.random()
+          .toString(36)
+          .substr(2, 9)}`;
+      }
+
       let { type, coordinates } = feature.geometry;
+
+      if (!coordinates || !Array.isArray(coordinates)) {
+        console.error(
+          "[mapStore] Feature has invalid or missing coordinates:",
+          feature
+        );
+        return state; // Return unchanged state
+      }
+
+      console.log("[mapStore] Processing feature geometry of type:", type);
 
       // Count total coordinate points in the geometry
       // Recursively count the number of coordinate points in a GeoJSON geometry
@@ -234,9 +269,8 @@ export const useMapStore = create<MapState>((set) => ({
       // Store the sequential index for backward compatibility
       const sequentialIndex = state.geojsonAreas.length;
 
-      // Check if this is a special shape based on osmType
-      const isSpecialShape =
-        feature.properties?.osmType?.includes("special-") || false;
+      // Check if this is a special shape based on customId prefix
+      const isSpecialShape = feature.properties?.customId?.startsWith("svg-") || false;
 
       // Split name into name and location if it contains a comma
       let shapeName = feature.properties?.name || "Unnamed Area";
@@ -283,6 +317,18 @@ export const useMapStore = create<MapState>((set) => ({
       setTimeout(() => {
         useMapStore.getState().addToHistory(featureWithColor);
       }, 0);
+
+      console.log(
+        "[mapStore] Successfully processed feature:",
+        "id:",
+        uniqueId,
+        "name:",
+        shapeName,
+        "type:",
+        type,
+        "coordinates length:",
+        coordinates?.length
+      );
 
       return {
         geojsonAreas: [...state.geojsonAreas, featureWithColor],
@@ -589,7 +635,6 @@ export const useMapStore = create<MapState>((set) => ({
     set((state) => {
       // Create a copy of the feature to ensure we don't modify the original
       const featureCopy = JSON.parse(JSON.stringify(feature));
-      console.log("Feature copy location: ", featureCopy.properties.location);
 
       // Make sure location property is preserved
       // If it's missing but the name has a comma, extract location from name
@@ -607,13 +652,16 @@ export const useMapStore = create<MapState>((set) => ({
         featureCopy.properties.location = shapeLocation;
       }
 
+      // Check for SVG shapes that should be treated specially
       if (
         featureCopy.properties.customId &&
-        featureCopy.properties.customId.includes("special-shape")
+        featureCopy.properties.customId.startsWith("svg-")
       ) {
+        // Check if this SVG shape is already in history
         state.historyItems.some((item) => {
           if (
-            item.properties.customId.includes(featureCopy.properties.customId)
+            item.properties.customId &&
+            item.properties.customId === featureCopy.properties.customId
           )
             return false;
         });
@@ -621,15 +669,17 @@ export const useMapStore = create<MapState>((set) => ({
 
       // Check if this feature is already in history
       const isAlreadyInHistory = state.historyItems.some((item) => {
+        // Check custom shapes based on osmClass pattern
         if (
-          featureCopy.properties.osmType === item.properties.osmType &&
-          (featureCopy.properties.osmType.includes("special-") ||
-            featureCopy.properties.osmType.includes("custom-"))
+          featureCopy.properties.osmClass && 
+          item.properties.osmClass &&
+          featureCopy.properties.osmClass === item.properties.osmClass &&
+          featureCopy.properties.osmClass.startsWith("custom-")
         ) {
           return true;
         }
-        // Check by osmId if available
-        if (item.properties.osmId && featureCopy.properties.osmId) {
+        // Check by osmId if available (for OSM objects)
+        if (item.properties.osmId !== null && featureCopy.properties.osmId !== null) {
           return item.properties.osmId === featureCopy.properties.osmId;
         }
         // For custom shapes without osmId, check by name and any custom identifier
@@ -641,10 +691,6 @@ export const useMapStore = create<MapState>((set) => ({
       if (isAlreadyInHistory) return state;
 
       // Add to history, limiting to last 20 items (increase from 10)
-      console.log(
-        "Feature copy location that is actually being saved: ",
-        featureCopy.properties.location
-      );
       const updatedHistory = [featureCopy, ...state.historyItems].slice(0, 20);
 
       // Save to localStorage

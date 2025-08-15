@@ -6,7 +6,7 @@
  */
 import React from "react";
 import { useMapStore } from "../../state/mapStore";
-import type { GeoJSONFeature } from "../../state/mapStoreTypes";
+import { OSM_Type, type GeoJSONFeature } from "../../state/mapStoreTypes";
 import { generateRandomColor } from "../utils/colorUtils";
 import { countCoordinates } from "../utils/geometryUtils";
 
@@ -39,10 +39,7 @@ const Card: React.FC<CardProps> = ({
   // Determine what to display based on props
   const displayName = feature?.properties?.name || name || "Unnamed Area";
   const displayDescription =
-    description ||
-    feature?.properties?.whatIsIt ||
-    feature?.properties?.osmType ||
-    "Geographic area";
+    description || feature?.properties?.whatIsIt || "Geographic area";
 
   // Handle the click event to add the area to the map
   const handleCardClick = () => {
@@ -90,9 +87,12 @@ const Card: React.FC<CardProps> = ({
         properties: {
           name: featureName,
           location: featureLocation,
-          osmType: "custom",
-          osmId: null,
-          osmClass: "custom",
+          osmType: Array.isArray(geojson.coordinates[0][0][0])
+            ? OSM_Type.RELATION
+            : OSM_Type.WAY,
+          osmId: null, // Not an OSM object
+          customId: `custom-${Math.random().toString(36).slice(2)}`, // Unique identifier for custom shape
+          osmClass: "custom-area", // Classification for custom areas
           whatIsIt: description || "Custom area",
           color: generateRandomColor(),
         },

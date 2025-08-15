@@ -22,9 +22,10 @@ export interface GeoJSONFeature {
   properties: {
     name: string; // Name of the place/shape
     location?: string; // Location information (e.g., city, country, etc.)
-    osmType: string;
-    osmId: string | null;
-    osmClass: string;
+    osmType: OSM_Type;
+    osmId: string | null; // The literal OpenStreetMap identifier, only populated for actual OSM objects
+    customId: string | null; // A unique identifier for custom shapes with format: [type]-[randomId], null for OSM objects
+    osmClass: string; // Classification: OSM class for OSM objects, consistent category for custom objects
     color?: string; // Add color property
     rotation?: number; // Rotation angle in degrees
     shouldBringToFocus?: boolean; // Whether this shape should be zoomed to when added

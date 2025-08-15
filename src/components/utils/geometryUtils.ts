@@ -87,19 +87,6 @@ function centroidsAreClose(centroids: LatLng[], thresholdKm = 200): boolean {
 // -- Use polygon center on the largest of the polygons for a multipolygon for SEPARATED areas
 export function findCenterForMarker(polygon: L.Polygon): LatLng {
   try {
-    // Special handling for Boeing 777 and other complex shapes
-    // Check if this is a special shape that needs stable center handling
-    const feature = (polygon as any).feature;
-    if (feature && 
-        feature.properties && 
-        feature.properties.name === "Boeing 777-300ER") {
-      
-      // For Boeing 777, use a more stable center calculation
-      const bounds = polygon.getBounds();
-      // This is a more stable approach - use the bounds center
-      return bounds.getCenter();
-    }
-
     const latLngs = polygon.getLatLngs();
 
     if (!Array.isArray(latLngs) || latLngs.length === 0) {
@@ -137,7 +124,7 @@ export function findCenterForMarker(polygon: L.Polygon): LatLng {
       return ringCentroid(multi[maxIndex]); // use largest piece
     }
   } catch (error) {
-    console.error("Error in findCenterForMarker:", error);
+    // Use the default bounds center
     return polygon.getBounds().getCenter();
   }
 }
@@ -153,7 +140,7 @@ export function shouldShowMarkerForPolygon(
   try {
     // Get pin settings from the store
     const { pinSettings } = useSettings.getState();
-    
+
     // Check if this is a mobile device
     const isMobile = isMobileDevice();
 
@@ -180,8 +167,11 @@ export function shouldShowMarkerForPolygon(
     return (polygonArea / screenArea) * 100 < pinSettings.appearanceThreshold;
   } catch (error) {
     // Fallback to the provided threshold if settings are not accessible
-    console.warn("Error accessing pin settings, using fallback threshold", error);
-    
+    console.warn(
+      "Error accessing pin settings, using fallback threshold",
+      error
+    );
+
     // Basic bounds check
     const bounds = polygon.getBounds();
     if (!map.getBounds().intersects(bounds)) return false;
@@ -192,7 +182,7 @@ export function shouldShowMarkerForPolygon(
     const polygonArea = Math.abs(ne.x - sw.x) * Math.abs(ne.y - sw.y);
     const mapSize = map.getSize();
     const screenArea = mapSize.x * mapSize.y;
-    
+
     return (polygonArea / screenArea) * 100 < threshold;
   }
 }
@@ -416,7 +406,7 @@ export function enablePolygonDragging(
                 );
                 associatedMarker.setLatLng(newMarkerPosition);
               }
-              
+
               // Update all labels for this polygon (marker or centered text)
               if ((window as any).updatePolygonLabels) {
                 (window as any).updatePolygonLabels(innerLayer, geoJsonLayer);
@@ -440,7 +430,7 @@ export function enablePolygonDragging(
               );
               associatedMarker.setLatLng(newMarkerPosition);
             }
-            
+
             // Update all labels for this polygon (marker or centered text)
             if ((window as any).updatePolygonLabels) {
               (window as any).updatePolygonLabels(innerLayer, geoJsonLayer);
@@ -466,7 +456,7 @@ export function enablePolygonDragging(
             );
             associatedMarker.setLatLng(newMarkerPosition);
           }
-          
+
           // Update all labels for this polygon (marker or centered text)
           if ((window as any).updatePolygonLabels) {
             (window as any).updatePolygonLabels(innerLayer, geoJsonLayer);
@@ -489,7 +479,7 @@ export function enablePolygonDragging(
             // Try to get the unique ID first, fall back to legacy index approach
             const featureId = feature.properties.id;
             const featureIndex = feature.properties.index;
-            
+
             if (featureId !== undefined || featureIndex !== undefined) {
               // Save the new coordinates after projection-based transformation
               const currentCoords = innerLayer.getLatLngs();
@@ -498,13 +488,10 @@ export function enablePolygonDragging(
 
               const { useMapStore } = await import("../../state/mapStore");
               const store = useMapStore.getState();
-              
+
               // Use the unique ID if available, otherwise fall back to legacy approach
               const idToUse = featureId || `geojson-${featureIndex}`;
-              store.updateCurrentCoordinates(
-                idToUse,
-                convertedCoords
-              );
+              store.updateCurrentCoordinates(idToUse, convertedCoords);
 
               // Only set as active if it was a click (not a drag)
               if (!hasMoved) {

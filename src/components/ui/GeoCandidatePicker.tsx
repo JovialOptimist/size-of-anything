@@ -3,7 +3,7 @@
  * Component that displays a list of geographic candidates for selection.
  * Used when multiple areas match a search term or coordinate point.
  */
-import type { GeoJSONFeature } from "../../state/mapStoreTypes";
+import type { GeoJSONFeature, OSM_Type } from "../../state/mapStoreTypes";
 import reactLogo from "../../assets/react.svg";
 import { useMapStore } from "../../state/mapStore";
 import "../../styles/GeoCandidatePicker.css";
@@ -170,7 +170,7 @@ function formatCandidateLabel(feature: any): string {
 }
 
 // Temporary icon fallback
-export function getOsmIconUrl(osmClass: string, osmType: string): string {
+export function getOsmIconUrl(osmClass: string, osmType: OSM_Type): string {
   console.log("getOsmIconUrl called with:", osmClass, osmType);
   return reactLogo;
 }

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useMapStore } from "../../state/mapStore";
-import type { GeoJSONFeature } from "../../state/mapStoreTypes";
+import { OSM_Type, type GeoJSONFeature } from "../../state/mapStoreTypes";
 import { InformationBubble } from "../ui/informationBubble";
 import { DismissableMessage } from "../ui/DismissableMessage";
 import { countCoordinates } from "../utils/geometryUtils";
@@ -106,10 +106,10 @@ const CustomAreaPanel: React.FC = () => {
       properties: {
         name,
         whatIsIt: `Custom ${areaUnit} square`,
-        osmType: "custom-" + sideLength + "-square",
-        osmId: null,
-        customId: `custom-square-${Math.random().toString(36).slice(2)}`,
-        osmClass: "custom-shape",
+        osmType: OSM_Type.WAY,
+        osmId: null, // Not an OSM object
+        customId: `square-${Math.random().toString(36).slice(2)}`, // Consistent prefix for square shapes
+        osmClass: `custom-square-${areaUnit}`, // Classification by type and unit
       },
     };
   };
