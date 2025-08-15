@@ -53,6 +53,7 @@ export function setupAutoRefreshOnSettingsChange(): () => void {
     size: number;
     appearanceThreshold: number;
     labelMode: string;
+    fontSize: number;
   }
 
   interface SettingsState {
@@ -111,14 +112,14 @@ export function createMarker(
   // For "disabled", don't show labels
   // For "always" or "onlyMarker", show labels on markers
   const shouldShowLabel = labelMode !== "disabled";
-  
+
   // Get font size from settings
   const { fontSize } = useSettings.getState().pinSettings;
-  
+
   // Add name label if provided and if labels are enabled
-  const nameLabel = shouldShowLabel 
+  const nameLabel = shouldShowLabel
     ? `<div class="marker-name-label" style="font-size: ${fontSize}px">${displayName}</div>`
-    : '';
+    : "";
 
   // Combine pin and label
   const html = `
