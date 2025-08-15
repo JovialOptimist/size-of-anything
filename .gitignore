@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+layered-block-diagram.md
+improved-architecture-diagram.md
+focused-architecture-diagram.md
+architecture-diagram.md
