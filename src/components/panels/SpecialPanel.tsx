@@ -3,7 +3,7 @@ import SpecialShape from "../ui/SpecialShape";
 import blueWhaleSvg from "../../assets/bluewhale.svg";
 import boeingPlane737 from "../../assets/boeing-737.svg";
 import boeingPlane777 from "../../assets/boeing-777-300ER.svg";
-import titanic from "../../assets/titanic.svg";
+import titanicShip from "../../assets/titanicShip.svg";
 import { InformationBubble } from "../ui/informationBubble";
 import { DismissableMessage } from "../ui/DismissableMessage";
 
@@ -40,7 +40,7 @@ const SpecialPanel: React.FC = () => {
     },
     {
       id: "titanic",
-      svgUrl: titanic,
+      svgUrl: titanicShip,
       name: "Titanic",
       description: "Famous British passenger liner",
       widthInMeters: 269.1,
