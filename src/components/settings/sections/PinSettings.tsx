@@ -10,7 +10,8 @@ import DropdownSetting from "../controls/DropdownSetting";
  * Pin/marker settings section component with interdependent controls
  */
 const PinSettings: React.FC = () => {
-  const { pinSettings, setPinMode, setPinSize, setLabelMode } = useSettings();
+  const { pinSettings, setPinMode, setPinSize, setLabelMode, setFontSize } =
+    useSettings();
 
   // Calculate if controls should be disabled based on current mode
   const isPinSizeDisabled = pinSettings.mode === "disabled";
@@ -68,6 +69,22 @@ const PinSettings: React.FC = () => {
           // Immediately refresh all markers when the label mode changes
           refreshAllMarkers();
         }}
+      />
+
+      <SliderSetting
+        title="Label Font Size"
+        description="Adjust the font size of marker labels"
+        value={pinSettings.fontSize || 16} // Default to 16px if not set
+        min={10}
+        max={48}
+        step={1}
+        disabled={pinSettings.labelMode === "disabled"}
+        onChange={(value) => {
+          setFontSize(value);
+          // Immediately refresh all markers when the font size changes
+          refreshAllMarkers();
+        }}
+        formatValue={(val) => `${val}px`}
       />
     </div>
   );

@@ -18,6 +18,7 @@ export interface PinSettings {
   size: number;
   appearanceThreshold: number;
   labelMode: LabelMode;
+  fontSize: number;
 }
 
 // Outline quality setting (for shape simplification)
@@ -35,6 +36,7 @@ export interface SettingsState {
   setPinMode: (mode: PinMode) => void;
   setPinSize: (size: number) => void;
   setLabelMode: (labelMode: LabelMode) => void;
+  setFontSize: (fontSize: number) => void;
 
   // Map display settings
   outlineQuality: OutlineQuality;
@@ -79,6 +81,7 @@ export const useSettings = create<SettingsState>()(
         size: 1.5,
         appearanceThreshold: 0.01,
         labelMode: "always", // Default to always show labels (current behavior)
+        fontSize: 14, // Default font size for marker labels (in pixels)
       },
       setPinMode: (mode) =>
         set((state) => ({
@@ -91,6 +94,10 @@ export const useSettings = create<SettingsState>()(
       setLabelMode: (labelMode) =>
         set((state) => ({
           pinSettings: { ...state.pinSettings, labelMode },
+        })),
+      setFontSize: (fontSize) =>
+        set((state) => ({
+          pinSettings: { ...state.pinSettings, fontSize },
         })),
 
       // Map display settings

@@ -68,7 +68,8 @@ export function setupAutoRefreshOnSettingsChange(): () => void {
         state.pinSettings.size !== prevState.pinSettings.size ||
         state.pinSettings.appearanceThreshold !==
           prevState.pinSettings.appearanceThreshold ||
-        state.pinSettings.labelMode !== prevState.pinSettings.labelMode
+        state.pinSettings.labelMode !== prevState.pinSettings.labelMode ||
+        state.pinSettings.fontSize !== prevState.pinSettings.fontSize
       ) {
         refreshAllMarkers();
       }
@@ -111,9 +112,12 @@ export function createMarker(
   // For "always" or "onlyMarker", show labels on markers
   const shouldShowLabel = labelMode !== "disabled";
   
+  // Get font size from settings
+  const { fontSize } = useSettings.getState().pinSettings;
+  
   // Add name label if provided and if labels are enabled
   const nameLabel = shouldShowLabel 
-    ? `<div class="marker-name-label">${displayName}</div>`
+    ? `<div class="marker-name-label" style="font-size: ${fontSize}px">${displayName}</div>`
     : '';
 
   // Combine pin and label

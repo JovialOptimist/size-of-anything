@@ -388,11 +388,14 @@ export default function MapView() {
                 words.slice(mid).join(" ");
             }
 
+            // Get font size from settings
+            const fontSize = pinSettings.fontSize || 16;
+
             const nameLabel = L.marker(centerPosition, {
               interactive: false, // Not clickable or draggable
               icon: L.divIcon({
                 className: "shape-center-name",
-                html: `<div class="shape-center-name-text">${displayName}</div>`,
+                html: `<div class="shape-center-name-text" style="font-size: ${fontSize}px">${displayName}</div>`,
                 iconSize: [0, 0], // Minimal size to avoid affecting the text positioning
                 iconAnchor: [0, 0], // Use center of the icon as the anchor point
               }),
