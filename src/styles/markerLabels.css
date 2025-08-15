@@ -36,12 +36,13 @@ line-height: 1.1;
 /* Style for shape names when displayed in the center */
 .shape-center-name {
   pointer-events: none; /* So it doesn't interfere with map clicks */
+  margin: 0;
+  padding: 0;
 }
 
 .shape-center-name-text {
   color: white;
   padding: 4px 8px;
-  top: -16px;
   font-size: 14px;
   text-align: center;
   white-space: nowrap;
@@ -58,8 +59,9 @@ line-height: 1.1;
   margin: 0;
   display: block;
   position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  transform: translate(-50%, -50%); /* Center both horizontally and vertically */
   letter-spacing: 1px;
-line-height: 1.1;
+  line-height: 1.1;
+  pointer-events: none; /* Ensure it doesn't interfere with map interactions */
 }

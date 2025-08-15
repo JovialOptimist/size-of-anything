@@ -125,7 +125,7 @@ function svgPathToGeoJSONFeature(
     // Step 3: Normalize and scale to meters
     const scaledToMeters: [number, number][] = rawPoints.map((p) => {
       const x = ((p.x - minX) / bboxWidth - 0.5) * widthInMeters; // center at 0
-      const y = ((p.y - minY) / bboxHeight - 0.5) * heightInMeters;
+      const y = -((p.y - minY) / bboxHeight - 0.5) * heightInMeters;
       return [x, y]; // in meters
     });
 
@@ -147,7 +147,7 @@ function svgPathToGeoJSONFeature(
         ? geoPoints
         : [...geoPoints, geoPoints[0]];
 
-    // Step 6: Return GeoJSON Feature with enhanced properties for Boeing 777
+    // Step 6: Return GeoJSON Feature
     return {
       type: "Feature",
       geometry: {
@@ -173,5 +173,4 @@ function svgPathToGeoJSONFeature(
     return null; // Return null if conversion fails
   }
 }
-
 export default SvgCard;

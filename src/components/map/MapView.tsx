@@ -281,8 +281,9 @@ export default function MapView() {
     const markerLayerGroup = markersLayerGroupRef.current;
     if (!map || !markerLayerGroup) return;
 
-    // Calculate the new center position
-    const centerPosition = findCenterForMarker(polygon);
+    // Calculate the new center position using bounds for stability
+    const bounds = polygon.getBounds();
+    const centerPosition = bounds.getCenter();
 
     // Check if this polygon has a centered label
     labelToLayerMap.current.forEach((labelLayer, label) => {
@@ -292,8 +293,13 @@ export default function MapView() {
       }
     });
 
-    // If no marker or label was found and updated, this might be during initial
-    // drag before updateMarkers has run, so we don't need to do anything
+    // Also check if there's a marker for this polygon
+    markerToLayerMap.current.forEach((markerLayer, marker) => {
+      if (markerLayer === layer) {
+        // Update marker position using the same stable center calculation
+        marker.setLatLng(centerPosition);
+      }
+    });
   }
 
   // Expose the function globally for access from geometryUtils
@@ -388,7 +394,7 @@ export default function MapView() {
                 className: "shape-center-name",
                 html: `<div class="shape-center-name-text">${displayName}</div>`,
                 iconSize: [0, 0], // Minimal size to avoid affecting the text positioning
-                iconAnchor: [0, 0], // Center point - CSS will handle the centering
+                iconAnchor: [0, 0], // Use center of the icon as the anchor point
               }),
             });
             nameLabel.addTo(markerLayerGroup);

@@ -3,6 +3,7 @@ import SpecialShape from "../ui/SpecialShape";
 import blueWhaleSvg from "../../assets/bluewhale.svg";
 import boeingPlane737 from "../../assets/boeing-737.svg";
 import boeingPlane777 from "../../assets/boeing-777-300ER.svg";
+import titanic from "../../assets/titanic.svg";
 import { InformationBubble } from "../ui/informationBubble";
 import { DismissableMessage } from "../ui/DismissableMessage";
 
@@ -25,7 +26,7 @@ const SpecialPanel: React.FC = () => {
       id: "boeing-737",
       svgUrl: boeingPlane737,
       name: "Boeing 737",
-      description: "Average plane mean for shorter flights.",
+      description: "Average-size plane for short flights",
       widthInMeters: 34.3,
       heightInMeters: 39.37,
     },
@@ -33,9 +34,17 @@ const SpecialPanel: React.FC = () => {
       id: "boeing-777-300ER",
       svgUrl: boeingPlane777,
       name: "Boeing 777-300ER",
-      description: "Bigger plane meant for long-haul flights",
+      description: "Bigger plane for long-haul flights",
       widthInMeters: 73.86,
       heightInMeters: 64.8,
+    },
+    {
+      id: "titanic",
+      svgUrl: titanic,
+      name: "Titanic",
+      description: "Famous British passenger liner",
+      widthInMeters: 269.1,
+      heightInMeters: 53.3,
     },
   ];
 

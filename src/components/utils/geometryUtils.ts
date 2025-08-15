@@ -23,19 +23,6 @@ import { useSettings } from "../../state/settingsStore";
  * This preserves the true shape and size relationships as they would appear on the actual globe.
  */
 
-// Utility to find the centroid of a ring (used to compare proximity)
-function ringCentroid(ring: LatLng[]): LatLng {
-  const sum = ring.reduce(
-    (acc, pt) => {
-      acc.lat += pt.lat;
-      acc.lng += pt.lng;
-      return acc;
-    },
-    { lat: 0, lng: 0 }
-  );
-  return L.latLng(sum.lat / ring.length, sum.lng / ring.length);
-}
-
 export const countCoordinates = (coords: any[]): number => {
   if (!Array.isArray(coords)) return 0;
   if (
@@ -49,34 +36,6 @@ export const countCoordinates = (coords: any[]): number => {
   return coords.reduce((sum, item) => sum + countCoordinates(item), 0);
 };
 
-// Utility to measure if all centroids are within ~200km
-function centroidsAreClose(centroids: LatLng[], thresholdKm = 200): boolean {
-  const EARTH_RADIUS_KM = 6371;
-
-  const toRadians = (deg: number) => (deg * Math.PI) / 180;
-
-  function haversine(a: LatLng, b: LatLng): number {
-    const dLat = toRadians(b.lat - a.lat);
-    const dLng = toRadians(b.lng - a.lng);
-    const lat1 = toRadians(a.lat);
-    const lat2 = toRadians(b.lat);
-
-    const aVal =
-      Math.sin(dLat / 2) ** 2 +
-      Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
-    return 2 * EARTH_RADIUS_KM * Math.asin(Math.sqrt(aVal));
-  }
-
-  for (let i = 0; i < centroids.length; i++) {
-    for (let j = i + 1; j < centroids.length; j++) {
-      if (haversine(centroids[i], centroids[j]) > thresholdKm) {
-        return false;
-      }
-    }
-  }
-  return true;
-}
-
 // There are a couple ways to do this
 // You can use polygon.center() which is a Leaflet method
 // You can use polygon.getBounds().getCenter() which is also a Leaflet method
@@ -85,61 +44,13 @@ function centroidsAreClose(centroids: LatLng[], thresholdKm = 200): boolean {
 // -- Use polygon center for regular (non-multipolygon) areas
 // -- Use the getBounds center for irregular, BUT CLOSELY linked areas (like Hawaii, The World Islands, but not France)
 // -- Use polygon center on the largest of the polygons for a multipolygon for SEPARATED areas
+
+// This used to be a lot more complicated.
+// But it was causing a LOT of bugs for special shapes
+// So for now, it just finds the center of the containing box
 export function findCenterForMarker(polygon: L.Polygon): LatLng {
-  try {
-    // Special handling for Boeing 777 and other complex shapes
-    // Check if this is a special shape that needs stable center handling
-    const feature = (polygon as any).feature;
-    if (feature && 
-        feature.properties && 
-        feature.properties.name === "Boeing 777-300ER") {
-      
-      // For Boeing 777, use a more stable center calculation
-      const bounds = polygon.getBounds();
-      // This is a more stable approach - use the bounds center
-      return bounds.getCenter();
-    }
-
-    const latLngs = polygon.getLatLngs();
-
-    if (!Array.isArray(latLngs) || latLngs.length === 0) {
-      return polygon.getBounds().getCenter(); // fallback
-    }
-
-    // Single polygon case (not MultiPolygon)
-    if (Array.isArray(latLngs[0]) && !Array.isArray((latLngs[0] as any)[0])) {
-      return polygon.getCenter();
-    }
-
-    // MultiPolygon
-    const multi: LatLng[][] = latLngs as any;
-
-    const centroids = multi.map((ring) => ringCentroid(ring));
-    // Calculate the area of each ring using turf.js
-    const areas = multi.map((ring) => {
-      const coords = ring.map((pt) => [pt.lng, pt.lat]);
-      // Ensure the ring is closed
-      if (
-        coords.length > 0 &&
-        (coords[0][0] !== coords[coords.length - 1][0] ||
-          coords[0][1] !== coords[coords.length - 1][1])
-      ) {
-        coords.push(coords[0]);
-      }
-      const polygon = turf.polygon([coords]);
-      return turf.area(polygon);
-    });
-
-    if (centroidsAreClose(centroids)) {
-      return polygon.getBounds().getCenter(); // tightly grouped
-    } else {
-      const maxIndex = areas.indexOf(Math.max(...areas));
-      return ringCentroid(multi[maxIndex]); // use largest piece
-    }
-  } catch (error) {
-    console.error("Error in findCenterForMarker:", error);
-    return polygon.getBounds().getCenter();
-  }
+  const bounds = polygon.getBounds();
+  return bounds.getCenter();
 }
 
 // Import device detection utility
@@ -153,7 +64,7 @@ export function shouldShowMarkerForPolygon(
   try {
     // Get pin settings from the store
     const { pinSettings } = useSettings.getState();
-    
+
     // Check if this is a mobile device
     const isMobile = isMobileDevice();
 
@@ -180,8 +91,11 @@ export function shouldShowMarkerForPolygon(
     return (polygonArea / screenArea) * 100 < pinSettings.appearanceThreshold;
   } catch (error) {
     // Fallback to the provided threshold if settings are not accessible
-    console.warn("Error accessing pin settings, using fallback threshold", error);
-    
+    console.warn(
+      "Error accessing pin settings, using fallback threshold",
+      error
+    );
+
     // Basic bounds check
     const bounds = polygon.getBounds();
     if (!map.getBounds().intersects(bounds)) return false;
@@ -192,7 +106,7 @@ export function shouldShowMarkerForPolygon(
     const polygonArea = Math.abs(ne.x - sw.x) * Math.abs(ne.y - sw.y);
     const mapSize = map.getSize();
     const screenArea = mapSize.x * mapSize.y;
-    
+
     return (polygonArea / screenArea) * 100 < threshold;
   }
 }
@@ -416,7 +330,7 @@ export function enablePolygonDragging(
                 );
                 associatedMarker.setLatLng(newMarkerPosition);
               }
-              
+
               // Update all labels for this polygon (marker or centered text)
               if ((window as any).updatePolygonLabels) {
                 (window as any).updatePolygonLabels(innerLayer, geoJsonLayer);
@@ -440,7 +354,7 @@ export function enablePolygonDragging(
               );
               associatedMarker.setLatLng(newMarkerPosition);
             }
-            
+
             // Update all labels for this polygon (marker or centered text)
             if ((window as any).updatePolygonLabels) {
               (window as any).updatePolygonLabels(innerLayer, geoJsonLayer);
@@ -466,7 +380,7 @@ export function enablePolygonDragging(
             );
             associatedMarker.setLatLng(newMarkerPosition);
           }
-          
+
           // Update all labels for this polygon (marker or centered text)
           if ((window as any).updatePolygonLabels) {
             (window as any).updatePolygonLabels(innerLayer, geoJsonLayer);
@@ -489,7 +403,7 @@ export function enablePolygonDragging(
             // Try to get the unique ID first, fall back to legacy index approach
             const featureId = feature.properties.id;
             const featureIndex = feature.properties.index;
-            
+
             if (featureId !== undefined || featureIndex !== undefined) {
               // Save the new coordinates after projection-based transformation
               const currentCoords = innerLayer.getLatLngs();
@@ -498,13 +412,10 @@ export function enablePolygonDragging(
 
               const { useMapStore } = await import("../../state/mapStore");
               const store = useMapStore.getState();
-              
+
               // Use the unique ID if available, otherwise fall back to legacy approach
               const idToUse = featureId || `geojson-${featureIndex}`;
-              store.updateCurrentCoordinates(
-                idToUse,
-                convertedCoords
-              );
+              store.updateCurrentCoordinates(idToUse, convertedCoords);
 
               // Only set as active if it was a click (not a drag)
               if (!hasMoved) {
