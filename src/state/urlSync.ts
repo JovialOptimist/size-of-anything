@@ -5,7 +5,6 @@
  */
 import { useEffect } from "react";
 import { useMapStore } from "./mapStore";
-import { usePanel } from "./panelStore";
 import type { GeoJSONFeature } from "./mapStoreTypes";
 
 // Define the shape of the state we want to share
@@ -20,47 +19,12 @@ interface ShareableState {
 }
 
 /**
- * Generate a shareable link containing the current state
+ * Generate a shareable link containing the current URL
+ * This simply returns the current URL as shown in the browser's address bar,
+ * without adding any additional state information or panel tracking.
  */
 export const generateShareableLink = (): string => {
-  const state = useMapStore.getState();
-  const { activePanel } = usePanel.getState();
-
-  // Get the current zoom level from the map instance if available
-  let currentZoom = 13; // Default zoom level
-  const mapInstance = (window as any).mapInstanceRef?.current;
-  if (mapInstance && typeof mapInstance.getZoom === "function") {
-    currentZoom = mapInstance.getZoom();
-  }
-
-  // Create the state object we want to encode in the URL
-  const shareableState: ShareableState = {
-    mapCenter: state.currentMapCenter,
-    zoomLevel: currentZoom,
-    activeAreaId: state.activeAreaId,
-    areas: state.geojsonAreas.map((feature, index) => ({
-      id: `geojson-${feature.properties.index || index}`,
-      feature: feature,
-    })),
-  };
-
-  // Serialize and encode the state
-  const stateString = JSON.stringify(shareableState);
-  const encodedState = btoa(encodeURIComponent(stateString));
-
-  // Generate the URL with the hash fragment
-  const baseUrl = window.location.origin + window.location.pathname;
-  let url = baseUrl;
-
-  // Include the panel state if needed
-  if (activePanel) {
-    url += `?panel=${activePanel}`;
-  }
-
-  // Add the share data as a hash fragment
-  url += `#share=${encodedState}`;
-
-  return url;
+  return window.location.href;
 };
 
 /**
@@ -118,7 +82,6 @@ export const applySharedState = (state: ShareableState): void => {
  * Custom hook for syncing state with URL parameters
  */
 export const useUrlSync = () => {
-  const { activePanel, setActivePanel } = usePanel();
   const { activeAreaId, areas, setActiveArea } = useMapStore();
 
   // Check for shared state on initial load
@@ -147,28 +110,23 @@ export const useUrlSync = () => {
     // Regular URL sync for non-shared states
     const params = new URLSearchParams(window.location.search);
 
-    const panelParam = params.get("panel");
-    if (panelParam) {
-      setActivePanel(panelParam);
-    }
+    // Panel tracking from URL removed as per requirements
 
     const areaParam = params.get("area");
     if (areaParam && areas.some((area) => area.id === areaParam)) {
       setActiveArea(areaParam);
     }
-  }, []);
+  }, [areas, setActiveArea]);
 
-  // Only sync panel and active area to URL during normal navigation
-  // (We don't want to overwrite the shared URL hash)
+  // Only sync active area to URL during normal navigation
+  // Panel tracking has been removed as per requirements
   useEffect(() => {
     // Don't update URL if we're viewing a shared state
     if (window.location.hash.startsWith("#share=")) return;
 
     const params = new URLSearchParams();
 
-    if (activePanel) {
-      params.set("panel", activePanel);
-    }
+    // Panel tracking removed from URL
 
     if (activeAreaId) {
       params.set("area", activeAreaId);
@@ -178,7 +136,7 @@ export const useUrlSync = () => {
       ? `?${params.toString()}`
       : window.location.pathname;
     window.history.replaceState({}, "", url);
-  }, [activePanel, activeAreaId]);
+  }, [activeAreaId]);
 
   return null; // This hook doesn't render anything
 };

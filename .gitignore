@@ -26,3 +26,4 @@ layered-block-diagram.md
 improved-architecture-diagram.md
 focused-architecture-diagram.md
 architecture-diagram.md
+src/utils/osmFetcher.ts

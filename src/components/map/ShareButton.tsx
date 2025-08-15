@@ -19,6 +19,13 @@ export default function ShareButton() {
       // Show copied confirmation
       setCopied(true);
       setShowTooltip(true);
+      let shouldAlert = localStorage.getItem("openedShare");
+      if (!shouldAlert) {
+        alert(
+          "For now, the share button just copies the URL. In the future, it will copy all of your comparisons to make for easy exporting and showing to your friends!"
+        );
+        localStorage.setItem("openedShare", "true");
+      }
 
       // Hide after 3 seconds
       setTimeout(() => {
