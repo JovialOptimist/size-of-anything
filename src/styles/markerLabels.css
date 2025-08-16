@@ -16,7 +16,6 @@ line-height: 1.1;
   color: white;
   padding: 4px 8px;
   font-size: 14px;
-  white-space: nowrap;
   margin-left: 0px;
   font-weight: bold;
     color: #fff;
@@ -26,11 +25,11 @@ line-height: 1.1;
             -1px -1px 0 #000,
             1px -1px 0 #000;
   pointer-events: none; /* So it doesn't interfere with clicks */
-  max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
 letter-spacing: 1px;
 line-height: 1.1;
+width: 400px;
 }
 
 /* Style for shape names when displayed in the center */
@@ -46,7 +45,6 @@ line-height: 1.1;
   font-size: 14px;
   text-align: center;
   white-space: nowrap;
-  max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
   font-weight: bold;

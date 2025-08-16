@@ -266,6 +266,7 @@ export default function MapView() {
               number,
               number
             ],
+            maxZoom: 19,
           });
         } else {
           console.warn("MapView: Bounds are not valid, skipping fitBounds");
