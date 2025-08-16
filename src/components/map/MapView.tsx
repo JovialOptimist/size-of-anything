@@ -21,6 +21,7 @@ import {
 import { createMarker, attachMarkerDragHandlers } from "../utils/markerUtils";
 import type { GeoJSONFeature, MapState } from "../../state/mapStoreTypes";
 import ShareButton from "./ShareButton";
+import LogoDisplay from "./LogoDisplay";
 import { setupAutoRefreshOnSettingsChange } from "../utils/markerUtils";
 
 // improved findUserLocation with timeout + async/await
@@ -462,6 +463,7 @@ export default function MapView() {
       }`}
     >
       <div id="map" ref={mapRef}></div>
+      <LogoDisplay />
       <ShareButton />
     </div>
   );
