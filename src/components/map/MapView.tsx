@@ -12,7 +12,7 @@ import "../../styles/ShareButton.css";
 import "../../styles/markerLabels.css";
 import { useMapStore } from "../../state/mapStore";
 import { usePanel } from "../../state/panelStore";
-import { useSettings } from "../../state/settingsStore";
+import { useSettings, applyMapTheme } from "../../state/settingsStore";
 import {
   enablePolygonDragging,
   shouldShowMarkerForPolygon,
@@ -417,6 +417,27 @@ export default function MapView() {
     if (mapInstanceRef.current) updateMarkers();
   }, [geojsonAreas, activeAreaId]);
 
+  // Apply map theme when settings change
+  useEffect(() => {
+    // Get the current theme settings
+    const { mapTheme, theme } = useSettings.getState();
+
+    // Apply the map theme if the map is initialized
+    if (mapInstanceRef.current) {
+      applyMapTheme(mapTheme, theme);
+    }
+
+    // Subscribe to theme setting changes
+    const unsubscribe = useSettings.subscribe((state) => {
+      const { mapTheme, theme } = state;
+      applyMapTheme(mapTheme, theme);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
   // Set up auto-refresh of markers when pin settings change
   useEffect(() => {
     // Start listening for settings changes
@@ -425,6 +446,25 @@ export default function MapView() {
     // Clean up subscription on unmount
     return () => {
       if (unsubscribe) unsubscribe();
+    };
+  }, []);
+
+  // Apply map theme when settings change
+  useEffect(() => {
+    // Get the current theme settings
+    const { mapTheme, theme } = useSettings.getState();
+
+    // Apply the map theme immediately
+    applyMapTheme(mapTheme, theme);
+
+    // Subscribe to theme setting changes
+    const unsubscribe = useSettings.subscribe((state) => {
+      const { mapTheme, theme } = state;
+      applyMapTheme(mapTheme, theme);
+    });
+
+    return () => {
+      unsubscribe();
     };
   }, []);
 

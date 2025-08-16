@@ -9,6 +9,9 @@ import { persist } from "zustand/middleware";
 // Theme settings
 export type ThemeMode = "light" | "dark" | "system";
 
+// Map theme settings
+export type MapThemeMode = "light" | "dark" | "system";
+
 // Pin marker settings
 export type PinMode = "disabled" | "adaptive" | "always";
 export type LabelMode = "disabled" | "always" | "onlyMarker";
@@ -30,6 +33,10 @@ export interface SettingsState {
   theme: ThemeMode;
   setTheme: (theme: ThemeMode) => void;
   getSystemPreference: () => "light" | "dark";
+
+  // Map theme settings
+  mapTheme: MapThemeMode;
+  setMapTheme: (mapTheme: MapThemeMode) => void;
 
   // Pin/marker settings
   pinSettings: PinSettings;
@@ -75,6 +82,10 @@ export const useSettings = create<SettingsState>()(
           : "light";
       },
 
+      // Map theme settings
+      mapTheme: "light", // Default to match app theme
+      setMapTheme: (mapTheme) => set({ mapTheme }),
+
       // Pin settings with defaults
       pinSettings: {
         mode: "adaptive",
@@ -109,6 +120,7 @@ export const useSettings = create<SettingsState>()(
       // Only store actual settings, not the setter functions
       partialize: (state) => ({
         theme: state.theme,
+        mapTheme: state.mapTheme,
         pinSettings: state.pinSettings,
         outlineQuality: state.outlineQuality,
       }),
@@ -125,5 +137,44 @@ export const applyTheme = (theme: ThemeMode): void => {
     root.classList.add("dark-mode");
   } else {
     root.classList.remove("dark-mode");
+  }
+};
+
+// Apply map theme by setting CSS filter variables
+export const applyMapTheme = (
+  mapTheme: MapThemeMode,
+  appTheme: ThemeMode
+): void => {
+  // Get the root element to modify CSS variables
+  const root = document.documentElement;
+  if (!root) return;
+
+  // Determine the effective map theme
+  let effectiveMapTheme: "light" | "dark";
+
+  if (mapTheme === "system") {
+    // "Match App" option - use the app theme
+    effectiveMapTheme =
+      appTheme === "system" ? getSystemPreference() : appTheme;
+  } else {
+    // "Light" or "Dark" option - use directly
+    effectiveMapTheme = mapTheme;
+  }
+
+  // Apply the appropriate filter values based on theme
+  if (effectiveMapTheme === "dark") {
+    // Dark mode map filter values
+    root.style.setProperty("--map-inversion", "1");
+    root.style.setProperty("--map-hue-rotate", "192deg");
+    root.style.setProperty("--map-brightness", "1.2");
+    root.style.setProperty("--map-contrast", "0.9");
+    root.style.setProperty("--map-loading-tile-bg", "#21252e");
+  } else {
+    // Light mode map filter values
+    root.style.setProperty("--map-inversion", "0");
+    root.style.setProperty("--map-hue-rotate", "0deg");
+    root.style.setProperty("--map-brightness", "1");
+    root.style.setProperty("--map-contrast", "1");
+    root.style.setProperty("--map-loading-tile-bg", "#e5e6e9");
   }
 };
