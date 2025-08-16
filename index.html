@@ -8,9 +8,19 @@
         <meta name="description"
             content="Drag and drop any country, city, building, park, or other feature in the entire world!" />
     </head>
+    <!-- Google tag (gtag.js) -->
+    <script async
+        src="https://www.googletagmanager.com/gtag/js?id=G-H9XQRQ07P5"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-H9XQRQ07P5');
+    </script>
     <body>
         <div id="root"></div>
-        
+
         <!-- Hidden Netlify Form for pre-rendering -->
         <form name="feedback" data-netlify="true" hidden>
             <input type="hidden" name="form-name" value="feedback" />
@@ -20,7 +30,7 @@
             <textarea name="details"></textarea>
             <input type="email" name="email" />
         </form>
-        
+
         <script type="module" src="/src/main.tsx"></script>
     </body>
 </html>
