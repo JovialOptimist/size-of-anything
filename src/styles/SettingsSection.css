@@ -54,6 +54,7 @@
   color: var(--control-sidebar-text-color);
   min-width: 120px;
   cursor: pointer;
+  margin-left: 0.5rem;
 }
 
 .settings-dropdown:focus {

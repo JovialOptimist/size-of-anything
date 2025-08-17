@@ -52,6 +52,10 @@ export interface SettingsState {
   // High contrast mode
   highContrastMode: boolean;
   setHighContrastMode: (highContrastMode: boolean) => void;
+
+  // Units display settings
+  useMetricUnits: boolean;
+  setUseMetricUnits: (useMetricUnits: boolean) => void;
 }
 
 // Check for system preference
@@ -87,7 +91,7 @@ export const useSettings = create<SettingsState>()(
       },
 
       // Map theme settings
-      mapTheme: "light", // Default to match app theme
+      mapTheme: "system", // Default to match app theme
       setMapTheme: (mapTheme) => set({ mapTheme }),
 
       // Pin settings with defaults
@@ -96,7 +100,7 @@ export const useSettings = create<SettingsState>()(
         size: 1.5,
         appearanceThreshold: 0.01,
         labelMode: "always", // Default to always show labels (current behavior)
-        fontSize: 14, // Default font size for marker labels (in pixels)
+        fontSize: 24, // Default font size for marker labels (in pixels)
       },
       setPinMode: (mode) =>
         set((state) => ({
@@ -122,6 +126,10 @@ export const useSettings = create<SettingsState>()(
       // High contrast mode
       highContrastMode: false, // Default to normal contrast
       setHighContrastMode: (highContrastMode) => set({ highContrastMode }),
+
+      // Units display settings
+      useMetricUnits: true, // Default to metric units
+      setUseMetricUnits: (useMetricUnits) => set({ useMetricUnits }),
     }),
     {
       name: "size-of-anything-settings",
@@ -132,6 +140,7 @@ export const useSettings = create<SettingsState>()(
         pinSettings: state.pinSettings,
         outlineQuality: state.outlineQuality,
         highContrastMode: state.highContrastMode,
+        useMetricUnits: state.useMetricUnits,
       }),
     }
   )

@@ -8,7 +8,14 @@ import { useSettings } from "../../../state/settingsStore";
  */
 const MapSettings: React.FC = () => {
   // Get settings from the store
-  const { outlineQuality, setOutlineQuality, highContrastMode, setHighContrastMode } = useSettings();
+  const {
+    outlineQuality,
+    setOutlineQuality,
+    highContrastMode,
+    setHighContrastMode,
+    useMetricUnits,
+    setUseMetricUnits,
+  } = useSettings();
 
   return (
     <div className="settings-section">
@@ -31,6 +38,17 @@ const MapSettings: React.FC = () => {
           { label: "Great (recommended)", value: "great" },
           { label: "Good", value: "good" },
           { label: "Low", value: "low" },
+        ]}
+      />
+
+      <DropdownSetting
+        title="Measurement Units"
+        description="Choose between metric (km²) and imperial (sq mi) units"
+        value={useMetricUnits ? "metric" : "imperial"}
+        onChange={(value) => setUseMetricUnits(value === "metric")}
+        options={[
+          { label: "Metric (km²)", value: "metric" },
+          { label: "Imperial (sq mi)", value: "imperial" },
         ]}
       />
     </div>

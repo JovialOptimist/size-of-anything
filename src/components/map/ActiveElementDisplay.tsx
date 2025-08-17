@@ -6,6 +6,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { usePanel } from "../../state/panelStore";
 import { useMapStore } from "../../state/mapStore";
+import { useSettings } from "../../state/settingsStore";
 import "../../styles/ActiveElementDisplay.css";
 import "../../styles/RotationControl.css";
 import "../../styles/CloseButton.css";
@@ -26,6 +27,7 @@ const ActiveElementDisplay: React.FC = () => {
   );
   const removeArea = useMapStore((state: any) => state.removeArea);
   const presetColors = getExistingColors();
+  const { useMetricUnits } = useSettings();
 
   const activeElement = getActiveElement();
   const currentColor = activeElement?.properties?.color || "#1f77b4";
@@ -90,19 +92,39 @@ const ActiveElementDisplay: React.FC = () => {
   }
 
   const areaSizeNum = calculateAreaInKm2(activeElement);
+
   // Format with million suffix
   const formatNumberWithCommas = (num: number) =>
     num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
-  const areaSize =
-    areaSizeNum >= 1e6
+  // Conversion factors
+  const KM2_TO_MI2 = 0.386102; // 1 km² = 0.386102 sq mi
+  const M2_TO_SQFT = 10.7639; // 1 m² = 10.7639 sq ft
+
+  const areaSize = useMetricUnits
+    ? // Metric units
+      areaSizeNum >= 1e6
       ? formatNumberWithCommas(Number((areaSizeNum / 1e6).toFixed(2))) +
         " million km²"
       : areaSizeNum >= 1e3
       ? formatNumberWithCommas(Number(areaSizeNum.toFixed(0))) + " km²"
       : areaSizeNum < 0.1
       ? (areaSizeNum * 1e6).toFixed(0) + " m²"
-      : areaSizeNum.toFixed(2) + " km²";
+      : areaSizeNum.toFixed(2) + " km²"
+    : // Imperial units
+    areaSizeNum >= 1e6
+    ? formatNumberWithCommas(
+        Number(((areaSizeNum / 1e6) * KM2_TO_MI2).toFixed(2))
+      ) + " million sq mi"
+    : areaSizeNum >= 1e3
+    ? formatNumberWithCommas(Number((areaSizeNum * KM2_TO_MI2).toFixed(0))) +
+      " sq mi"
+    : areaSizeNum < 0.1
+    ? formatNumberWithCommas(
+        Number((areaSizeNum * 1e6 * M2_TO_SQFT).toFixed(0))
+      ) + " sq ft"
+    : formatNumberWithCommas(Number((areaSizeNum * KM2_TO_MI2).toFixed(2))) +
+      " sq mi";
 
   const elementType =
     activeElement.properties?.whatIsIt ||

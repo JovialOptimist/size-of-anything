@@ -31,26 +31,6 @@ const SettingsPanel: React.FC = () => {
       <ThemeSettings />
       <PinSettings />
       <MapSettings />
-
-      <div className="settings-section">
-        <h3>Units</h3>
-        <div className="settings-option">
-          <div className="settings-option-label">
-            <span className="settings-option-title">Distance Units</span>
-            <span className="settings-option-description">
-              Choose your preferred units
-            </span>
-          </div>
-          <div className="radio-options">
-            <button className="radio-option selected" tabIndex={0}>
-              Metric
-            </button>
-            <button className="radio-option" tabIndex={0}>
-              Imperial
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

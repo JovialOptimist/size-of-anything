@@ -7,7 +7,6 @@ const presetColors = [
   "#9467bd",
   "#e1ee2eff",
   "#e377c2",
-  "#7f7f7f",
 ];
 
 /**
