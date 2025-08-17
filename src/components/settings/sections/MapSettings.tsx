@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import ToggleSetting from "../controls/ToggleSetting";
 import DropdownSetting from "../controls/DropdownSetting";
 import { useSettings } from "../../../state/settingsStore";
@@ -8,11 +8,7 @@ import { useSettings } from "../../../state/settingsStore";
  */
 const MapSettings: React.FC = () => {
   // Get settings from the store
-  const { outlineQuality, setOutlineQuality } = useSettings();
-
-  // This setting is not yet connected to the store
-  // It's just a placeholder for UI demonstration
-  const [highContrast, setHighContrast] = useState(false);
+  const { outlineQuality, setOutlineQuality, highContrastMode, setHighContrastMode } = useSettings();
 
   return (
     <div className="settings-section">
@@ -21,8 +17,8 @@ const MapSettings: React.FC = () => {
       <ToggleSetting
         title="High Contrast Mode"
         description="Increase visibility of map elements"
-        value={highContrast}
-        onChange={setHighContrast}
+        value={highContrastMode}
+        onChange={setHighContrastMode}
       />
 
       <DropdownSetting

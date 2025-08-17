@@ -48,6 +48,10 @@ export interface SettingsState {
   // Map display settings
   outlineQuality: OutlineQuality;
   setOutlineQuality: (quality: OutlineQuality) => void;
+
+  // High contrast mode
+  highContrastMode: boolean;
+  setHighContrastMode: (highContrastMode: boolean) => void;
 }
 
 // Check for system preference
@@ -114,6 +118,10 @@ export const useSettings = create<SettingsState>()(
       // Map display settings
       outlineQuality: "great", // Default to "Great" quality
       setOutlineQuality: (quality) => set({ outlineQuality: quality }),
+
+      // High contrast mode
+      highContrastMode: false, // Default to normal contrast
+      setHighContrastMode: (highContrastMode) => set({ highContrastMode }),
     }),
     {
       name: "size-of-anything-settings",
@@ -123,6 +131,7 @@ export const useSettings = create<SettingsState>()(
         mapTheme: state.mapTheme,
         pinSettings: state.pinSettings,
         outlineQuality: state.outlineQuality,
+        highContrastMode: state.highContrastMode,
       }),
     }
   )
@@ -161,20 +170,23 @@ export const applyMapTheme = (
     effectiveMapTheme = mapTheme;
   }
 
+  // Get the high contrast mode setting
+  const { highContrastMode } = useSettings.getState();
+
   // Apply the appropriate filter values based on theme
   if (effectiveMapTheme === "dark") {
     // Dark mode map filter values
-    root.style.setProperty("--map-inversion", "1");
-    root.style.setProperty("--map-hue-rotate", "192deg");
-    root.style.setProperty("--map-brightness", "1.2");
-    root.style.setProperty("--map-contrast", "0.9");
-    root.style.setProperty("--map-loading-tile-bg", "#21252e");
+    root.style.setProperty("--map-inversion", "0");
+    root.style.setProperty("--map-hue-rotate", "0deg");
+    root.style.setProperty("--map-brightness", "0.6");
+    root.style.setProperty("--map-contrast", highContrastMode ? "3" : "2");
+    root.style.setProperty("--map-loading-tile-bg", "#a39f98");
   } else {
     // Light mode map filter values
     root.style.setProperty("--map-inversion", "0");
     root.style.setProperty("--map-hue-rotate", "0deg");
-    root.style.setProperty("--map-brightness", "1");
-    root.style.setProperty("--map-contrast", "1");
-    root.style.setProperty("--map-loading-tile-bg", "#e5e6e9");
+    root.style.setProperty("--map-brightness", highContrastMode ? "0.8" : "1");
+    root.style.setProperty("--map-contrast", highContrastMode ? "2" : "1");
+    root.style.setProperty("--map-loading-tile-bg", "#f2efe9");
   }
 };
