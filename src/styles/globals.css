@@ -194,6 +194,7 @@ body {
     flex-direction: column;
     justify-content: space-between;
     align-items: flex-start;
+    z-index: 1100; /* Ensure sidebars appear above logo */
     padding-top: 1rem;
     padding-bottom: 1rem;
     z-index: 1000;
@@ -268,9 +269,11 @@ body {
     background: var(--control-sidebar-bg);
     height: 100vh;
     min-width: 200px;
-    max-width: 600px;
+    /* Ensure the panel doesn't exceed viewport width, accounting for icon sidebar */
+    max-width: min(600px, calc(100vw - var(--sidebar-width) - 20px));
     box-shadow: var(--map-controls-shadow);
     overflow: hidden;
+    z-index: 1100; /* Ensure panels appear above logo */
     /* Prevent content overflow */
     z-index: 900;
     transition: transform 0.3s ease-in-out;
@@ -281,7 +284,9 @@ body {
 
 .sidebar-content {
     flex-grow: 1;
+    width: 100%;
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 1rem;
     /* Optional: for inner spacing */
     text-align: left;
@@ -338,6 +343,7 @@ body {
     display: flex;
     left: var(--sidebar-width);
     transform: translateX(0);
+    transition: transform 0.3s ease, width 0.2s ease;
 }
 
 /* Hidden state: sidebar is positioned off-screen */
@@ -352,6 +358,11 @@ body {
 .panel {
     padding: 1rem;
     color: var(--control-sidebar-text-color);
+    width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
+    position: relative;
+    z-index: 1100; /* Ensure panel content appears above logo */
 }
 
 .panel h2 {
@@ -425,19 +436,22 @@ body {
     padding: 0.75rem;
     max-width: 32rem;
     z-index: 800;
-    transition: left 0.3s ease-in-out;
+    transition: left 0.3s ease-in-out, width 0.2s ease;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
+/* Base styles for positioning - will be overridden by JavaScript for more precise control */
 /* When the sidebar is expanded */
 .active-element-display.sidebar-expanded {
     left: calc(1rem + var(--sidebar-width) + var(--control-panel-width));
-    width: calc(100% - var(--sidebar-width) - var(--control-panel-width) - 2rem);
+    width: min(400px, calc(100vw - var(--sidebar-width) - var(--control-panel-width) - 2rem));
 }
 
 /* When the sidebar is collapsed */
 .active-element-display.sidebar-collapsed {
     left: calc(1rem + var(--sidebar-width));
-    width: calc(100% - var(--sidebar-width) - 2rem);
+    width: min(400px, calc(100vw - var(--sidebar-width) - 2rem));
 }
 
 .panel-header {

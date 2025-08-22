@@ -2,7 +2,7 @@
   position: absolute;
   top: 10px;
   right: 10px;
-  z-index: 1000;
+  z-index: 500; /* Lowered z-index significantly to ensure it appears below all panels */
   animation: fadeIn 0.3s ease-out;
 }
 

@@ -1,14 +1,15 @@
 .active-element-panel {
   position: absolute;
   bottom: 20px;
-  right: 20px;
   background-color: var(--active-element-display-bg);
   color: var(--default-fg);
   border-radius: 8px;
   box-shadow: var(--active-element-display-shadow);
   padding: 15px;
-  width: 100px;
+  width: 100%; /* Will be controlled by JavaScript for responsive sizing */
   max-width: 400px; /* Increased to accommodate the new layout */
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .active-element-empty {
@@ -75,6 +76,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    width: 100%;
 }
 
 .element-name-display {
@@ -170,6 +172,12 @@
     font-size: 13px;
 }
 
+.element-info {
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
 .element-info p {
   margin: 8px 0;
   font-size: 14px;
@@ -245,8 +253,8 @@
   .active-element-panel,
   .active-element-empty {
     bottom: 60px;
-    right: 10px;
-    width: 200px;
+    width: auto;
+    min-width: 200px;
   }
   
   .description-rotation-container {
@@ -257,6 +265,26 @@
   .rotation-controls-container {
     margin-top: 10px;
     align-self: center;
+  }
+
+  .element-name-display h3 {
+    font-size: 22px;
+    word-break: break-word;
+    white-space: normal;
+  }
+}
+
+@media (max-width: 480px) {
+  .active-element-panel {
+    padding: 10px;
+  }
+  
+  .button-group {
+    flex-wrap: wrap;
+  }
+
+  .icon-action-button {
+    padding: 6px;
   }
 }
 

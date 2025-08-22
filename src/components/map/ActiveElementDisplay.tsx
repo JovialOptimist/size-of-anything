@@ -58,6 +58,50 @@ const ActiveElementDisplay: React.FC = () => {
   );
 
   const colorPickerRef = useRef<HTMLDivElement>(null);
+  const displayRef = useRef<HTMLDivElement>(null);
+
+  // Ensure proper positioning and sizing
+  useEffect(() => {
+    const adjustDisplayPosition = () => {
+      if (displayRef.current) {
+        const sidebarWidth = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sidebar-width'));
+        const controlPanelWidth = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--control-panel-width'));
+        
+        // Calculate available width for the display
+        let availableWidth: number;
+        let leftPosition: number;
+        
+        if (activePanel) {
+          // Sidebar is expanded - position to the right of both sidebars
+          const panelElement = document.querySelector('.control-sidebar') as HTMLElement;
+          const actualPanelWidth = panelElement ? panelElement.offsetWidth : controlPanelWidth;
+          
+          leftPosition = sidebarWidth + actualPanelWidth + 20; // 20px spacing
+          availableWidth = window.innerWidth - leftPosition - 20; // 20px from right edge
+        } else {
+          // Sidebar is collapsed - position to the right of icon sidebar only
+          leftPosition = sidebarWidth + 20; // 20px spacing
+          availableWidth = window.innerWidth - leftPosition - 20; // 20px from right edge
+        }
+        
+        // Apply constraints
+        const maxWidth = Math.min(400, availableWidth); // 400px is the desired max-width
+        
+        // Update styles
+        displayRef.current.style.left = `${leftPosition}px`;
+        displayRef.current.style.width = `${maxWidth}px`;
+        displayRef.current.style.maxWidth = `${availableWidth}px`;
+      }
+    };
+    
+    // Adjust on component mount, panel change, and window resize
+    adjustDisplayPosition();
+    window.addEventListener('resize', adjustDisplayPosition);
+    
+    return () => {
+      window.removeEventListener('resize', adjustDisplayPosition);
+    };
+  }, [activePanel]);
 
   // Rotation now handled directly by the wheel component
 
@@ -152,7 +196,7 @@ const ActiveElementDisplay: React.FC = () => {
   // Rotation is now handled by the RotationWheel component
 
   return (
-    <div className={`${displayClass} active-element-panel`}>
+    <div className={`${displayClass} active-element-panel`} ref={displayRef}>
       <div className="element-info">
         <div className="element-header">
           <div className="element-title">
