@@ -146,6 +146,7 @@ export const useMapStore = create<MapState>((set) => ({
   magicWandMode: false,
   currentMapCenter: [0, 0],
   hoveredCandidate: null,
+  viewMode: 'outline' as const,
   setIsSelectingArea: (isSelecting) => set({ isSelectingArea: isSelecting }),
   setClickedPosition: (position) => set({ clickedPosition: position }),
   addGeoJSONFromSearch: (feature: GeoJSONFeature) =>
@@ -658,5 +659,10 @@ export const useMapStore = create<MapState>((set) => ({
   clearHistory: () => {
     localStorage.removeItem(HISTORY_STORAGE_KEY);
     set({ historyItems: [] });
+  },
+
+  // Set view mode
+  setViewMode: (mode) => {
+    set({ viewMode: mode });
   },
 }));

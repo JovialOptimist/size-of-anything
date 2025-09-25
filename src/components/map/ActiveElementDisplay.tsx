@@ -31,6 +31,11 @@ const ActiveElementDisplay: React.FC = () => {
 
   const activeElement = getActiveElement();
   const currentColor = activeElement?.properties?.color || "#1f77b4";
+  
+  // View mode from global state
+  const viewMode = useMapStore((state: any) => state.viewMode);
+  const setViewMode = useMapStore((state: any) => state.setViewMode);
+  
   // Update rotation angle and name when active element changes
   useEffect(() => {
     if (activeElement) {
@@ -59,6 +64,8 @@ const ActiveElementDisplay: React.FC = () => {
 
   const colorPickerRef = useRef<HTMLDivElement>(null);
   const displayRef = useRef<HTMLDivElement>(null);
+
+
 
   // Ensure proper positioning and sizing
   useEffect(() => {
@@ -270,6 +277,76 @@ const ActiveElementDisplay: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {/* View Mode Selector */}
+        <div className="view-mode-selector">
+          <button
+            className={`view-mode-button ${viewMode === 'outline' ? 'active' : ''}`}
+            onClick={() => setViewMode('outline')}
+            title="Outline view - shows the area boundary on the map"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M12 2L2 7v10c0 5.55 3.84 10 9 10s9-4.45 9-10V7l-10-5z"/>
+              <path d="M12 22s8-4 8-10V7l-8-5-8 5v5c0 6 8 10 8 10z"/>
+            </svg>
+            Outline
+          </button>
+          <button
+            className={`view-mode-button ${viewMode === 'map' ? 'active' : ''}`}
+            onClick={() => setViewMode('map')}
+            title="Map view - shows the area on a street map"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/>
+              <path d="M9 3v15"/>
+              <path d="M15 6v15"/>
+            </svg>
+            Map
+          </button>
+          <button
+            className={`view-mode-button ${viewMode === 'satellite' ? 'active' : ''}`}
+            onClick={() => setViewMode('satellite')}
+            title="Satellite view - shows satellite imagery of the area"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+            Satellite
+          </button>
+        </div>
+
+
 
         {isColorPickerOpen && (
           <div className="color-picker-popup" ref={colorPickerRef}>

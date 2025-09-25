@@ -19,10 +19,11 @@ import {
   findCenterForMarker,
 } from "../utils/geometryUtils";
 import { createMarker, attachMarkerDragHandlers } from "../utils/markerUtils";
-import type { GeoJSONFeature, MapState } from "../../state/mapStoreTypes";
+import type { GeoJSONFeature, MapState, ViewMode } from "../../state/mapStoreTypes";
 import ShareButton from "./ShareButton";
 import LogoDisplay from "./LogoDisplay";
 import { setupAutoRefreshOnSettingsChange } from "../utils/markerUtils";
+import { SatellitePolygonLayer } from "../utils/SatellitePolygonLayer";
 
 // improved findUserLocation with timeout + async/await
 async function findUserLocation(timeout = 3000) {
@@ -85,6 +86,10 @@ export default function MapView() {
 
   const magicWandMode: boolean = useMapStore(
     (state: MapState) => state.magicWandMode
+  );
+
+  const viewMode: ViewMode = useMapStore(
+    (state: MapState) => state.viewMode
   );
 
   // single init effect — create map once and use the store getState() inside handlers
@@ -219,22 +224,48 @@ export default function MapView() {
           featureToRender.geometry.rotatedCoordinates;
       }
 
-      const layer = L.geoJSON(featureToRender, {
-        style: {
-          color: polygonColor,
-          weight: isActive ? 4 : 2,
-          fillOpacity: 0.4,
-          opacity: isActive ? 0.9 : 0.7,
-        },
-      }).addTo(group);
+      let layer: L.Layer;
 
-      // Add click handler to set active element
-      layer.on("click", (e) => {
-        L.DomEvent.stopPropagation(e);
-      });
+      // Use satellite/map layer for non-outline views
+      if (viewMode !== 'outline') {
+        const satelliteLayer = new SatellitePolygonLayer({
+          feature: featureToRender,
+          type: viewMode as 'satellite' | 'map',
+          isActive: isActive,
+        });
+        layer = satelliteLayer;
+        satelliteLayer.addTo(group);
 
-      // Only enable dragging if this is the active element or there is no active element
-      enablePolygonDragging(layer, map);
+        // Set up click handler on the polygon layer when it's available
+        setTimeout(() => {
+          const polygonLayer = satelliteLayer.getPolygonLayer();
+          if (polygonLayer) {
+            polygonLayer.on("click", (e: any) => {
+              L.DomEvent.stopPropagation(e);
+            });
+            enablePolygonDragging(polygonLayer, map);
+          }
+        }, 100);
+      } else {
+        // Use regular GeoJSON layer for outline view
+        const geoLayer = L.geoJSON(featureToRender, {
+          style: {
+            color: polygonColor,
+            weight: isActive ? 4 : 2,
+            fillOpacity: 0.4,
+            opacity: isActive ? 0.9 : 0.7,
+          },
+        }).addTo(group);
+        layer = geoLayer;
+
+        // Add click handler to set active element
+        geoLayer.on("click", (e) => {
+          L.DomEvent.stopPropagation(e);
+        });
+
+        // Only enable dragging if this is the active element or there is no active element
+        enablePolygonDragging(geoLayer, map);
+      }
     });
 
     if (geojsonAreas.length > numShapesRef.current) {
@@ -275,7 +306,7 @@ export default function MapView() {
     }
 
     numShapesRef.current = geojsonAreas.length;
-  }, [geojsonAreas, activeAreaId]);
+  }, [geojsonAreas, activeAreaId, viewMode]);
 
   // Function to update a specific polygon's marker or centered label
   function updatePolygonLabels(polygon: L.Polygon, layer: L.GeoJSON) {

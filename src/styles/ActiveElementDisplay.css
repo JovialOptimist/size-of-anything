@@ -298,6 +298,134 @@
   animation: fadeIn 0.3s ease-out;
 }
 
+/* View Mode Selector Styles */
+.view-mode-selector {
+  display: flex;
+  gap: 4px;
+  margin: 10px 0;
+  background-color: var(--panel-heading-border-color);
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.view-mode-button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background-color: transparent;
+  color: var(--control-sidebar-text-color);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  opacity: 0.7;
+}
+
+.view-mode-button:hover {
+  opacity: 1;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.view-mode-button.active {
+  background-color: var(--active-element-display-bg);
+  color: var(--control-sidebar-text-color);
+  opacity: 1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.view-mode-button svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Image View Container */
+.image-view-container {
+  margin: 10px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: var(--panel-heading-border-color);
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.area-image {
+  width: 100%;
+  height: auto;
+  max-height: 300px;
+  object-fit: contain;
+  display: block;
+}
+
+/* Loading State */
+.image-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: var(--control-sidebar-text-color);
+}
+
+.loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--panel-heading-border-color);
+  border-top: 2px solid var(--control-sidebar-text-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 10px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.image-loading p {
+  margin: 0;
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+/* Error State */
+.image-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: var(--control-sidebar-text-color);
+  text-align: center;
+}
+
+.image-error p {
+  margin: 0 0 15px 0;
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.fallback-button {
+  padding: 8px 16px;
+  background-color: #4287f5;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background-color 0.2s;
+}
+
+.fallback-button:hover {
+  background-color: #3476e0;
+}
+
 .color-picker-buttons {
     display: flex;
     flex-wrap: wrap;

@@ -40,6 +40,8 @@ export const OSM_Type = {
 } as const;
 export type OSM_Type = (typeof OSM_Type)[keyof typeof OSM_Type];
 
+export type ViewMode = 'outline' | 'map' | 'satellite';
+
 export interface MapState {
   areas: MapArea[];
   activeAreaId: string | null;
@@ -50,6 +52,7 @@ export interface MapState {
   magicWandMode: boolean;
   currentMapCenter: [number, number];
   hoveredCandidate: GeoJSONFeature | null;
+  viewMode: ViewMode;
   setIsSelectingArea: (isSelecting: boolean) => void;
   setClickedPosition: (position: [number, number] | null) => void;
   addGeoJSONFromSearch: (feature: GeoJSONFeature) => void;
@@ -73,4 +76,5 @@ export interface MapState {
   setHoveredCandidate: (candidate: GeoJSONFeature | null) => void;
   addToHistory: (feature: GeoJSONFeature) => void;
   clearHistory: () => void;
+  setViewMode: (mode: ViewMode) => void;
 }
