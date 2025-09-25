@@ -16,6 +16,7 @@ interface SatellitePolygonOptions {
   feature: GeoJSONFeature;
   type: 'satellite' | 'map';
   isActive?: boolean;
+  reuseExistingPattern?: boolean;
 }
 
 export class SatellitePolygonLayer extends L.Layer {
@@ -25,12 +26,14 @@ export class SatellitePolygonLayer extends L.Layer {
   private polygonLayer: L.GeoJSON | null = null;
   private bounds: L.LatLngBounds | null = null;
   private originalBounds: L.LatLngBounds | null = null; // Store original bounds for satellite imagery
+  private reuseExistingPattern: boolean;
 
   constructor(options: SatellitePolygonOptions) {
     super();
     this.feature = options.feature;
     this.type = options.type;
     this.isActive = options.isActive || false;
+    this.reuseExistingPattern = options.reuseExistingPattern || false;
   }
 
   onAdd(map: L.Map): this {
@@ -44,16 +47,9 @@ export class SatellitePolygonLayer extends L.Layer {
       this.polygonLayer = null;
     }
     
-    // Clean up any SVG patterns we created
-    const mapSvg = map.getPanes().overlayPane?.querySelector('svg');
-    if (mapSvg) {
-      const defs = mapSvg.querySelector('defs');
-      if (defs) {
-        // Remove any patterns created by this layer
-        const patterns = defs.querySelectorAll('pattern[id^="satellite-pattern-"]');
-        patterns.forEach(pattern => pattern.remove());
-      }
-    }
+    // DON'T clean up SVG patterns when removing layer during reuse
+    // Only clean up patterns when actually switching away from satellite mode
+    // The MapView will handle pattern cleanup when switching view modes
     
     return this;
   }
@@ -64,22 +60,27 @@ export class SatellitePolygonLayer extends L.Layer {
       const tempLayer = L.geoJSON(this.feature);
       this.bounds = tempLayer.getBounds();
       
-      // Store the original bounds - this is what the satellite imagery represents
-      this.originalBounds = L.latLngBounds(this.bounds.getSouthWest(), this.bounds.getNorthEast());
-
       if (!this.bounds.isValid()) {
         console.warn('Invalid bounds for satellite overlay');
         return;
       }
 
-      // Use a higher zoom level to get detailed satellite imagery
-      const zoom = Math.max(12, Math.min(18, map.getZoom() + 4));
+      if (this.reuseExistingPattern) {
+        // Reuse existing satellite pattern instead of fetching new imagery
+        this.polygonLayer = await this.createPolygonWithExistingPattern(map);
+      } else {
+        // Store the original bounds - this is what the satellite imagery represents
+        this.originalBounds = L.latLngBounds(this.bounds.getSouthWest(), this.bounds.getNorthEast());
 
-      // Generate satellite image that shows the actual geographic area of the polygon
-      const imageUrl = await this.generateSatelliteImage(this.originalBounds, zoom, 1024, 1024);
-      
-      // Create the polygon layer with satellite imagery as fill pattern
-      this.polygonLayer = await this.createSatelliteFilledPolygon(map, imageUrl);
+        // Use a higher zoom level to get detailed satellite imagery
+        const zoom = Math.max(12, Math.min(18, map.getZoom() + 4));
+
+        // Generate satellite image that shows the actual geographic area of the polygon
+        const imageUrl = await this.generateSatelliteImage(this.originalBounds, zoom, 1024, 1024);
+        
+        // Create the polygon layer with satellite imagery as fill pattern
+        this.polygonLayer = await this.createSatelliteFilledPolygon(map, imageUrl);
+      }
 
       // Add layers to map
       if (map.hasLayer(this)) {
@@ -382,5 +383,59 @@ export class SatellitePolygonLayer extends L.Layer {
   // Get the polygon layer for event handling
   getPolygonLayer(): L.GeoJSON | null {
     return this.polygonLayer;
+  }
+
+
+
+  private async createPolygonWithExistingPattern(map: L.Map): Promise<L.GeoJSON> {
+    return new Promise((resolve) => {
+      // Create the GeoJSON layer with new coordinates
+      const geoLayer = L.geoJSON(this.feature, {
+        style: {
+          color: this.feature.properties.color || '#ff0000',
+          weight: this.isActive ? 4 : 2,
+          fillOpacity: 1,
+          opacity: this.isActive ? 0.9 : 0.7,
+        },
+        onEachFeature: (feature, layer) => {
+          // When the layer is added to the map, apply existing satellite texture
+          layer.on('add', () => {
+            this.applyExistingSatellitePattern(layer as L.Path);
+          });
+        }
+      });
+
+      resolve(geoLayer);
+    });
+  }
+
+  private applyExistingSatellitePattern(layer: L.Path) {
+    try {
+      // Get the SVG element from the layer
+      const svgElement = (layer as any)._path;
+      if (!svgElement) return;
+
+      // Find existing satellite pattern in the SVG
+      const mapSvg = svgElement.ownerSVGElement;
+      if (!mapSvg) return;
+
+      const defs = mapSvg.querySelector('defs');
+      if (!defs) return;
+
+      // Find an existing satellite pattern (there should be one from a previous layer)
+      const existingPattern = defs.querySelector('pattern[id^="satellite-pattern-"]');
+      if (existingPattern) {
+        const patternId = existingPattern.id;
+        svgElement.setAttribute('fill', `url(#${patternId})`);
+      } else {
+        console.warn('No existing satellite pattern found to reuse');
+        // Fallback to regular polygon fill
+        svgElement.setAttribute('fill', this.feature.properties.color || '#ff0000');
+        svgElement.setAttribute('fill-opacity', '0.4');
+      }
+
+    } catch (error) {
+      console.error('Failed to apply existing satellite pattern:', error);
+    }
   }
 }

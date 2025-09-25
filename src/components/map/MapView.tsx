@@ -61,6 +61,7 @@ export default function MapView() {
   const markerToLayerMap = useRef<Map<L.Marker, L.GeoJSON>>(new Map());
   const labelToLayerMap = useRef<Map<L.Marker, L.GeoJSON>>(new Map());
   const numShapesRef = useRef(0);
+  const satelliteLayersRef = useRef<Map<string, SatellitePolygonLayer>>(new Map());
 
   const geojsonAreas: GeoJSONFeature[] = useMapStore(
     (state: MapState) => state.geojsonAreas
@@ -194,6 +195,20 @@ export default function MapView() {
       map.removeLayer(geoJSONLayerGroupRef.current);
     }
 
+    // Clean up satellite layers that are no longer needed
+    const currentFeatureIds = new Set(geojsonAreas.map(f => f.properties.id));
+    const satelliteLayerIds = Array.from(satelliteLayersRef.current.keys());
+    
+    satelliteLayerIds.forEach(id => {
+      if (!currentFeatureIds.has(id)) {
+        const layer = satelliteLayersRef.current.get(id);
+        if (layer) {
+          cleanupSatelliteLayer(layer, map);
+          satelliteLayersRef.current.delete(id);
+        }
+      }
+    });
+
     const group = L.layerGroup().addTo(map);
     geoJSONLayerGroupRef.current = group;
 
@@ -228,26 +243,73 @@ export default function MapView() {
 
       // Use satellite/map layer for non-outline views
       if (viewMode !== 'outline') {
-        const satelliteLayer = new SatellitePolygonLayer({
-          feature: featureToRender,
-          type: viewMode as 'satellite' | 'map',
-          isActive: isActive,
-        });
-        layer = satelliteLayer;
-        satelliteLayer.addTo(group);
+        // Check if we already have a satellite layer for this feature
+        const existingSatelliteLayer = satelliteLayersRef.current.get(idx);
+        
+        if (existingSatelliteLayer) {
+          // We have an existing satellite layer, which means we already have the satellite imagery
+          // Create a new layer with updated coordinates but reuse the satellite pattern
+          const newSatelliteLayer = new SatellitePolygonLayer({
+            feature: featureToRender,
+            type: viewMode as 'satellite' | 'map',
+            isActive: isActive,
+            reuseExistingPattern: true, // Flag to reuse existing satellite imagery
+          });
+          
+          // Remove the old layer
+          existingSatelliteLayer.onRemove(map);
+          
+          layer = newSatelliteLayer;
+          newSatelliteLayer.addTo(group);
 
-        // Set up click handler on the polygon layer when it's available
-        setTimeout(() => {
-          const polygonLayer = satelliteLayer.getPolygonLayer();
-          if (polygonLayer) {
-            polygonLayer.on("click", (e: any) => {
-              L.DomEvent.stopPropagation(e);
-            });
-            enablePolygonDragging(polygonLayer, map);
-          }
-        }, 100);
+          // Update the stored reference
+          satelliteLayersRef.current.set(idx, newSatelliteLayer);
+
+          // Set up event handlers
+          setTimeout(() => {
+            const polygonLayer = newSatelliteLayer.getPolygonLayer();
+            if (polygonLayer) {
+              polygonLayer.on("click", (e: any) => {
+                L.DomEvent.stopPropagation(e);
+              });
+              enablePolygonDragging(polygonLayer, map);
+            }
+          }, 100);
+          
+        } else {
+          // Create new satellite layer
+          const satelliteLayer = new SatellitePolygonLayer({
+            feature: featureToRender,
+            type: viewMode as 'satellite' | 'map',
+            isActive: isActive,
+          });
+          layer = satelliteLayer;
+          satelliteLayer.addTo(group);
+
+          // Store the satellite layer for reuse
+          satelliteLayersRef.current.set(idx, satelliteLayer);
+
+          // Set up click handler on the polygon layer when it's available
+          setTimeout(() => {
+            const polygonLayer = satelliteLayer.getPolygonLayer();
+            if (polygonLayer) {
+              polygonLayer.on("click", (e: any) => {
+                L.DomEvent.stopPropagation(e);
+              });
+              enablePolygonDragging(polygonLayer, map);
+            }
+          }, 100);
+        }
       } else {
         // Use regular GeoJSON layer for outline view
+        // Clean up any existing satellite layer for this feature
+        const existingSatelliteLayer = satelliteLayersRef.current.get(idx);
+        if (existingSatelliteLayer) {
+          // Clean up the satellite layer AND its patterns when switching to outline mode
+          cleanupSatelliteLayer(existingSatelliteLayer, map);
+          satelliteLayersRef.current.delete(idx);
+        }
+
         const geoLayer = L.geoJSON(featureToRender, {
           style: {
             color: polygonColor,
@@ -307,6 +369,22 @@ export default function MapView() {
 
     numShapesRef.current = geojsonAreas.length;
   }, [geojsonAreas, activeAreaId, viewMode]);
+
+  // Helper function to properly clean up satellite layers and their patterns
+  const cleanupSatelliteLayer = (layer: SatellitePolygonLayer, map: L.Map) => {
+    layer.onRemove(map);
+    
+    // Clean up associated SVG patterns
+    const mapSvg = map.getPanes().overlayPane?.querySelector('svg');
+    if (mapSvg) {
+      const defs = mapSvg.querySelector('defs');
+      if (defs) {
+        // Remove satellite patterns - be more aggressive about cleanup when actually removing layers
+        const patterns = defs.querySelectorAll('pattern[id^="satellite-pattern-"]');
+        patterns.forEach(pattern => pattern.remove());
+      }
+    }
+  };
 
   // Function to update a specific polygon's marker or centered label
   function updatePolygonLabels(polygon: L.Polygon, layer: L.GeoJSON) {
