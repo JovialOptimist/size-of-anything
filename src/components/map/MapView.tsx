@@ -9,10 +9,12 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "../../styles/mapDarkMode.css";
 import "../../styles/ShareButton.css";
+import "../../styles/LayerToggleButton.css";
 import "../../styles/markerLabels.css";
 import { useMapStore } from "../../state/mapStore";
 import { usePanel } from "../../state/panelStore";
 import { useSettings, applyMapTheme } from "../../state/settingsStore";
+import type { MapLayerType } from "../../state/settingsStore";
 import {
   enablePolygonDragging,
   shouldShowMarkerForPolygon,
@@ -23,6 +25,40 @@ import type { GeoJSONFeature, MapState } from "../../state/mapStoreTypes";
 import ShareButton from "./ShareButton";
 import LogoDisplay from "./LogoDisplay";
 import { setupAutoRefreshOnSettingsChange } from "../utils/markerUtils";
+
+// Function to create tile layer based on layer type
+function createTileLayer(layerType: MapLayerType): L.TileLayer {
+  if (layerType === "satellite") {
+    return L.tileLayer(
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      {
+        attribution:
+          'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+        maxNativeZoom: 19,
+        maxZoom: 22,
+        minZoom: 2,
+        noWrap: true,
+        bounds: [
+          [-90, -180],
+          [90, 180],
+        ],
+      }
+    );
+  } else {
+    return L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/">OSM</a> contributors',
+      maxNativeZoom: 19,
+      maxZoom: 22,
+      minZoom: 2,
+      noWrap: true,
+      bounds: [
+        [-90, -180],
+        [90, 180],
+      ],
+    });
+  }
+}
 
 // improved findUserLocation with timeout + async/await
 async function findUserLocation(timeout = 3000) {
@@ -60,6 +96,7 @@ export default function MapView() {
   const markerToLayerMap = useRef<Map<L.Marker, L.GeoJSON>>(new Map());
   const labelToLayerMap = useRef<Map<L.Marker, L.GeoJSON>>(new Map());
   const numShapesRef = useRef(0);
+  const currentTileLayerRef = useRef<L.TileLayer | null>(null);
 
   const geojsonAreas: GeoJSONFeature[] = useMapStore(
     (state: MapState) => state.geojsonAreas
@@ -114,18 +151,11 @@ export default function MapView() {
 
         L.control.zoom({ position: "bottomright" }).addTo(map);
 
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          attribution:
-            '&copy; <a href="https://www.openstreetmap.org/">OSM</a> contributors',
-          maxNativeZoom: 19,
-          maxZoom: 22,
-          minZoom: 2,
-          noWrap: true,
-          bounds: [
-            [-90, -180],
-            [90, 180],
-          ],
-        }).addTo(map);
+        // Initialize with the current layer type from settings
+        const { mapLayerType } = useSettings.getState();
+        const tileLayer = createTileLayer(mapLayerType);
+        currentTileLayerRef.current = tileLayer;
+        tileLayer.addTo(map);
 
         // use getState() inside handlers so they always see the latest store values
         map.on("click", (e: L.LeafletMouseEvent) => {
@@ -496,6 +526,23 @@ export default function MapView() {
       if (hoveredLayer) hoveredLayer.clearLayers();
     };
   }, [hoveredCandidate]);
+
+  // Get the current map layer type from settings
+  const { mapLayerType } = useSettings();
+
+  // Effect to handle map layer changes
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !currentTileLayerRef.current) return;
+
+    // Remove current tile layer
+    map.removeLayer(currentTileLayerRef.current);
+    
+    // Create and add new tile layer
+    const newTileLayer = createTileLayer(mapLayerType);
+    currentTileLayerRef.current = newTileLayer;
+    newTileLayer.addTo(map);
+  }, [mapLayerType]);
 
   return (
     <div

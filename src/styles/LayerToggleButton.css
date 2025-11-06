@@ -1,0 +1,26 @@
+.layer-toggle-button-container {
+  position: absolute;
+  bottom: 105px;
+  right: 180px;
+  z-index: 1002;
+}
+
+.layer-toggle-button {
+  background-color: var(--map-button-bg);
+  color: var(--map-button-fg);
+  border: none;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.layer-toggle-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+}

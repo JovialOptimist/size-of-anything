@@ -15,6 +15,7 @@ import ThemeInitializer from "./components/ThemeInitializer";
 import KeyboardHandler from "./components/KeyboardHandler";
 import ShareButton from "./components/map/ShareButton";
 import FeedbackButton from "./components/map/FeedbackButton";
+import LayerToggleButton from "./components/map/LayerToggleButton";
 
 function App() {
   // Use the URL sync hook to synchronize state with URL
@@ -58,6 +59,7 @@ function App() {
         <ActiveElementDisplay />
         <ShareButton />
         <FeedbackButton />
+        <LayerToggleButton />
       </div>
     </div>
   );

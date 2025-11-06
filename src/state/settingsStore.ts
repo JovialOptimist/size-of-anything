@@ -12,6 +12,9 @@ export type ThemeMode = "light" | "dark" | "system";
 // Map theme settings
 export type MapThemeMode = "light" | "dark" | "system";
 
+// Map layer settings
+export type MapLayerType = "osm" | "satellite";
+
 // Pin marker settings
 export type PinMode = "disabled" | "adaptive" | "always";
 export type LabelMode = "disabled" | "always" | "onlyMarker";
@@ -37,6 +40,10 @@ export interface SettingsState {
   // Map theme settings
   mapTheme: MapThemeMode;
   setMapTheme: (mapTheme: MapThemeMode) => void;
+
+  // Map layer settings
+  mapLayerType: MapLayerType;
+  setMapLayerType: (layerType: MapLayerType) => void;
 
   // Pin/marker settings
   pinSettings: PinSettings;
@@ -94,6 +101,10 @@ export const useSettings = create<SettingsState>()(
       mapTheme: "system", // Default to match app theme
       setMapTheme: (mapTheme) => set({ mapTheme }),
 
+      // Map layer settings
+      mapLayerType: "osm", // Default to OSM
+      setMapLayerType: (layerType) => set({ mapLayerType: layerType }),
+
       // Pin settings with defaults
       pinSettings: {
         mode: "adaptive",
@@ -137,6 +148,7 @@ export const useSettings = create<SettingsState>()(
       partialize: (state) => ({
         theme: state.theme,
         mapTheme: state.mapTheme,
+        mapLayerType: state.mapLayerType,
         pinSettings: state.pinSettings,
         outlineQuality: state.outlineQuality,
         highContrastMode: state.highContrastMode,
