@@ -6,7 +6,8 @@
 
 .creation-panel-search-left {
   flex: 1;
-  min-width: 0;
+  min-width: 220px; /* Ensure wand and list are never squeezed behind minimap */
+  max-width: 58%;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -14,36 +15,35 @@
 
 .creation-panel-search-right {
   width: 40%;
-  min-width: 140px;
+  min-width: 160px;
+  max-width: 42%;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.creation-panel-search-row {
+.creation-panel-wand-row {
   display: flex;
-  gap: 6px;
   align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
-.creation-panel-search-input-inline {
-  flex: 1;
-  padding: 6px 10px;
-  border: 1px solid var(--panel-heading-border-color, #e5e7eb);
-  border-radius: 6px;
-  background: var(--active-element-display-bg, #fff);
+.creation-panel-wand-label {
+  font-size: 0.85rem;
   color: var(--control-sidebar-text-color);
-  font-size: 0.9rem;
+  opacity: 0.9;
 }
 
-.creation-panel-search-btn,
 .creation-panel-wand-btn {
-  padding: 6px 10px;
+  padding: 6px 12px;
   border: none;
   border-radius: 6px;
   background: var(--icon-sidebar-button-bg, #f3f4f6);
   color: var(--control-sidebar-text-color);
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .creation-panel-search-btn:hover,
@@ -133,23 +133,49 @@
   border-radius: 8px;
   overflow: hidden;
   background: var(--map-loading-tile-bg, #e5e7eb);
+  border: 1px solid var(--panel-heading-border-color, #e5e7eb);
 }
 
 .creation-panel-minimap {
   width: 100%;
   height: 100%;
+  pointer-events: none;
+}
+
+/* Hide zoom and attribution in minimap */
+.creation-panel-minimap-wrap .leaflet-control-zoom,
+.creation-panel-minimap-wrap .leaflet-control-attribution {
+  display: none !important;
 }
 
 .creation-panel-minimap-empty {
   position: absolute;
   inset: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.4);
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.35);
   color: #fff;
   font-size: 0.9rem;
   pointer-events: none;
+}
+
+.creation-panel-minimap-empty-title {
+  font-weight: 500;
+}
+
+.creation-panel-minimap-empty-desc {
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
+
+.creation-panel-attr-placeholder {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--control-sidebar-text-color);
+  opacity: 0.8;
 }
 
 .creation-panel-attributes {
@@ -198,8 +224,13 @@
   color: var(--control-sidebar-text-color);
 }
 
-.creation-panel-action:hover {
+.creation-panel-action:hover:not(:disabled) {
   opacity: 0.9;
+}
+
+.creation-panel-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .creation-panel-props-backdrop {

@@ -47,11 +47,11 @@ function createTileLayer(layerType: MapLayerType): L.TileLayer {
   if (layerType === "satellite") {
     return L.tileLayer(
       "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-      { maxNativeZoom: 19, maxZoom: 22, minZoom: 2, noWrap: true }
+      { maxNativeZoom: 19, maxZoom: 22, minZoom: 2, noWrap: true, attribution: "" }
     );
   }
   return L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: "© OSM",
+    attribution: "",
     maxNativeZoom: 19,
     maxZoom: 22,
     minZoom: 2,
@@ -60,11 +60,12 @@ function createTileLayer(layerType: MapLayerType): L.TileLayer {
 }
 
 interface CreationPanelSearchProps {
+  query: string;
+  searchTrigger: number;
   onPlaced?: () => void;
 }
 
-export default function CreationPanelSearch({ onPlaced }: CreationPanelSearchProps) {
-  const [query, setQuery] = useState("");
+export default function CreationPanelSearch({ query, searchTrigger, onPlaced }: CreationPanelSearchProps) {
   const [candidates, setCandidates] = useState<GeoJSONFeature[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -83,18 +84,30 @@ export default function CreationPanelSearch({ onPlaced }: CreationPanelSearchPro
 
   const selectedFeature = candidates.length > 0 ? candidates[selectedIndex] ?? candidates[0] : null;
 
+  // Run search when parent triggers it (header search button / Enter)
+  useEffect(() => {
+    if (searchTrigger > 0 && query.trim()) handleSearch();
+  }, [searchTrigger]); // eslint-disable-line react-hooks/exhaustive-deps -- only run when searchTrigger changes
+
   // Auto-select first when candidates change
   useEffect(() => {
     if (candidates.length > 0) setSelectedIndex(0);
   }, [candidates]);
 
-  // Minimap: init and update when selected feature or mapLayerType changes
+  // Minimap: init (no zoom control, non-interactive, no attribution) and update when selected feature or mapLayerType changes
   useEffect(() => {
     if (!minimapRef.current) return;
 
     if (!minimapInstanceRef.current) {
-      const map = L.map(minimapRef.current, { zoomControl: false }).setView([0, 0], 2);
-      L.control.zoom({ position: "bottomright" }).addTo(map);
+      const map = L.map(minimapRef.current, {
+        zoomControl: false,
+        dragging: false,
+        scrollWheelZoom: false,
+        doubleClickZoom: false,
+        boxZoom: false,
+        keyboard: false,
+        touchZoom: false,
+      }).setView([0, 0], 2);
       const tile = createTileLayer(mapLayerType);
       tile.addTo(map);
       minimapInstanceRef.current = map;
@@ -214,18 +227,8 @@ export default function CreationPanelSearch({ onPlaced }: CreationPanelSearchPro
   return (
     <div className="creation-panel-search">
       <div className="creation-panel-search-left">
-        <div className="creation-panel-search-row">
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            placeholder="Search for a place..."
-            className="creation-panel-search-input-inline"
-          />
-          <button type="button" className="creation-panel-search-btn" onClick={handleSearch} aria-label="Search">
-            🔍
-          </button>
+        <div className="creation-panel-wand-row">
+          <span className="creation-panel-wand-label">Click on map to search</span>
           <button
             type="button"
             className={`creation-panel-wand-btn ${magicWandMode ? "active" : ""}`}
@@ -266,14 +269,15 @@ export default function CreationPanelSearch({ onPlaced }: CreationPanelSearchPro
           <div ref={minimapRef} className="creation-panel-minimap" />
           {!selectedFeature && (
             <div className="creation-panel-minimap-empty" aria-hidden>
-              Search to see a preview
+              <span className="creation-panel-minimap-empty-title">Areas will appear here</span>
+              <span className="creation-panel-minimap-empty-desc">Description here</span>
             </div>
           )}
         </div>
 
-        {selectedFeature && (
-          <>
-            <div className="creation-panel-attributes">
+        <div className="creation-panel-attributes">
+          {selectedFeature ? (
+            <>
               <div className="creation-panel-attr">
                 <strong>Name</strong> {selectedFeature.properties?.name ?? "—"}
               </div>
@@ -286,17 +290,29 @@ export default function CreationPanelSearch({ onPlaced }: CreationPanelSearchPro
               <button type="button" className="creation-panel-show-props" onClick={() => setShowPropertiesModal(true)}>
                 Show properties…
               </button>
-            </div>
-            <div className="creation-panel-actions">
-              <button type="button" className="creation-panel-action creation-panel-action-place" onClick={handlePlaceHere}>
-                Place here
-              </button>
-              <button type="button" className="creation-panel-action creation-panel-action-outline" onClick={handleOutlineOriginal}>
-                Outline original
-              </button>
-            </div>
-          </>
-        )}
+            </>
+          ) : (
+            <p className="creation-panel-attr-placeholder">Select a result to see details.</p>
+          )}
+        </div>
+        <div className="creation-panel-actions">
+          <button
+            type="button"
+            className="creation-panel-action creation-panel-action-place"
+            onClick={handlePlaceHere}
+            disabled={!selectedFeature}
+          >
+            Place here
+          </button>
+          <button
+            type="button"
+            className="creation-panel-action creation-panel-action-outline"
+            onClick={handleOutlineOriginal}
+            disabled={!selectedFeature}
+          >
+            Outline original
+          </button>
+        </div>
       </div>
 
       {showPropertiesModal && selectedFeature && (

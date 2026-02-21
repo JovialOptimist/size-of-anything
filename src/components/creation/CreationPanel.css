@@ -1,14 +1,15 @@
-/* Creation Panel - floating overlay, Google Maps style */
+/* Creation Panel - floating overlay; match active element display styling */
 .creation-panel {
   position: absolute;
-  top: 5px;
-  left: 5px;
-  z-index: 1100; /* On top of map controls when expanded */
-  background: var(--control-sidebar-bg, #fff);
-  color: var(--control-sidebar-text-color, #111);
+  top: 1rem;
+  left: 1rem;
+  z-index: 1100;
+  background-color: var(--active-element-display-bg);
+  color: var(--default-fg);
   border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--active-element-display-shadow);
   overflow: hidden;
+  font-family: inherit;
 }
 
 .creation-panel-collapsed {
@@ -16,8 +17,8 @@
 }
 
 .creation-panel-expanded {
-  width: 440px;
-  max-width: calc(100vw - 20px);
+  width: 500px;
+  max-width: calc(100vw - 2rem);
 }
 
 .creation-panel-bar {
@@ -57,7 +58,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 12px;
+  padding: 10px 12px 12px;
   border-bottom: 1px solid var(--panel-heading-border-color, #e5e7eb);
 }
 
@@ -71,26 +72,44 @@
   font-size: 0.95rem;
 }
 
-.creation-panel-collapse-btn {
+.creation-panel-search-btn-header {
   width: 36px;
   height: 36px;
   padding: 0;
   border: none;
   border-radius: 6px;
-  background: var(--icon-sidebar-button-bg, #f3f4f6);
+  background: transparent;
   color: var(--control-sidebar-text-color);
   cursor: pointer;
   font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.creation-panel-search-btn-header:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.creation-panel-collapse-btn {
+  background: none;
+  border: none;
+  color: var(--control-sidebar-text-color);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0 6px;
+  margin-left: 5px;
+  transition: color 0.2s ease;
+  flex-shrink: 0;
+  line-height: 1;
 }
 
 .creation-panel-collapse-btn:hover {
-  background: var(--icon-sidebar-button-hover-bg, #e5e7eb);
+  color: #e74c3c;
 }
 
 .creation-panel-tabs {
   display: flex;
   gap: 2px;
-  padding: 8px 8px 0;
+  padding: 8px 12px 0;
   border-bottom: 1px solid var(--panel-heading-border-color, #e5e7eb);
 }
 

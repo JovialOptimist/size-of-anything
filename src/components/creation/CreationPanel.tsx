@@ -23,6 +23,8 @@ const TABS: { key: CreationTab; label: string }[] = [
 export default function CreationPanel() {
   const [expanded, setExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<CreationTab>("search");
+  const [query, setQuery] = useState("");
+  const [searchTrigger, setSearchTrigger] = useState(0);
   const prevAreasLengthRef = useRef(0);
   const geojsonAreas = useMapStore((s) => s.geojsonAreas);
 
@@ -39,23 +41,6 @@ export default function CreationPanel() {
     <div className={`creation-panel ${expanded ? "creation-panel-expanded" : "creation-panel-collapsed"}`}>
       {expanded ? (
         <>
-          <div className="creation-panel-header">
-            <input
-              type="text"
-              className="creation-panel-search-input"
-              placeholder="Search for a place..."
-              readOnly
-              aria-label="Search"
-            />
-            <button
-              type="button"
-              className="creation-panel-collapse-btn"
-              onClick={() => setExpanded(false)}
-              aria-label="Collapse"
-            >
-              ←
-            </button>
-          </div>
           <div className="creation-panel-tabs">
             {TABS.map(({ key, label }) => (
               <button
@@ -68,8 +53,43 @@ export default function CreationPanel() {
               </button>
             ))}
           </div>
+          <div className="creation-panel-header">
+            <input
+              type="text"
+              className="creation-panel-search-input"
+              placeholder="Search for a place..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && setSearchTrigger((s) => s + 1)}
+              aria-label="Search"
+            />
+            {activeTab === "search" && (
+              <button
+                type="button"
+                className="creation-panel-search-btn-header"
+                onClick={() => setSearchTrigger((s) => s + 1)}
+                aria-label="Search"
+              >
+                🔍
+              </button>
+            )}
+            <button
+              type="button"
+              className="creation-panel-collapse-btn"
+              onClick={() => setExpanded(false)}
+              aria-label="Collapse"
+            >
+              ↑
+            </button>
+          </div>
           <div className="creation-panel-content">
-            {activeTab === "search" && <CreationPanelSearch onPlaced={() => setExpanded(false)} />}
+            {activeTab === "search" && (
+              <CreationPanelSearch
+                query={query}
+                searchTrigger={searchTrigger}
+                onPlaced={() => setExpanded(false)}
+              />
+            )}
             {activeTab === "custom" && <CustomAreaPanel />}
             {activeTab === "special" && <SpecialPanel />}
             {activeTab === "history" && <HistoryPanel />}
