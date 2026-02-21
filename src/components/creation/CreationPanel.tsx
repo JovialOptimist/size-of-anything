@@ -27,6 +27,8 @@ export default function CreationPanel() {
   const [searchTrigger, setSearchTrigger] = useState(0);
   const prevAreasLengthRef = useRef(0);
   const geojsonAreas = useMapStore((s) => s.geojsonAreas);
+  const magicWandMode = useMapStore((s) => s.magicWandMode);
+  const setMagicWandMode = useMapStore((s) => s.setMagicWandMode);
 
   // Auto-collapse when user places an object (from any tab)
   useEffect(() => {
@@ -52,36 +54,46 @@ export default function CreationPanel() {
                 {label}
               </button>
             ))}
-          </div>
-          <div className="creation-panel-header">
-            <input
-              type="text"
-              className="creation-panel-search-input"
-              placeholder="Search for a place..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && setSearchTrigger((s) => s + 1)}
-              aria-label="Search"
-            />
-            {activeTab === "search" && (
-              <button
-                type="button"
-                className="creation-panel-search-btn-header"
-                onClick={() => setSearchTrigger((s) => s + 1)}
-                aria-label="Search"
-              >
-                🔍
-              </button>
-            )}
             <button
               type="button"
-              className="creation-panel-collapse-btn"
+              className="creation-panel-close-btn"
               onClick={() => setExpanded(false)}
-              aria-label="Collapse"
+              aria-label="Close"
             >
-              ↑
+              ×
             </button>
           </div>
+          {activeTab === "search" && (
+            <div className="creation-panel-header">
+              <div className="creation-panel-search-wrap">
+                <input
+                  type="text"
+                  className="creation-panel-search-input"
+                  placeholder="Search for a place..."
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && setSearchTrigger((s) => s + 1)}
+                  aria-label="Search"
+                />
+                <button
+                  type="button"
+                  className="creation-panel-search-btn-inside"
+                  onClick={() => setSearchTrigger((s) => s + 1)}
+                  aria-label="Search"
+                >
+                  🔍
+                </button>
+              </div>
+              <span className="creation-panel-or">OR</span>
+              <button
+                type="button"
+                className={`creation-panel-click-to-search ${magicWandMode ? "active" : ""}`}
+                onClick={() => setMagicWandMode(!magicWandMode)}
+              >
+                Click to search
+              </button>
+            </div>
+          )}
           <div className="creation-panel-content">
             {activeTab === "search" && (
               <CreationPanelSearch

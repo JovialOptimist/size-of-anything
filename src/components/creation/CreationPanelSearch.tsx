@@ -36,11 +36,20 @@ const ICON_EMOJI: Record<string, string> = {
   other: "📌",
 };
 
-function formatLocation(feature: GeoJSONFeature): string {
+/** Display name when placed (first part only, no address) - matches mapStore split */
+function getDisplayName(feature: GeoJSONFeature): string {
+  const name = feature.properties?.name ?? "Unnamed";
+  const first = name.split(",")[0]?.trim();
+  return first || name;
+}
+
+/** Location for list subtitle: last 3 parts of display_name (city, state, country) */
+function formatLocationShort(feature: GeoJSONFeature): string {
   const name = feature.properties?.name ?? "";
-  const parts = name.split(",").map((s: string) => s.trim());
-  const location = parts.slice(1, 4).join(", ");
-  return location || "—";
+  const parts = name.split(",").map((s: string) => s.trim()).filter(Boolean);
+  if (parts.length <= 1) return "—";
+  const last3 = parts.slice(-3);
+  return last3.join(", ");
 }
 
 function createTileLayer(layerType: MapLayerType): L.TileLayer {
@@ -176,18 +185,6 @@ export default function CreationPanelSearch({ query, searchTrigger, onPlaced }: 
     }
   };
 
-  const activateWand = () => {
-    setCandidates([]);
-    setError(null);
-    setOnMapClick(handleMapClick);
-    setMagicWandMode(true);
-  };
-
-  const deactivateWand = () => {
-    setOnMapClick(null);
-    setMagicWandMode(false);
-  };
-
   const handleMapClick = async (latlng: { lat: number; lng: number }) => {
     setIsLoading(true);
     setError(null);
@@ -204,6 +201,20 @@ export default function CreationPanelSearch({ query, searchTrigger, onPlaced }: 
       setIsLoading(false);
     }
   };
+
+  const handleMapClickRef = useRef(handleMapClick);
+  handleMapClickRef.current = handleMapClick;
+
+  // When magic wand is active (toggled from header), set map click handler. Use a stable
+  // callback so the effect only depends on magicWandMode and doesn't cause update loops.
+  useEffect(() => {
+    if (magicWandMode) {
+      setOnMapClick((latlng: { lat: number; lng: number }) => handleMapClickRef.current(latlng));
+    } else {
+      setOnMapClick(null);
+    }
+    return () => setOnMapClick(null);
+  }, [magicWandMode, setOnMapClick]);
 
   const handlePlaceHere = () => {
     if (!selectedFeature) return;
@@ -227,19 +238,6 @@ export default function CreationPanelSearch({ query, searchTrigger, onPlaced }: 
   return (
     <div className="creation-panel-search">
       <div className="creation-panel-search-left">
-        <div className="creation-panel-wand-row">
-          <span className="creation-panel-wand-label">Click on map to search</span>
-          <button
-            type="button"
-            className={`creation-panel-wand-btn ${magicWandMode ? "active" : ""}`}
-            onClick={magicWandMode ? deactivateWand : activateWand}
-            title={magicWandMode ? "Cancel magic wand" : "Click on map to search"}
-            aria-label={magicWandMode ? "Cancel magic wand" : "Magic wand"}
-          >
-            ✦
-          </button>
-        </div>
-
         {error && <div className="creation-panel-search-error">{error}</div>}
         {isLoading && <div className="creation-panel-search-loading">Searching…</div>}
 
@@ -255,8 +253,8 @@ export default function CreationPanelSearch({ query, searchTrigger, onPlaced }: 
                   {ICON_EMOJI[getOsmIconType(f)] ?? ICON_EMOJI.other}
                 </span>
                 <div className="creation-panel-search-list-text">
-                  <span className="creation-panel-search-list-name">{f.properties?.name ?? "Unnamed"}</span>
-                  <span className="creation-panel-search-list-location">{formatLocation(f)}</span>
+                  <span className="creation-panel-search-list-name">{getDisplayName(f)}</span>
+                  <span className="creation-panel-search-list-location">{formatLocationShort(f)}</span>
                 </div>
               </button>
             </li>
@@ -279,7 +277,10 @@ export default function CreationPanelSearch({ query, searchTrigger, onPlaced }: 
           {selectedFeature ? (
             <>
               <div className="creation-panel-attr">
-                <strong>Name</strong> {selectedFeature.properties?.name ?? "—"}
+                <strong>Name</strong><br />{getDisplayName(selectedFeature)}
+              </div>
+              <div className="creation-panel-attr">
+                <strong>Location</strong><br />{formatLocationShort(selectedFeature)}
               </div>
               <div className="creation-panel-attr">
                 <strong>Type</strong> {selectedFeature.properties?.whatIsIt ?? "—"}

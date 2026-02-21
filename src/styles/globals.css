@@ -428,13 +428,13 @@ body {
     animation: active-scale 0.2s;
 }
 
-/* Active element display - bottom-left, full viewport layout */
+/* Active element display - bottom-left, same width as expanded creation panel */
 .active-element-display {
     position: absolute;
     left: 1rem;
     bottom: 1rem;
-    width: min(400px, calc(100vw - 2rem));
-    max-width: 32rem;
+    width: 500px;
+    max-width: min(500px, calc(100vw - 2rem));
     background-color: var(--active-element-display-bg);
     border-radius: 0.5rem;
     box-shadow: var(--active-element-display-shadow);
