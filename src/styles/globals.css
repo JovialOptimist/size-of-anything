@@ -371,12 +371,13 @@ body {
     color: var(--control-sidebar-text-color);
 }
 
-/* Map styles */
-.map-container, .map-view-container {
+/* Map styles - full viewport (no left sidebars) */
+.map-container,
+.map-view-container {
     width: 100%;
     height: 100%;
     position: absolute;
-    left: var(--sidebar-width / 2);
+    left: 0;
     top: 0;
 }
 
@@ -427,31 +428,20 @@ body {
     animation: active-scale 0.2s;
 }
 
+/* Active element display - bottom-left, full viewport layout */
 .active-element-display {
     position: absolute;
+    left: 1rem;
     bottom: 1rem;
+    width: min(400px, calc(100vw - 2rem));
+    max-width: 32rem;
     background-color: var(--active-element-display-bg);
     border-radius: 0.5rem;
     box-shadow: var(--active-element-display-shadow);
     padding: 0.75rem;
-    max-width: 32rem;
     z-index: 800;
-    transition: left 0.3s ease-in-out, width 0.2s ease;
     box-sizing: border-box;
     overflow: hidden;
-}
-
-/* Base styles for positioning - will be overridden by JavaScript for more precise control */
-/* When the sidebar is expanded */
-.active-element-display.sidebar-expanded {
-    left: calc(1rem + var(--sidebar-width) + var(--control-panel-width));
-    width: min(400px, calc(100vw - var(--sidebar-width) - var(--control-panel-width) - 2rem));
-}
-
-/* When the sidebar is collapsed */
-.active-element-display.sidebar-collapsed {
-    left: calc(1rem + var(--sidebar-width));
-    width: min(400px, calc(100vw - var(--sidebar-width) - 2rem));
 }
 
 .panel-header {

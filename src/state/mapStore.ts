@@ -1,10 +1,13 @@
 // src/state/mapStore.ts
 import { create } from "zustand";
 import { generateRandomColor } from "../components/utils/colorUtils";
+import { projectAndTranslateGeometry } from "../components/utils/geometryUtils";
 import type { MapArea, GeoJSONFeature, MapState } from "./mapStoreTypes";
 import * as turf from "@turf/turf"; // TODO: what does this import other than simplify?
 import { useSettings } from "./settingsStore";
 import { generateShapeId } from "../utils/idUtils";
+
+export type AddFromSearchOptions = { placeAtCenter?: boolean };
 
 /**
  * Zustand store for managing map areas and active area
@@ -148,8 +151,18 @@ export const useMapStore = create<MapState>((set) => ({
   hoveredCandidate: null,
   setIsSelectingArea: (isSelecting) => set({ isSelectingArea: isSelecting }),
   setClickedPosition: (position) => set({ clickedPosition: position }),
-  addGeoJSONFromSearch: (feature: GeoJSONFeature) =>
+  addGeoJSONFromSearch: (feature: GeoJSONFeature, options?: AddFromSearchOptions) =>
     set((state) => {
+      let workingFeature = feature;
+      if (options?.placeAtCenter && state.currentMapCenter[0] !== 0 && state.currentMapCenter[1] !== 0) {
+        const [lat, lng] = state.currentMapCenter;
+        workingFeature = projectAndTranslateGeometry(
+          workingFeature as Parameters<typeof projectAndTranslateGeometry>[0],
+          [lng, lat]
+        ) as GeoJSONFeature;
+      }
+      const placeAtCenter = options?.placeAtCenter === true;
+      feature = workingFeature;
       let { type, coordinates } = feature.geometry;
 
       // Count total coordinate points in the geometry
@@ -265,7 +278,7 @@ export const useMapStore = create<MapState>((set) => ({
           color,
           index: sequentialIndex, // Keep the index for backward compatibility
           id: uniqueId, // Store the unique ID in properties too
-          shouldBringToFocus: !isSpecialShape, // Set focus flag (false for Special shapes)
+          shouldBringToFocus: !isSpecialShape && !placeAtCenter, // Set focus flag (false for Special shapes or place-at-center)
         },
       };
 

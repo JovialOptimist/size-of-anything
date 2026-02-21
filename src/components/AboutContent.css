@@ -1,0 +1,34 @@
+.about-content {
+  color: var(--control-sidebar-text-color);
+  font-size: 0.95rem;
+}
+
+.about-section {
+  margin-bottom: 1.25rem;
+}
+
+.about-section h3 {
+  font-size: 1rem;
+  margin: 0 0 0.5rem;
+  color: var(--control-sidebar-text-color);
+}
+
+.about-section p {
+  margin: 0 0 0.5rem;
+  line-height: 1.5;
+}
+
+.about-section a {
+  color: var(--control-sidebar-accent-text-color);
+  text-decoration: underline;
+}
+
+.about-section a:hover {
+  opacity: 0.9;
+}
+
+.about-footer {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--panel-heading-border-color);
+}

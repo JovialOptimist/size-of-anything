@@ -52,7 +52,7 @@ export interface MapState {
   hoveredCandidate: GeoJSONFeature | null;
   setIsSelectingArea: (isSelecting: boolean) => void;
   setClickedPosition: (position: [number, number] | null) => void;
-  addGeoJSONFromSearch: (feature: GeoJSONFeature) => void;
+  addGeoJSONFromSearch: (feature: GeoJSONFeature, options?: { placeAtCenter?: boolean }) => void;
   addArea: (area: MapArea) => void;
   updateArea: (id: string, area: Partial<MapArea>) => void;
   removeArea: (id: string) => void;

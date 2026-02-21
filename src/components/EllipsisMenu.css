@@ -1,0 +1,61 @@
+.ellipsis-menu-wrap {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1000;
+}
+
+.ellipsis-menu-btn {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--map-button-bg, #fff);
+  color: var(--map-button-fg, #111);
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ellipsis-menu-btn:hover {
+  background: var(--icon-sidebar-button-hover-bg, #e5e7eb);
+}
+
+.ellipsis-dots {
+  font-size: 1.4rem;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.ellipsis-menu-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 6px;
+  min-width: 140px;
+  padding: 6px 0;
+  background: var(--active-element-display-bg, #fff);
+  color: var(--control-sidebar-text-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  z-index: 1001;
+}
+
+.ellipsis-menu-dropdown button {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.ellipsis-menu-dropdown button:hover {
+  background: var(--candidate-hover-option, rgba(0, 0, 0, 0.06));
+}

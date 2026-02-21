@@ -12,7 +12,6 @@ import "../../styles/ShareButton.css";
 import "../../styles/LayerToggleButton.css";
 import "../../styles/markerLabels.css";
 import { useMapStore } from "../../state/mapStore";
-import { usePanel } from "../../state/panelStore";
 import { useSettings, applyMapTheme } from "../../state/settingsStore";
 import type { MapLayerType } from "../../state/settingsStore";
 import {
@@ -22,8 +21,6 @@ import {
 } from "../utils/geometryUtils";
 import { createMarker, attachMarkerDragHandlers } from "../utils/markerUtils";
 import type { GeoJSONFeature, MapState } from "../../state/mapStoreTypes";
-import ShareButton from "./ShareButton";
-import LogoDisplay from "./LogoDisplay";
 import { setupAutoRefreshOnSettingsChange } from "../utils/markerUtils";
 
 // Function to create tile layer based on layer type
@@ -134,10 +131,6 @@ export default function MapView() {
       const center = await findUserLocation();
       console.log(`Map center determined: ${center}`);
       if (cancelled) return;
-
-      // account for the control panel if open
-      const isPanelOpen = usePanel.getState().activePanel !== null;
-      if (isPanelOpen) center[1] -= 0.15;
 
       // If map not created yet, create it. Otherwise just setView.
       if (!mapInstanceRef.current) {
@@ -285,17 +278,9 @@ export default function MapView() {
         const bounds = tempLayer.getBounds();
 
         if (bounds.isValid()) {
-          // Apply appropriate padding based on panel state
-          const paddingOptions = usePanel.getState().activePanel
-            ? { paddingTopLeft: [560, 120], paddingBottomRight: [120, 120] }
-            : { paddingTopLeft: [120, 120], paddingBottomRight: [120, 120] };
-
           map.fitBounds(bounds, {
-            paddingTopLeft: paddingOptions.paddingTopLeft as [number, number],
-            paddingBottomRight: paddingOptions.paddingBottomRight as [
-              number,
-              number
-            ],
+            paddingTopLeft: [120, 120],
+            paddingBottomRight: [120, 120],
             maxZoom: 19,
           });
         } else {
@@ -551,8 +536,6 @@ export default function MapView() {
       }`}
     >
       <div id="map" ref={mapRef}></div>
-      <LogoDisplay />
-      <ShareButton />
     </div>
   );
 }

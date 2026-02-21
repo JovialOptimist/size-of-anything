@@ -1,26 +1,27 @@
 // src/App.tsx
 /**
  * Main application component for Size of Anything.
- * Composes the UI layout including map, sidebars, and controls that allow users
+ * Composes the UI layout including map, creation panel, and controls that allow users
  * to compare and visualize the sizes of different areas on a map.
  */
-import IconSidebar from "./components/sidebar/IconSidebar";
-import ControlSidebar from "./components/sidebar/ControlSidebar";
+import { useState, useEffect } from "react";
 import MapView from "./components/map/MapView";
 import ActiveElementDisplay from "./components/map/ActiveElementDisplay";
 import useUrlSync from "./state/urlSync";
-import { useEffect } from "react";
 import { useSettings, applyTheme } from "./state/settingsStore";
 import ThemeInitializer from "./components/ThemeInitializer";
 import KeyboardHandler from "./components/KeyboardHandler";
 import ShareButton from "./components/map/ShareButton";
 import FeedbackButton from "./components/map/FeedbackButton";
 import LayerToggleButton from "./components/map/LayerToggleButton";
+import CreationPanel from "./components/creation/CreationPanel";
+import EllipsisMenu, { type RightSidebarContent } from "./components/EllipsisMenu";
+import RightSidebar from "./components/RightSidebar";
 
 function App() {
-  // Use the URL sync hook to synchronize state with URL
   useUrlSync();
   const { theme } = useSettings();
+  const [rightSidebar, setRightSidebar] = useState<RightSidebarContent>(null);
 
   useEffect(() => {
     console.log("--- SIZE OF ANYTHING APP STARTED ---");
@@ -48,19 +49,18 @@ function App() {
       {/* Handle keyboard shortcuts */}
       <KeyboardHandler />
 
-      {/* Left sidebar with tool icons */}
-      <IconSidebar />
-      {/* Right control sidebar */}
-      <ControlSidebar />
-
-      {/* Main map area */}
+      {/* Main map area - full viewport */}
       <div className="map-view-container">
         <MapView />
+        <EllipsisMenu onSelect={setRightSidebar} />
+        <CreationPanel />
         <ActiveElementDisplay />
         <ShareButton />
         <FeedbackButton />
         <LayerToggleButton />
       </div>
+
+      <RightSidebar content={rightSidebar} onClose={() => setRightSidebar(null)} />
     </div>
   );
 }
