@@ -444,7 +444,7 @@ body {
     overflow: hidden;
 }
 
-/* Mobile only: prevent scroll (keep address bar visible); Android gets bottom buffer for system nav */
+/* Mobile only: prevent scroll (keep address bar visible); Android shrinks map container above system nav */
 @media (max-width: 500px) {
     html, body {
         overflow: hidden;
@@ -467,15 +467,9 @@ body {
         max-width: none;
     }
 
-    /* Android only: bottom from Visual Viewport API (adapts to any nav bar size); fallback 72px */
-    .platform-android .map-view-container .leaflet-control-zoom {
-        bottom: calc(var(--mobile-bottom-inset, 72px) + 0px) !important;
-    }
-    .platform-android .map-view-container .leaflet-control-attribution {
-        bottom: calc(var(--mobile-bottom-inset, 72px) + 0px) !important;
-    }
-    .platform-android .active-element-display {
-        bottom: calc(var(--mobile-bottom-inset, 72px) + 128px);
+    /* Android only: shrink map container so it doesn't extend under system nav; controls use default positioning */
+    .platform-android .map-view-container {
+        height: calc(100vh - var(--mobile-bottom-inset, 72px));
     }
 }
 
