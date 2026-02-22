@@ -4,7 +4,6 @@
  * Shows area details, controls for manipulation, and enables shape rotation.
  */
 import React, { useState, useRef, useEffect } from "react";
-import { usePanel } from "../../state/panelStore";
 import { useMapStore } from "../../state/mapStore";
 import { useSettings } from "../../state/settingsStore";
 import "../../styles/ActiveElementDisplay.css";
@@ -18,7 +17,6 @@ import { countCoordinates } from "../utils/geometryUtils";
 import RotationWheel from "../ui/RotationWheel";
 
 const ActiveElementDisplay: React.FC = () => {
-  const { activePanel } = usePanel();
   const activeAreaId = useMapStore((state: any) => state.activeAreaId);
   const getActiveElement = useMapStore((state: any) => state.getActiveElement);
   const setActiveArea = useMapStore((state: any) => state.setActiveArea);
@@ -58,50 +56,6 @@ const ActiveElementDisplay: React.FC = () => {
   );
 
   const colorPickerRef = useRef<HTMLDivElement>(null);
-  const displayRef = useRef<HTMLDivElement>(null);
-
-  // Ensure proper positioning and sizing
-  useEffect(() => {
-    const adjustDisplayPosition = () => {
-      if (displayRef.current) {
-        const sidebarWidth = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sidebar-width'));
-        const controlPanelWidth = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--control-panel-width'));
-        
-        // Calculate available width for the display
-        let availableWidth: number;
-        let leftPosition: number;
-        
-        if (activePanel) {
-          // Sidebar is expanded - position to the right of both sidebars
-          const panelElement = document.querySelector('.control-sidebar') as HTMLElement;
-          const actualPanelWidth = panelElement ? panelElement.offsetWidth : controlPanelWidth;
-          
-          leftPosition = sidebarWidth + actualPanelWidth + 20; // 20px spacing
-          availableWidth = window.innerWidth - leftPosition - 20; // 20px from right edge
-        } else {
-          // Sidebar is collapsed - position to the right of icon sidebar only
-          leftPosition = sidebarWidth + 20; // 20px spacing
-          availableWidth = window.innerWidth - leftPosition - 20; // 20px from right edge
-        }
-        
-        // Apply constraints
-        const maxWidth = Math.min(400, availableWidth); // 400px is the desired max-width
-        
-        // Update styles
-        displayRef.current.style.left = `${leftPosition}px`;
-        displayRef.current.style.width = `${maxWidth}px`;
-        displayRef.current.style.maxWidth = `${availableWidth}px`;
-      }
-    };
-    
-    // Adjust on component mount, panel change, and window resize
-    adjustDisplayPosition();
-    window.addEventListener('resize', adjustDisplayPosition);
-    
-    return () => {
-      window.removeEventListener('resize', adjustDisplayPosition);
-    };
-  }, [activePanel]);
 
   // Rotation now handled directly by the wheel component
 
@@ -127,12 +81,8 @@ const ActiveElementDisplay: React.FC = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isColorPickerOpen]);
 
-  const displayClass = activePanel
-    ? "active-element-display sidebar-expanded"
-    : "active-element-display sidebar-collapsed";
-
   if (!activeElement || !activeAreaId) {
-    return <div className={`active-element-empty`}></div>;
+    return <div className="active-element-empty"></div>;
   }
 
   const areaSizeNum = calculateAreaInKm2(activeElement);
@@ -196,7 +146,7 @@ const ActiveElementDisplay: React.FC = () => {
   // Rotation is now handled by the RotationWheel component
 
   return (
-    <div className={`${displayClass} active-element-panel`} ref={displayRef}>
+    <div className="active-element-display active-element-panel">
       <div className="element-info">
         <div className="element-header">
           <div className="element-title">

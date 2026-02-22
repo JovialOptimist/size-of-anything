@@ -64,6 +64,22 @@
   color: #666;
 }
 
+.history-view-more {
+  margin-top: 8px;
+  padding: 8px 12px;
+  width: 100%;
+  border: 1px solid var(--panel-heading-border-color, #e5e7eb);
+  border-radius: 6px;
+  background: var(--icon-sidebar-button-bg, #f3f4f6);
+  color: var(--control-sidebar-text-color);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.history-view-more:hover {
+  background: var(--icon-sidebar-button-hover-bg, #e5e7eb);
+}
+
 .clear-history-button {
   margin-top: 16px;
   padding: 8px 16px;

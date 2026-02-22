@@ -1,10 +1,13 @@
 // src/state/mapStore.ts
 import { create } from "zustand";
 import { generateRandomColor } from "../components/utils/colorUtils";
+import { hybridProjectAndTranslateGeometry } from "../components/utils/geometryUtils";
 import type { MapArea, GeoJSONFeature, MapState } from "./mapStoreTypes";
 import * as turf from "@turf/turf"; // TODO: what does this import other than simplify?
 import { useSettings } from "./settingsStore";
 import { generateShapeId } from "../utils/idUtils";
+
+export type AddFromSearchOptions = { placeAtCenter?: boolean };
 
 /**
  * Zustand store for managing map areas and active area
@@ -146,10 +149,22 @@ export const useMapStore = create<MapState>((set) => ({
   magicWandMode: false,
   currentMapCenter: [0, 0],
   hoveredCandidate: null,
+  creationPanelExpanded: false,
+  setCreationPanelExpanded: (expanded) => set({ creationPanelExpanded: expanded }),
   setIsSelectingArea: (isSelecting) => set({ isSelectingArea: isSelecting }),
   setClickedPosition: (position) => set({ clickedPosition: position }),
-  addGeoJSONFromSearch: (feature: GeoJSONFeature) =>
+  addGeoJSONFromSearch: (feature: GeoJSONFeature, options?: AddFromSearchOptions) =>
     set((state) => {
+      let workingFeature = feature;
+      if (options?.placeAtCenter && state.currentMapCenter[0] !== 0 && state.currentMapCenter[1] !== 0) {
+        const [lat, lng] = state.currentMapCenter;
+        workingFeature = hybridProjectAndTranslateGeometry(
+          workingFeature as Parameters<typeof hybridProjectAndTranslateGeometry>[0],
+          [lng, lat]
+        ) as GeoJSONFeature;
+      }
+      const placeAtCenter = options?.placeAtCenter === true;
+      feature = workingFeature;
       let { type, coordinates } = feature.geometry;
 
       // Count total coordinate points in the geometry
@@ -237,6 +252,11 @@ export const useMapStore = create<MapState>((set) => ({
       // Check if this is a special shape based on osmType
       const isSpecialShape =
         feature.properties?.osmType?.includes("special-") || false;
+      const isCustomShape =
+        feature.properties?.osmClass === "custom-shape" ||
+        feature.properties?.osmType === "custom-square" ||
+        feature.properties?.osmType === "custom-circle" ||
+        false;
 
       // Split name into name and location if it contains a comma
       let shapeName = feature.properties?.name || "Unnamed Area";
@@ -265,7 +285,7 @@ export const useMapStore = create<MapState>((set) => ({
           color,
           index: sequentialIndex, // Keep the index for backward compatibility
           id: uniqueId, // Store the unique ID in properties too
-          shouldBringToFocus: !isSpecialShape, // Set focus flag (false for Special shapes)
+          shouldBringToFocus: !isSpecialShape && !placeAtCenter && !isCustomShape, // Don't zoom for special/custom or place-at-center
         },
       };
 

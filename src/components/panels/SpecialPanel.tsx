@@ -4,9 +4,6 @@ import blueWhaleSvg from "../../assets/bluewhale.svg";
 import boeingPlane737 from "../../assets/boeing-737.svg";
 import boeingPlane777 from "../../assets/boeing-777-300ER.svg";
 import titanicShip from "../../assets/titanicShip.svg";
-import { InformationBubble } from "../ui/informationBubble";
-import { DismissableMessage } from "../ui/DismissableMessage";
-
 /**
  * Panel for Special features
  * Contains predefined notable areas that users can add to the map
@@ -50,16 +47,6 @@ const SpecialPanel: React.FC = () => {
 
   return (
     <div className="panel special-panel">
-      <div className="panel-header">
-        <h2>
-          Treasure<span className="keybind-text">T</span>
-        </h2>
-        <InformationBubble message="These are special shapes that you can add to the map. If you have suggestions for a special shape you'd like to see added to the Size of Anything, use the Feature Request option!" />
-      </div>
-      <div className="panel-description">
-        Cool shapes and areas that you've unlocked so far!
-      </div>
-
       <div className="special-areas-list">
         {specialShapes.map((shape) => (
           <SpecialShape
@@ -72,11 +59,6 @@ const SpecialPanel: React.FC = () => {
           />
         ))}
       </div>
-      <DismissableMessage messageId="special-area-center-info">
-        <p>
-          The new area will be placed at the center of your current map view.
-        </p>
-      </DismissableMessage>
     </div>
   );
 };

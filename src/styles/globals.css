@@ -5,7 +5,7 @@
     --icon-fill-size: 60%;
 
     /* Defaults - Light Mode */
-    --default-bg: #f9fafb;
+    --default-bg: #ffffff;
     --default-fg: #111827;
 
     /* Icon sidebar styles - Light Mode */
@@ -371,12 +371,13 @@ body {
     color: var(--control-sidebar-text-color);
 }
 
-/* Map styles */
-.map-container, .map-view-container {
+/* Map styles - full viewport (no left sidebars) */
+.map-container,
+.map-view-container {
     width: 100%;
     height: 100%;
     position: absolute;
-    left: var(--sidebar-width / 2);
+    left: 0;
     top: 0;
 }
 
@@ -427,31 +428,38 @@ body {
     animation: active-scale 0.2s;
 }
 
+/* Active element display - bottom-left */
 .active-element-display {
     position: absolute;
+    left: 1rem;
     bottom: 1rem;
+    width: min(400px, calc(100vw - 2rem));
+    max-width: 32rem;
     background-color: var(--active-element-display-bg);
     border-radius: 0.5rem;
     box-shadow: var(--active-element-display-shadow);
-    padding: 0.75rem;
-    max-width: 32rem;
+    padding: 0;
     z-index: 800;
-    transition: left 0.3s ease-in-out, width 0.2s ease;
     box-sizing: border-box;
     overflow: hidden;
 }
 
-/* Base styles for positioning - will be overridden by JavaScript for more precise control */
-/* When the sidebar is expanded */
-.active-element-display.sidebar-expanded {
-    left: calc(1rem + var(--sidebar-width) + var(--control-panel-width));
-    width: min(400px, calc(100vw - var(--sidebar-width) - var(--control-panel-width) - 2rem));
-}
+/* Mobile only: hide share, satellite, comments when creation panel is expanded */
+@media (max-width: 500px) {
+    .map-view-container:has(.creation-panel-expanded) .share-button-container,
+    .map-view-container:has(.creation-panel-expanded) .feedback-button-container,
+    .map-view-container:has(.creation-panel-expanded) .layer-toggle-button-container {
+        display: none !important;
+    }
 
-/* When the sidebar is collapsed */
-.active-element-display.sidebar-collapsed {
-    left: calc(1rem + var(--sidebar-width));
-    width: min(400px, calc(100vw - var(--sidebar-width) - 2rem));
+    /* Active element display: respect both margins; sit right above map buttons (105px + 60px + gap) */
+    .active-element-display {
+        left: 1rem;
+        right: 1rem;
+        bottom: 173px;
+        width: auto;
+        max-width: none;
+    }
 }
 
 .panel-header {

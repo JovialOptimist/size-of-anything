@@ -497,7 +497,7 @@ export default function TextSearchPanel() {
 // fetch all possible candidates from Nominatim,
 // filter out only ways and relations,
 // and return the remaining list of candidates.
-async function fetchCandidates(input: string) {
+export async function fetchCandidates(input: string) {
   // Gather candidates from Nominatim
   // You can bias the search to a location by adding the "viewbox" and "bounded" parameters.
   // For example, to bias near latitude/longitude (lat, lon), create a small bounding box around it.

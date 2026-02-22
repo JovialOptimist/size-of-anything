@@ -1,0 +1,304 @@
+/* Creation Panel - floating overlay; match active element display styling */
+.creation-panel {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 1100;
+  background-color: var(--active-element-display-bg);
+  color: var(--default-fg);
+  border-radius: 8px;
+  box-shadow: var(--active-element-display-shadow);
+  overflow: hidden;
+  font-family: inherit;
+}
+
+.creation-panel-collapsed {
+  max-width: 320px;
+}
+
+.creation-panel-expanded {
+  width: 500px;
+  max-width: calc(100vw - 2rem);
+  height: 520px;
+  display: flex;
+  flex-direction: column;
+  transition: height 0.25s ease-out, width 0.25s ease-out, opacity 0.25s ease-out;
+}
+
+.creation-panel-expanded.creation-panel-expanding {
+  height: 44px;
+  width: 320px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* When closing: panel shrinks to bar height, bar is visible at top while inner shrinks */
+.creation-panel-expanded.creation-panel-closing {
+  height: 44px;
+  min-height: 44px;
+}
+
+.creation-panel-expanded-inner {
+  height: 520px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: height 0.25s ease-out;
+}
+
+.creation-panel-expanded-inner-closing {
+  height: 0 !important;
+  min-height: 0 !important;
+}
+
+.creation-panel-bar-closing {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
+}
+
+.creation-panel-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 240px;
+  height: 44px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 8px;
+  background: var(--active-element-display-bg, #fff);
+  color: var(--control-sidebar-text-color, #333);
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.95rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  animation: creation-panel-bar-appear 0.22s ease-out forwards;
+}
+
+@keyframes creation-panel-bar-appear {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.creation-panel-bar:hover {
+  background: var(--candidate-hover-option, #f0f0f0);
+}
+
+.creation-panel-spyglass {
+  font-size: 1.1rem;
+  opacity: 0.8;
+}
+
+.creation-panel-bar-text {
+  flex: 1;
+  color: var(--control-sidebar-text-color);
+  opacity: 0.9;
+}
+
+.creation-panel-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 12px 8px;
+  border-bottom: 1px solid var(--panel-heading-border-color, #e5e7eb);
+  background: #dbeafe;
+  flex-shrink: 0;
+}
+
+.creation-panel-close-btn {
+  background: none;
+  border: none;
+  color: var(--control-sidebar-text-color);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0 6px;
+  margin-left: auto;
+  transition: color 0.2s ease;
+  line-height: 1;
+}
+
+.creation-panel-close-btn:hover {
+  color: #e74c3c;
+}
+
+.creation-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px 12px;
+  border-bottom: 1px solid var(--panel-heading-border-color, #e5e7eb);
+  flex-shrink: 0;
+}
+
+.creation-panel-search-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.creation-panel-search-input {
+  width: 100%;
+  padding: 8px 36px 8px 12px;
+  border: 1px solid var(--panel-heading-border-color, #e5e7eb);
+  border-radius: 6px;
+  background: var(--active-element-display-bg, #fff);
+  color: var(--control-sidebar-text-color);
+  font-size: 0.95rem;
+  box-sizing: border-box;
+}
+
+.creation-panel-search-btn-inside {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--control-sidebar-text-color);
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.creation-panel-search-btn-inside:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.creation-panel-or {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--control-sidebar-text-color);
+  opacity: 0.8;
+  flex-shrink: 0;
+}
+
+.creation-panel-click-to-search {
+  padding: 10px 16px;
+  border: 1px solid var(--panel-heading-border-color, #e5e7eb);
+  border-radius: 8px;
+  background: var(--active-element-display-bg, #fff);
+  color: var(--control-sidebar-text-color);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  flex-shrink: 0;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.creation-panel-click-to-search:hover {
+  background: var(--icon-sidebar-button-hover-bg, #f0f4ff);
+  border-color: var(--icon-sidebar-button-active-bg, #4287f5);
+}
+
+.creation-panel-click-to-search.active {
+  background: var(--icon-sidebar-button-active-bg, #4287f5);
+  border-color: var(--icon-sidebar-button-active-bg, #4287f5);
+  color: white;
+}
+
+.creation-panel-tab {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px 6px 0 0;
+  background: transparent;
+  color: var(--control-sidebar-text-color);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.creation-panel-tab:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.creation-panel-tab.active {
+  background: var(--icon-sidebar-button-active-bg, #4287f5);
+  color: white;
+}
+
+.creation-panel-content {
+  padding: 12px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Same margin for all tabs: panels inside creation panel get no extra padding */
+.creation-panel-content .panel {
+  padding: 0;
+  margin: 0;
+}
+
+.creation-panel-placeholder {
+  color: var(--control-sidebar-text-color);
+  opacity: 0.7;
+  font-size: 0.9rem;
+}
+
+/* Dark mode: tabs and header backgrounds + readable text */
+.dark-mode .creation-panel-tabs {
+  background: var(--icon-sidebar-button-bg, #1e293b);
+  border-bottom-color: var(--panel-heading-border-color, rgba(255, 255, 255, 0.1));
+}
+
+.dark-mode .creation-panel-tab {
+  color: var(--control-sidebar-text-color);
+}
+
+.dark-mode .creation-panel-tab:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.dark-mode .creation-panel-tab.active {
+  background: var(--icon-sidebar-button-active-bg);
+  color: var(--icon-sidebar-button-active-text-color);
+}
+
+.dark-mode .creation-panel-header {
+  border-bottom-color: var(--panel-heading-border-color, rgba(255, 255, 255, 0.1));
+}
+
+.dark-mode .creation-panel-close-btn {
+  color: var(--control-sidebar-text-color);
+}
+
+/* Mobile only: collapsed bar full width up to ellipsis; expanded = full screen */
+@media (max-width: 500px) {
+  .creation-panel.creation-panel-collapsed {
+    top: 1rem;
+    left: 1rem;
+    right: 60px; /* leave room for ellipsis (10px + 40px button + 10px) */
+    width: auto;
+    max-width: none;
+    /* keep default border-radius from .creation-panel */
+  }
+
+  .creation-panel-expanded {
+    top: 0;
+    left: 0;
+    border-radius: 0;
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+    min-height: 100%;
+  }
+
+  .creation-panel-expanded-inner {
+    height: 100%;
+    min-height: 0;
+  }
+}

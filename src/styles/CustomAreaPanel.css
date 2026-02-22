@@ -1,68 +1,124 @@
-.custom-area-form {
-  margin: 20px 0;
-  padding: 15px;
-  background-color: var(--active-element-display-bg);
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.custom-area-form .form-group {
-  margin-bottom: 15px;
-}
-
-.custom-area-form label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: 500;
-}
-
-.input-with-unit {
+.custom-area-form-compact {
+  margin: 0;
+  padding: 0;
   display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.custom-area-segmented {
+  display: flex;
+  border: 1px solid #94a3b8;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--icon-sidebar-button-bg, #f1f5f9);
+}
+
+.custom-area-segmented button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: none;
+  border-right: 1px solid #94a3b8;
+  background: transparent;
+  color: var(--control-sidebar-text-color);
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.custom-area-segmented-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.custom-area-segmented button:last-child {
+  border-right: none;
+}
+
+.custom-area-segmented button:hover:not(.active) {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.custom-area-segmented button.active {
+  background: var(--icon-sidebar-button-active-bg, #4287f5);
+  color: white;
+  font-weight: 600;
+}
+
+.custom-area-input-row {
+  display: flex;
+  gap: 8px;
   align-items: center;
 }
 
-.area-input {
+.custom-area-input {
   flex: 1;
-  padding: 8px 12px;
-  border: 1px solid var(--panel-heading-border-color);
-  border-radius: 4px;
-  font-size: 16px;
-  margin-right: 1rem;
-  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--panel-heading-border-color, #e5e7eb);
+  border-radius: 8px;
+  font-size: 1rem;
+  background: var(--active-element-display-bg, #fff);
+  color: var(--control-sidebar-text-color);
 }
 
-.unit-select {
-  padding: 8px 12px;
-  border: 1px solid var(--panel-heading-border-color);
-  border-radius: 4px;
-  font-size: 16px;
-  background-color: var(--input-bg);
-  color: var(--text-color);
-}
-
-.generate-area-button {
-  display: block;
-  width: 100%;
-  padding: 10px;
-  background-color: var(--primary-color, #3498db);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-size: 16px;
+.custom-area-unit-select {
+  padding: 10px 36px 10px 12px;
+  min-width: 100px;
+  border: 1px solid var(--panel-heading-border-color, #94a3b8);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  background-color: var(--active-element-display-bg, #fff);
+  color: var(--control-sidebar-text-color);
   cursor: pointer;
-  transition: background-color 0.2s;
-  margin-top: 10px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23475569' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.generate-area-button:hover {
-  background-color: var(--primary-hover, #2980b9);
+.custom-area-unit-select:hover {
+  border-color: var(--icon-sidebar-button-active-bg, #4287f5);
 }
 
-.custom-area-info {
-  margin-top: 15px;
-  padding: 10px;
-  background-color: var(--info-bg, rgba(52, 152, 219, 0.1));
-  border-left: 4px solid var(--primary-color, #3498db);
-  border-radius: 4px;
-  font-size: 0.9em;
+.custom-area-unit-select:focus {
+  outline: none;
+  border-color: var(--icon-sidebar-button-active-bg, #4287f5);
+  box-shadow: 0 0 0 2px rgba(66, 135, 245, 0.2);
+}
+
+.custom-area-unit-select optgroup {
+  font-weight: 600;
+  color: var(--control-sidebar-text-color);
+  padding: 6px 8px 4px;
+  background: var(--icon-sidebar-button-bg, #f1f5f9);
+}
+
+.custom-area-unit-select option {
+  padding: 6px 8px;
+}
+
+.custom-area-place-btn {
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 8px;
+  background: var(--icon-sidebar-button-active-bg, #4287f5);
+  color: white;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  text-align: center;
+  line-height: 1.35;
+}
+
+.custom-area-place-btn:hover {
+  background: #357ae8;
 }

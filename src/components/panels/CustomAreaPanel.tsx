@@ -1,147 +1,100 @@
 import React, { useState } from "react";
 import { useMapStore } from "../../state/mapStore";
 import type { GeoJSONFeature } from "../../state/mapStoreTypes";
-import { InformationBubble } from "../ui/informationBubble";
-import { DismissableMessage } from "../ui/DismissableMessage";
 import { countCoordinates } from "../utils/geometryUtils";
+import { CircleShapeIcon, SquareShapeIcon } from "../ui/Icons";
+
+const LENGTH_CONVERSIONS: Record<string, number> = {
+  m: 1,
+  km: 1000,
+  mi: 1609.344,
+  ft: 0.3048,
+};
+
+const AREA_CONVERSIONS: Record<string, number> = {
+  m2: 1,
+  km2: 1_000_000,
+  acres: 4046.85642,
+  hectares: 10_000,
+  miles2: 2_589_988.110336,
+  ft2: 0.09290304, // 1 ft² in m²
+};
+
+const UNIT_OPTIONS: { value: string; label: string; kind: "length" | "area" }[] = [
+  { value: "m", label: "m", kind: "length" },
+  { value: "km", label: "km", kind: "length" },
+  { value: "mi", label: "mi", kind: "length" },
+  { value: "ft", label: "ft", kind: "length" },
+  { value: "m2", label: "m²", kind: "area" },
+  { value: "km2", label: "km²", kind: "area" },
+  { value: "ft2", label: "ft²", kind: "area" },
+  { value: "acres", label: "acres", kind: "area" },
+  { value: "hectares", label: "hectares", kind: "area" },
+  { value: "miles2", label: "mi²", kind: "area" },
+];
 
 /**
- * Panel for custom area functionality
- * Allows users to create shapes by area or by length/radius
+ * Custom area panel: circle or square; value in length or area (by unit); Place here.
  */
 const CustomAreaPanel: React.FC = () => {
-  // Area panel state
-  const [areaValue, setAreaValue] = useState<string>("1");
-  const [areaUnit, setAreaUnit] = useState<string>("km2");
-  const [areaShapeType, setAreaShapeType] = useState<"square" | "circle">(
-    "square"
-  );
+  const [shapeType, setShapeType] = useState<"circle" | "square">("circle");
+  const [value, setValue] = useState<string>("1");
+  const [unit, setUnit] = useState<string>("km");
 
-  // Length/Radius panel state
-  const [lengthValue, setLengthValue] = useState<string>("1");
-  const [lengthUnit, setLengthUnit] = useState<string>("km");
-  const [lengthShapeType, setLengthShapeType] = useState<"square" | "circle">(
-    "circle"
-  );
-
-  // Get current map center and search function from store
   const currentMapCenter = useMapStore((state) => state.currentMapCenter);
-  const addGeoJSONFromSearch = useMapStore(
-    (state) => state.addGeoJSONFromSearch
-  );
+  const addGeoJSONFromSearch = useMapStore((state) => state.addGeoJSONFromSearch);
 
-  // Define conversion factors to square meters
-  const areaConversions: Record<string, number> = {
-    m2: 1,
-    km2: 1000000, // 1 km² = 1,000,000 m²
-    acres: 4046.85642, // 1 acre = 4046.85642 m²
-    hectares: 10000, // 1 hectare = 10,000 m²
-    miles2: 2589988.110336, // 1 mile² = 2,589,988.110336 m²
-  };
+  const currentUnitOption = UNIT_OPTIONS.find((o) => o.value === unit) ?? UNIT_OPTIONS[0];
+  const isArea = currentUnitOption.kind === "area";
 
-  // Define conversion factors to meters
-  const lengthConversions: Record<string, number> = {
-    m: 1,
-    km: 1000, // 1 km = 1,000 m
-    mi: 1609.344, // 1 mile = 1609.344 m
-    ft: 0.3048, // 1 foot = 0.3048 m
-  };
+  // Button label: "Place a {description} here"
+  const placeButtonLabel = (() => {
+    const label = currentUnitOption.label;
+    const val = value.trim() || "0";
+    if (isArea) {
+      return shapeType === "circle"
+        ? `Place a ${val} ${label} circle here`
+        : `Place a ${val} ${label} square here`;
+    }
+    if (shapeType === "circle") {
+      return `Place a circle with a radius of ${val} ${label} here`;
+    }
+    return `Place a square with ${val} ${label} sidelengths here`;
+  })();
 
-  // Unit labels for display
-  const areaLabels: Record<string, string> = {
-    m2: "m²",
-    km2: "km²",
-    acres: "acres",
-    hectares: "hectares",
-    miles2: "miles²",
-  };
-
-  // Length unit labels for display
-  const lengthLabels: Record<string, string> = {
-    m: "m",
-    km: "km",
-    mi: "miles",
-    ft: "feet",
-  };
-
-  /**
-   * Creates a shape based on area (either square or circle)
-   */
-  const generateAreaBasedShape = () => {
+  const placeHere = () => {
     if (!currentMapCenter) return;
-
-    // Parse area value and convert to square meters
-    const numericValue = parseFloat(areaValue);
-    if (isNaN(numericValue) || numericValue <= 0) {
-      alert("Please enter a valid positive area");
+    const num = parseFloat(value);
+    if (isNaN(num) || num <= 0) {
+      alert("Please enter a valid positive number");
       return;
     }
-
-    const areaInSquareMeters = numericValue * areaConversions[areaUnit];
-
-    // Generate appropriate shape based on type
+    const label = currentUnitOption.label;
     let feature: GeoJSONFeature;
-    if (areaShapeType === "square") {
-      // For square, calculate side length from area
-      const sideLength = Math.sqrt(areaInSquareMeters);
-      feature = createSquareFeature(
-        currentMapCenter,
-        sideLength,
-        `Square area: ${areaValue} ${areaLabels[areaUnit]}`
-      );
+    let name: string;
+    if (isArea) {
+      const areaInM2 = num * AREA_CONVERSIONS[unit];
+      if (shapeType === "circle") {
+        const radius = Math.sqrt(areaInM2 / Math.PI);
+        name = `${value} ${label} Circle`;
+        feature = createCircleFeature(currentMapCenter, radius, name);
+      } else {
+        const side = Math.sqrt(areaInM2);
+        name = `${value} ${label} Square`;
+        feature = createSquareFeature(currentMapCenter, side, name);
+      }
     } else {
-      // For circle, calculate radius from area (A = πr²)
-      const radius = Math.sqrt(areaInSquareMeters / Math.PI);
-      feature = createCircleFeature(
-        currentMapCenter,
-        radius,
-        `Circle area: ${areaValue} ${areaLabels[areaUnit]}`
-      );
+      const lengthInMeters = num * LENGTH_CONVERSIONS[unit];
+      name =
+        shapeType === "circle"
+          ? `Circle radius: ${value} ${label}`
+          : `Square side: ${value} ${label}`;
+      feature =
+        shapeType === "square"
+          ? createSquareFeature(currentMapCenter, lengthInMeters, name)
+          : createCircleFeature(currentMapCenter, lengthInMeters, name);
     }
-
-    // Add the feature to the map
-    if (feature) {
-      addGeoJSONFromSearch(feature);
-    }
-  };
-
-  /**
-   * Creates a shape based on length/radius (either square or circle)
-   */
-  const generateLengthBasedShape = () => {
-    if (!currentMapCenter) return;
-
-    // Parse length value and convert to meters
-    const numericValue = parseFloat(lengthValue);
-    if (isNaN(numericValue) || numericValue <= 0) {
-      alert("Please enter a valid positive length");
-      return;
-    }
-
-    const lengthInMeters = numericValue * lengthConversions[lengthUnit];
-
-    // Generate appropriate shape based on type
-    let feature: GeoJSONFeature;
-    if (lengthShapeType === "square") {
-      // For square, use length as side length
-      feature = createSquareFeature(
-        currentMapCenter,
-        lengthInMeters,
-        `Square sidelength: ${lengthValue} ${lengthLabels[lengthUnit]}`
-      );
-    } else {
-      // For circle, use length as radius
-      feature = createCircleFeature(
-        currentMapCenter,
-        lengthInMeters,
-        `Circle radius: ${lengthValue} ${lengthLabels[lengthUnit]}`
-      );
-    }
-
-    // Add the feature to the map
-    if (feature) {
-      addGeoJSONFromSearch(feature);
-    }
+    addGeoJSONFromSearch(feature);
   };
 
   /**
@@ -245,148 +198,68 @@ const CustomAreaPanel: React.FC = () => {
 
   return (
     <div className="panel custom-area-panel">
-      <div className="panel-header">
-        <h2>
-          Custom Area<span className="keybind-text">C</span>
-        </h2>
-
-        <InformationBubble message="Create custom shapes by specifying either an area or dimensions." />
-      </div>
-
-      {/* Area-based panel */}
-      <div className="sub-panel">
-        <div className="panel-description">
-          Create a shape with a specific area.
-        </div>
-
-        <div className="custom-area-form">
-          {/* Shape type selector */}
-          <div className="form-group">
-            <div className="input-with-unit">
-              <select
-                id="area-shape-type"
-                value={areaShapeType}
-                onChange={(e) =>
-                  setAreaShapeType(e.target.value as "square" | "circle")
-                }
-                className="unit-select"
-                style={{ width: "100%" }}
-                tabIndex={0}
-              >
-                <option value="square">Square</option>
-                <option value="circle">Circle</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Area input */}
-          <div className="form-group">
-            <div className="input-with-unit">
-              <input
-                id="area-value"
-                type="number"
-                min="0.001"
-                step="0.001"
-                value={areaValue}
-                onChange={(e) => setAreaValue(e.target.value)}
-                className="area-input"
-                placeholder="Area"
-              />
-
-              <select
-                value={areaUnit}
-                onChange={(e) => setAreaUnit(e.target.value)}
-                className="unit-select"
-                tabIndex={0}
-              >
-                <option value="acres">acres</option>
-                <option value="hectares">hectares</option>
-                <option value="km2">km²</option>
-                <option value="m2">m²</option>
-                <option value="miles2">miles²</option>
-              </select>
-            </div>
-          </div>
-
+      <div className="custom-area-form custom-area-form-compact">
+        <div className="custom-area-segmented">
           <button
-            className="generate-area-button"
-            onClick={generateAreaBasedShape}
-            tabIndex={0}
+            type="button"
+            className={shapeType === "circle" ? "active" : ""}
+            onClick={() => setShapeType("circle")}
           >
-            Generate by Area
+            <CircleShapeIcon className="custom-area-segmented-icon" />
+            <span>Circle</span>
+          </button>
+          <button
+            type="button"
+            className={shapeType === "square" ? "active" : ""}
+            onClick={() => setShapeType("square")}
+          >
+            <SquareShapeIcon className="custom-area-segmented-icon" />
+            <span>Square</span>
           </button>
         </div>
-      </div>
-
-      {/* Length/Radius-based panel */}
-      <div className="sub-panel" style={{ marginTop: "20px" }}>
-        <div className="panel-description">
-          Create a circle or square with a radius or side length.
-        </div>
-
-        <div className="custom-area-form">
-          {/* Shape type selector */}
-          <div className="form-group">
-            <div className="input-with-unit">
-              <select
-                id="length-shape-type"
-                value={lengthShapeType}
-                onChange={(e) =>
-                  setLengthShapeType(e.target.value as "square" | "circle")
-                }
-                className="unit-select"
-                style={{ width: "100%" }}
-                tabIndex={0}
-              >
-                <option value="circle">Circle (Radius)</option>
-                <option value="square">Square (Side Length)</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Length/Radius input */}
-          <div className="form-group">
-            <div className="input-with-unit">
-              <input
-                id="length-value"
-                type="number"
-                min="0.001"
-                step="0.001"
-                value={lengthValue}
-                onChange={(e) => setLengthValue(e.target.value)}
-                className="area-input"
-                placeholder={
-                  lengthShapeType === "square" ? "Side Length" : "Radius"
-                }
-              />
-
-              <select
-                value={lengthUnit}
-                onChange={(e) => setLengthUnit(e.target.value)}
-                className="unit-select"
-                tabIndex={0}
-              >
-                <option value="m">meters</option>
-                <option value="km">kilometers</option>
-                <option value="mi">miles</option>
-                <option value="ft">feet</option>
-              </select>
-            </div>
-          </div>
-
-          <button
-            className="generate-area-button"
-            onClick={generateLengthBasedShape}
-            tabIndex={0}
+        <div className="custom-area-input-row">
+          <input
+            type="number"
+            min="0.001"
+            step="0.001"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            className="custom-area-input"
+            placeholder={
+              isArea
+                ? "Area"
+                : shapeType === "circle"
+                  ? "Radius"
+                  : "Side length"
+            }
+            aria-label={isArea ? "Area" : shapeType === "circle" ? "Radius" : "Side length"}
+          />
+          <select
+            value={unit}
+            onChange={(e) => setUnit(e.target.value)}
+            className="custom-area-unit-select"
+            aria-label="Unit"
           >
-            Generate by {lengthShapeType === "square" ? "Length" : "Radius"}
-          </button>
+            <optgroup label="Length">
+              {UNIT_OPTIONS.filter((o) => o.kind === "length").map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </optgroup>
+            <optgroup label="Area">
+              {UNIT_OPTIONS.filter((o) => o.kind === "area").map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </optgroup>
+          </select>
         </div>
+        <button type="button" className="custom-area-place-btn" onClick={placeHere}>
+          {placeButtonLabel}
+        </button>
       </div>
-
-      <DismissableMessage messageId="custom-area-center-info">
-        <p>All shapes will be placed at the center of your current map view.</p>
-      </DismissableMessage>
     </div>
   );
 };
