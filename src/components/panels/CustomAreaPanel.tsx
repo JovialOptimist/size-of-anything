@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useMapStore } from "../../state/mapStore";
 import type { GeoJSONFeature } from "../../state/mapStoreTypes";
 import { countCoordinates } from "../utils/geometryUtils";
+import { CircleShapeIcon, SquareShapeIcon } from "../ui/Icons";
 
 const LENGTH_CONVERSIONS: Record<string, number> = {
   m: 1,
@@ -16,6 +17,7 @@ const AREA_CONVERSIONS: Record<string, number> = {
   acres: 4046.85642,
   hectares: 10_000,
   miles2: 2_589_988.110336,
+  ft2: 0.09290304, // 1 ft² in m²
 };
 
 const UNIT_OPTIONS: { value: string; label: string; kind: "length" | "area" }[] = [
@@ -25,6 +27,7 @@ const UNIT_OPTIONS: { value: string; label: string; kind: "length" | "area" }[] 
   { value: "ft", label: "ft", kind: "length" },
   { value: "m2", label: "m²", kind: "area" },
   { value: "km2", label: "km²", kind: "area" },
+  { value: "ft2", label: "ft²", kind: "area" },
   { value: "acres", label: "acres", kind: "area" },
   { value: "hectares", label: "hectares", kind: "area" },
   { value: "miles2", label: "mi²", kind: "area" },
@@ -44,6 +47,21 @@ const CustomAreaPanel: React.FC = () => {
   const currentUnitOption = UNIT_OPTIONS.find((o) => o.value === unit) ?? UNIT_OPTIONS[0];
   const isArea = currentUnitOption.kind === "area";
 
+  // Button label: "Place a {description} here"
+  const placeButtonLabel = (() => {
+    const label = currentUnitOption.label;
+    const val = value.trim() || "0";
+    if (isArea) {
+      return shapeType === "circle"
+        ? `Place a ${val} ${label} circle here`
+        : `Place a ${val} ${label} square here`;
+    }
+    if (shapeType === "circle") {
+      return `Place a circle with a radius of ${val} ${label} here`;
+    }
+    return `Place a square with ${val} ${label} sidelengths here`;
+  })();
+
   const placeHere = () => {
     if (!currentMapCenter) return;
     const num = parseFloat(value);
@@ -58,11 +76,11 @@ const CustomAreaPanel: React.FC = () => {
       const areaInM2 = num * AREA_CONVERSIONS[unit];
       if (shapeType === "circle") {
         const radius = Math.sqrt(areaInM2 / Math.PI);
-        name = `Circle area: ${value} ${label}`;
+        name = `${value} ${label} Circle`;
         feature = createCircleFeature(currentMapCenter, radius, name);
       } else {
         const side = Math.sqrt(areaInM2);
-        name = `Square area: ${value} ${label}`;
+        name = `${value} ${label} Square`;
         feature = createSquareFeature(currentMapCenter, side, name);
       }
     } else {
@@ -187,14 +205,16 @@ const CustomAreaPanel: React.FC = () => {
             className={shapeType === "circle" ? "active" : ""}
             onClick={() => setShapeType("circle")}
           >
-            Circle
+            <CircleShapeIcon className="custom-area-segmented-icon" />
+            <span>Circle</span>
           </button>
           <button
             type="button"
             className={shapeType === "square" ? "active" : ""}
             onClick={() => setShapeType("square")}
           >
-            Square
+            <SquareShapeIcon className="custom-area-segmented-icon" />
+            <span>Square</span>
           </button>
         </div>
         <div className="custom-area-input-row">
@@ -220,15 +240,24 @@ const CustomAreaPanel: React.FC = () => {
             className="custom-area-unit-select"
             aria-label="Unit"
           >
-            {UNIT_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
+            <optgroup label="Length">
+              {UNIT_OPTIONS.filter((o) => o.kind === "length").map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </optgroup>
+            <optgroup label="Area">
+              {UNIT_OPTIONS.filter((o) => o.kind === "area").map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </optgroup>
           </select>
         </div>
         <button type="button" className="custom-area-place-btn" onClick={placeHere}>
-          Place here
+          {placeButtonLabel}
         </button>
       </div>
     </div>

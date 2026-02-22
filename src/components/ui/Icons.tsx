@@ -14,6 +14,24 @@ export function SearchIcon({ className = iconClass }: { className?: string }) {
   );
 }
 
+/** Circle shape for custom area segment control */
+export function CircleShapeIcon({ className = iconClass }: { className?: string }) {
+  return (
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <circle cx="12" cy="12" r="9" />
+    </svg>
+  );
+}
+
+/** Square shape for custom area segment control */
+export function SquareShapeIcon({ className = iconClass }: { className?: string }) {
+  return (
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <rect x="3" y="3" width="18" height="18" rx="1" />
+    </svg>
+  );
+}
+
 /** Info bubble (circle with "i") for empty states e.g. no search results */
 export function InfoBubbleIcon({ className = iconClass }: { className?: string }) {
   return (

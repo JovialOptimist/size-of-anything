@@ -16,6 +16,10 @@
 
 .custom-area-segmented button {
   flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   padding: 10px 16px;
   border: none;
   border-right: 1px solid #94a3b8;
@@ -24,6 +28,12 @@
   font-size: 0.95rem;
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
+}
+
+.custom-area-segmented-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
 }
 
 .custom-area-segmented button:last-child {
@@ -58,19 +68,40 @@
 }
 
 .custom-area-unit-select {
-  padding: 10px 12px;
-  min-width: 88px;
-  border: 1px solid var(--panel-heading-border-color, #e5e7eb);
+  padding: 10px 36px 10px 12px;
+  min-width: 100px;
+  border: 1px solid var(--panel-heading-border-color, #94a3b8);
   border-radius: 8px;
-  font-size: 1rem;
-  background: var(--active-element-display-bg, #fff);
+  font-size: 0.95rem;
+  background-color: var(--active-element-display-bg, #fff);
   color: var(--control-sidebar-text-color);
   cursor: pointer;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23475569' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 10px center;
-  padding-right: 32px;
+  background-position: right 12px center;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.custom-area-unit-select:hover {
+  border-color: var(--icon-sidebar-button-active-bg, #4287f5);
+}
+
+.custom-area-unit-select:focus {
+  outline: none;
+  border-color: var(--icon-sidebar-button-active-bg, #4287f5);
+  box-shadow: 0 0 0 2px rgba(66, 135, 245, 0.2);
+}
+
+.custom-area-unit-select optgroup {
+  font-weight: 600;
+  color: var(--control-sidebar-text-color);
+  padding: 6px 8px 4px;
+  background: var(--icon-sidebar-button-bg, #f1f5f9);
+}
+
+.custom-area-unit-select option {
+  padding: 6px 8px;
 }
 
 .custom-area-place-btn {
@@ -80,10 +111,12 @@
   border-radius: 8px;
   background: var(--icon-sidebar-button-active-bg, #4287f5);
   color: white;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.2s;
+  text-align: center;
+  line-height: 1.35;
 }
 
 .custom-area-place-btn:hover {
