@@ -5,6 +5,12 @@
   z-index: 1000;
 }
 
+@media (max-width: 500px) {
+  .ellipsis-menu-wrap {
+    top: calc(env(safe-area-inset-top, 0px) + 56px);
+  }
+}
+
 .ellipsis-menu-btn {
   width: 40px;
   height: 40px;
