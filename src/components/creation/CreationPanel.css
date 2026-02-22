@@ -138,22 +138,26 @@
 }
 
 .creation-panel-click-to-search {
-  padding: 8px 12px;
-  border: none;
-  border-radius: 6px;
-  background: var(--icon-sidebar-button-bg, #f3f4f6);
+  padding: 10px 16px;
+  border: 1px solid var(--panel-heading-border-color, #e5e7eb);
+  border-radius: 8px;
+  background: var(--active-element-display-bg, #fff);
   color: var(--control-sidebar-text-color);
   cursor: pointer;
   font-size: 0.9rem;
+  font-weight: 500;
   flex-shrink: 0;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
 
 .creation-panel-click-to-search:hover {
-  background: var(--icon-sidebar-button-hover-bg, #e5e7eb);
+  background: var(--icon-sidebar-button-hover-bg, #f0f4ff);
+  border-color: var(--icon-sidebar-button-active-bg, #4287f5);
 }
 
 .creation-panel-click-to-search.active {
   background: var(--icon-sidebar-button-active-bg, #4287f5);
+  border-color: var(--icon-sidebar-button-active-bg, #4287f5);
   color: white;
 }
 
@@ -183,6 +187,12 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+/* Same margin for all tabs: panels inside creation panel get no extra padding */
+.creation-panel-content .panel {
+  padding: 0;
+  margin: 0;
 }
 
 .creation-panel-placeholder {

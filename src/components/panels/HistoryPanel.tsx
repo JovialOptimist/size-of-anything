@@ -1,9 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { useMapStore } from "../../state/mapStore";
 import Card from "../ui/Card";
-import { InformationBubble } from "../ui/informationBubble";
-import { DismissableMessage } from "../ui/DismissableMessage";
-
 /**
  * Panel for history functionality
  * Shows previously viewed areas and allows users to re-add them to the map
@@ -13,25 +10,28 @@ const HistoryPanel: React.FC = () => {
   const historyItems = useMapStore((state) => state.historyItems);
   const clearHistory = useMapStore((state) => state.clearHistory);
 
+  const [listExpanded, setListExpanded] = useState(false);
+  const displayItems = listExpanded ? historyItems : historyItems.slice(0, 6);
+  const hasMore = historyItems.length > 6 && !listExpanded;
+
   return (
     <div className="panel history-panel">
-      <div className="panel-header">
-        <h2>
-          History<span className="keybind-text">H</span>
-        </h2>
-        <InformationBubble message="This panel shows the areas you've previously added to the map. Click an option from the list to place a copy of it on the map." />
-      </div>
-      <div className="panel-description">
-        Previously created areas and shapes.
-      </div>
-
       {historyItems.length > 0 ? (
         <>
           <div className="history-list">
-            {historyItems.map((item, index) => (
+            {displayItems.map((item, index) => (
               <Card key={`history-${index}`} feature={item} />
             ))}
           </div>
+          {hasMore && (
+            <button
+              type="button"
+              className="history-view-more"
+              onClick={() => setListExpanded(true)}
+            >
+              View more
+            </button>
+          )}
           <button
             className="clear-history-button"
             onClick={clearHistory}
@@ -45,13 +45,6 @@ const HistoryPanel: React.FC = () => {
           <p>No history yet. Search for areas to see them here.</p>
         </div>
       )}
-
-      <DismissableMessage messageId="history-feature-location-info">
-        <p>
-          The outline of the area will be made around the original feature, not
-          where you are currently looking.
-        </p>
-      </DismissableMessage>
     </div>
   );
 };

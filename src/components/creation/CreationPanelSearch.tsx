@@ -14,27 +14,25 @@ import { fetchFeaturesAtPoint } from "../../utils/magicWandSearch";
 import { countCoordinates, fixMultiPolygon } from "../utils/geometryUtils";
 import { describeOsmObject } from "../utils/describeOsmObject";
 import { calculateAreaInKm2 } from "../utils/geometryUtils";
+import { ListResultIcon } from "../ui/Icons";
 import "./CreationPanelSearch.css";
 
-// Simple icon type for list (building, park, water, place, other)
 function getOsmIconType(feature: GeoJSONFeature): string {
   const cls = (feature.properties?.osmClass ?? "").toLowerCase();
   const type = (feature.properties?.osmType ?? "").toLowerCase();
   const what = (feature.properties?.whatIsIt ?? "").toLowerCase();
-  if (cls.includes("building") || type.includes("building") || what.includes("building")) return "building";
-  if (cls.includes("natural") || type.includes("park") || what.includes("park") || what.includes("forest")) return "park";
-  if (cls.includes("water") || type.includes("water") || what.includes("lake") || what.includes("river")) return "water";
-  if (cls.includes("place") || type.includes("place") || what.includes("city") || what.includes("town")) return "place";
+  const combined = [cls, type, what].join(" ");
+  if (combined.includes("building")) return "building";
+  if (combined.includes("natural") || combined.includes("park") || combined.includes("forest") || combined.includes("wood")) return "park";
+  if (combined.includes("water") || combined.includes("lake") || combined.includes("river") || combined.includes("sea") || combined.includes("ocean")) return "water";
+  if (combined.includes("place") || combined.includes("city") || combined.includes("town") || combined.includes("village") || combined.includes("locality")) return "place";
+  if (combined.includes("highway") || combined.includes("road") || combined.includes("street") || combined.includes("path")) return "road";
+  if (combined.includes("boundary") || combined.includes("administrative")) return "boundary";
+  if (combined.includes("landuse") || combined.includes("industrial") || combined.includes("residential") || combined.includes("commercial")) return "landuse";
+  if (combined.includes("leisure") || combined.includes("sport") || combined.includes("stadium") || combined.includes("pitch")) return "leisure";
+  if (combined.includes("school") || combined.includes("university") || combined.includes("college") || combined.includes("education") || combined.includes("amenity")) return "school";
   return "other";
 }
-
-const ICON_EMOJI: Record<string, string> = {
-  building: "🏢",
-  park: "🌳",
-  water: "💧",
-  place: "📍",
-  other: "📌",
-};
 
 /** Display name when placed (first part only, no address) - matches mapStore split */
 function getDisplayName(feature: GeoJSONFeature): string {
@@ -77,6 +75,7 @@ interface CreationPanelSearchProps {
 export default function CreationPanelSearch({ query, searchTrigger, onPlaced }: CreationPanelSearchProps) {
   const [candidates, setCandidates] = useState<GeoJSONFeature[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [listExpanded, setListExpanded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPropertiesModal, setShowPropertiesModal] = useState(false);
@@ -98,9 +97,10 @@ export default function CreationPanelSearch({ query, searchTrigger, onPlaced }: 
     if (searchTrigger > 0 && query.trim()) handleSearch();
   }, [searchTrigger]); // eslint-disable-line react-hooks/exhaustive-deps -- only run when searchTrigger changes
 
-  // Auto-select first when candidates change
+  // Auto-select first and collapse list when candidates change
   useEffect(() => {
     if (candidates.length > 0) setSelectedIndex(0);
+    setListExpanded(false);
   }, [candidates]);
 
   // Minimap: init (no zoom control, non-interactive, no attribution) and update when selected feature or mapLayerType changes
@@ -241,7 +241,9 @@ export default function CreationPanelSearch({ query, searchTrigger, onPlaced }: 
         {error && <div className="creation-panel-search-error">{error}</div>}
         {isLoading && <div className="creation-panel-search-loading">Searching…</div>}
 
-        <ul className="creation-panel-search-list">
+        <ul
+          className={`creation-panel-search-list ${listExpanded ? "creation-panel-search-list-expanded" : ""}`}
+        >
           {candidates.map((f, i) => (
             <li key={i}>
               <button
@@ -250,7 +252,7 @@ export default function CreationPanelSearch({ query, searchTrigger, onPlaced }: 
                 onClick={() => setSelectedIndex(i)}
               >
                 <span className="creation-panel-search-icon" aria-hidden>
-                  {ICON_EMOJI[getOsmIconType(f)] ?? ICON_EMOJI.other}
+                  <ListResultIcon type={getOsmIconType(f)} />
                 </span>
                 <div className="creation-panel-search-list-text">
                   <span className="creation-panel-search-list-name">{getDisplayName(f)}</span>
@@ -260,6 +262,15 @@ export default function CreationPanelSearch({ query, searchTrigger, onPlaced }: 
             </li>
           ))}
         </ul>
+        {!listExpanded && candidates.length > 6 && (
+          <button
+            type="button"
+            className="creation-panel-search-view-more"
+            onClick={() => setListExpanded(true)}
+          >
+            View more
+          </button>
+        )}
       </div>
 
       <div className="creation-panel-search-right">
@@ -268,7 +279,6 @@ export default function CreationPanelSearch({ query, searchTrigger, onPlaced }: 
           {!selectedFeature && (
             <div className="creation-panel-minimap-empty" aria-hidden>
               <span className="creation-panel-minimap-empty-title">Areas will appear here</span>
-              <span className="creation-panel-minimap-empty-desc">Description here</span>
             </div>
           )}
         </div>

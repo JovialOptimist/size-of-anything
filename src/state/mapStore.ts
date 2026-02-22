@@ -250,6 +250,11 @@ export const useMapStore = create<MapState>((set) => ({
       // Check if this is a special shape based on osmType
       const isSpecialShape =
         feature.properties?.osmType?.includes("special-") || false;
+      const isCustomShape =
+        feature.properties?.osmClass === "custom-shape" ||
+        feature.properties?.osmType === "custom-square" ||
+        feature.properties?.osmType === "custom-circle" ||
+        false;
 
       // Split name into name and location if it contains a comma
       let shapeName = feature.properties?.name || "Unnamed Area";
@@ -278,7 +283,7 @@ export const useMapStore = create<MapState>((set) => ({
           color,
           index: sequentialIndex, // Keep the index for backward compatibility
           id: uniqueId, // Store the unique ID in properties too
-          shouldBringToFocus: !isSpecialShape && !placeAtCenter, // Set focus flag (false for Special shapes or place-at-center)
+          shouldBringToFocus: !isSpecialShape && !placeAtCenter && !isCustomShape, // Don't zoom for special/custom or place-at-center
         },
       };
 

@@ -9,6 +9,7 @@ import CustomAreaPanel from "../panels/CustomAreaPanel";
 import SpecialPanel from "../panels/SpecialPanel";
 import HistoryPanel from "../panels/HistoryPanel";
 import CreationPanelSearch from "./CreationPanelSearch";
+import { SearchIcon } from "../ui/Icons";
 import "./CreationPanel.css";
 
 type CreationTab = "search" | "custom" | "special" | "history";
@@ -81,7 +82,7 @@ export default function CreationPanel() {
                   onClick={() => setSearchTrigger((s) => s + 1)}
                   aria-label="Search"
                 >
-                  🔍
+                  <SearchIcon />
                 </button>
               </div>
               <span className="creation-panel-or">OR</span>
@@ -114,7 +115,7 @@ export default function CreationPanel() {
           onClick={() => setExpanded(true)}
           aria-label="Expand search"
         >
-          <span className="creation-panel-spyglass" aria-hidden>🔍</span>
+          <span className="creation-panel-spyglass" aria-hidden><SearchIcon /></span>
           <span className="creation-panel-bar-text">Search for a place...</span>
         </button>
       )}
