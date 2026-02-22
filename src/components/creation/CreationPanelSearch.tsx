@@ -82,6 +82,7 @@ export default function CreationPanelSearch({ query, searchTrigger, onPlaced }: 
   const minimapRef = useRef<HTMLDivElement>(null);
   const minimapInstanceRef = useRef<L.Map | null>(null);
   const layerRef = useRef<L.GeoJSON | null>(null);
+  const minimapRefitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const addGeoJSONFromSearch = useMapStore((s) => s.addGeoJSONFromSearch);
   const setOnMapClick = useMapStore((s) => s.setOnMapClick);
@@ -146,6 +147,39 @@ export default function CreationPanelSearch({ query, searchTrigger, onPlaced }: 
       }
     };
   }, [selectedFeature, mapLayerType]);
+
+  // When the minimap container is resized (e.g. panel finishes expanding from 44px), Leaflet's
+  // cached size is wrong. Invalidate and re-fit so the outline and view correct themselves.
+  // We do an immediate refit plus a delayed refit (after expand animation ~250ms) so the
+  // final container size is used and the minimap zooms in fully.
+  useEffect(() => {
+    const el = minimapRef.current;
+    const map = minimapInstanceRef.current;
+    if (!el || !map) return;
+
+    const doRefit = () => {
+      map.invalidateSize();
+      const layer = layerRef.current;
+      if (layer) {
+        const bounds = layer.getBounds();
+        if (bounds.isValid()) map.fitBounds(bounds, { padding: [8, 8], maxZoom: 17 });
+      }
+    };
+
+    const ro = new ResizeObserver(() => {
+      doRefit();
+      if (minimapRefitTimeoutRef.current) clearTimeout(minimapRefitTimeoutRef.current);
+      minimapRefitTimeoutRef.current = setTimeout(doRefit, 350);
+    });
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      if (minimapRefitTimeoutRef.current) {
+        clearTimeout(minimapRefitTimeoutRef.current);
+        minimapRefitTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   const handleSearch = async () => {
     if (!query.trim()) return;

@@ -23,6 +23,8 @@ const TABS: { key: CreationTab; label: string }[] = [
 
 export default function CreationPanel() {
   const [expanded, setExpanded] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+  const [isExpanding, setIsExpanding] = useState(false);
   const [activeTab, setActiveTab] = useState<CreationTab>("search");
   const [query, setQuery] = useState("");
   const [searchTrigger, setSearchTrigger] = useState(0);
@@ -31,93 +33,131 @@ export default function CreationPanel() {
   const magicWandMode = useMapStore((s) => s.magicWandMode);
   const setMagicWandMode = useMapStore((s) => s.setMagicWandMode);
 
+  const handleClose = () => {
+    if (!expanded || isClosing) return;
+    setIsClosing(true);
+  };
+
+  const handleExpand = () => {
+    setExpanded(true);
+    setIsExpanding(true);
+  };
+
+  // After painting the expanded panel at initial (small) size, remove expanding class to trigger transition
+  useEffect(() => {
+    if (!expanded || !isExpanding) return;
+    const id = requestAnimationFrame(() => {
+      requestAnimationFrame(() => setIsExpanding(false));
+    });
+    return () => cancelAnimationFrame(id);
+  }, [expanded, isExpanding]);
+
+  const handleTransitionEnd = (e: React.TransitionEvent) => {
+    if (e.propertyName === "height" && isClosing) {
+      setExpanded(false);
+      setIsClosing(false);
+    }
+  };
+
   // Auto-collapse when user places an object (from any tab)
   useEffect(() => {
     const len = geojsonAreas.length;
-    if (len > prevAreasLengthRef.current && prevAreasLengthRef.current > 0) {
-      setExpanded(false);
+    if (len > prevAreasLengthRef.current && prevAreasLengthRef.current > 0 && expanded && !isClosing) {
+      setIsClosing(true);
     }
     prevAreasLengthRef.current = len;
-  }, [geojsonAreas.length]);
+  }, [geojsonAreas.length, expanded, isClosing]);
+
+  const barButton = (
+    <button
+      type="button"
+      className={`creation-panel-bar ${isClosing ? "creation-panel-bar-closing" : ""}`}
+      onClick={handleExpand}
+      aria-label="Expand search"
+    >
+      <span className="creation-panel-spyglass" aria-hidden><SearchIcon /></span>
+      <span className="creation-panel-bar-text">Search for a place...</span>
+    </button>
+  );
 
   return (
-    <div className={`creation-panel ${expanded ? "creation-panel-expanded" : "creation-panel-collapsed"}`}>
+    <div
+      className={`creation-panel ${expanded ? "creation-panel-expanded" : "creation-panel-collapsed"} ${isClosing ? "creation-panel-closing" : ""} ${isExpanding ? "creation-panel-expanding" : ""}`}
+    >
       {expanded ? (
         <>
-          <div className="creation-panel-tabs">
-            {TABS.map(({ key, label }) => (
-              <button
-                key={key}
-                type="button"
-                className={`creation-panel-tab ${activeTab === key ? "active" : ""}`}
-                onClick={() => setActiveTab(key)}
-              >
-                {label}
-              </button>
-            ))}
-            <button
-              type="button"
-              className="creation-panel-close-btn"
-              onClick={() => setExpanded(false)}
-              aria-label="Close"
-            >
-              ×
-            </button>
-          </div>
-          {activeTab === "search" && (
-            <div className="creation-panel-header">
-              <div className="creation-panel-search-wrap">
-                <input
-                  type="text"
-                  className="creation-panel-search-input"
-                  placeholder="Search for a place..."
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && setSearchTrigger((s) => s + 1)}
-                  aria-label="Search"
-                />
+          {isClosing && barButton}
+          <div
+            className={`creation-panel-expanded-inner ${isClosing ? "creation-panel-expanded-inner-closing" : ""}`}
+            onTransitionEnd={handleTransitionEnd}
+          >
+            <div className="creation-panel-tabs">
+              {TABS.map(({ key, label }) => (
                 <button
+                  key={key}
                   type="button"
-                  className="creation-panel-search-btn-inside"
-                  onClick={() => setSearchTrigger((s) => s + 1)}
-                  aria-label="Search"
+                  className={`creation-panel-tab ${activeTab === key ? "active" : ""}`}
+                  onClick={() => setActiveTab(key)}
                 >
-                  <SearchIcon />
+                  {label}
                 </button>
-              </div>
-              <span className="creation-panel-or">OR</span>
+              ))}
               <button
                 type="button"
-                className={`creation-panel-click-to-search ${magicWandMode ? "active" : ""}`}
-                onClick={() => setMagicWandMode(!magicWandMode)}
+                className="creation-panel-close-btn"
+                onClick={handleClose}
+                aria-label="Close"
               >
-                Click to search
+                ×
               </button>
             </div>
-          )}
-          <div className="creation-panel-content">
             {activeTab === "search" && (
-              <CreationPanelSearch
-                query={query}
-                searchTrigger={searchTrigger}
-                onPlaced={() => setExpanded(false)}
-              />
+              <div className="creation-panel-header">
+                <div className="creation-panel-search-wrap">
+                  <input
+                    type="text"
+                    className="creation-panel-search-input"
+                    placeholder="Search for a place..."
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && setSearchTrigger((s) => s + 1)}
+                    aria-label="Search"
+                  />
+                  <button
+                    type="button"
+                    className="creation-panel-search-btn-inside"
+                    onClick={() => setSearchTrigger((s) => s + 1)}
+                    aria-label="Search"
+                  >
+                    <SearchIcon />
+                  </button>
+                </div>
+                <span className="creation-panel-or">OR</span>
+                <button
+                  type="button"
+                  className={`creation-panel-click-to-search ${magicWandMode ? "active" : ""}`}
+                  onClick={() => setMagicWandMode(!magicWandMode)}
+                >
+                  Choose on map
+                </button>
+              </div>
             )}
-            {activeTab === "custom" && <CustomAreaPanel />}
-            {activeTab === "special" && <SpecialPanel />}
-            {activeTab === "history" && <HistoryPanel />}
+            <div className="creation-panel-content">
+              {activeTab === "search" && (
+                <CreationPanelSearch
+                  query={query}
+                  searchTrigger={searchTrigger}
+                  onPlaced={handleClose}
+                />
+              )}
+              {activeTab === "custom" && <CustomAreaPanel />}
+              {activeTab === "special" && <SpecialPanel />}
+              {activeTab === "history" && <HistoryPanel />}
+            </div>
           </div>
         </>
       ) : (
-        <button
-          type="button"
-          className="creation-panel-bar"
-          onClick={() => setExpanded(true)}
-          aria-label="Expand search"
-        >
-          <span className="creation-panel-spyglass" aria-hidden><SearchIcon /></span>
-          <span className="creation-panel-bar-text">Search for a place...</span>
-        </button>
+        barButton
       )}
     </div>
   );

@@ -22,6 +22,42 @@
   height: 520px;
   display: flex;
   flex-direction: column;
+  transition: height 0.25s ease-out, width 0.25s ease-out, opacity 0.25s ease-out;
+}
+
+.creation-panel-expanded.creation-panel-expanding {
+  height: 44px;
+  width: 320px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* When closing: panel shrinks to bar height, bar is visible at top while inner shrinks */
+.creation-panel-expanded.creation-panel-closing {
+  height: 44px;
+  min-height: 44px;
+}
+
+.creation-panel-expanded-inner {
+  height: 520px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: height 0.25s ease-out;
+}
+
+.creation-panel-expanded-inner-closing {
+  height: 0 !important;
+  min-height: 0 !important;
+}
+
+.creation-panel-bar-closing {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
 }
 
 .creation-panel-bar {
@@ -40,6 +76,18 @@
   text-align: left;
   font-size: 0.95rem;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  animation: creation-panel-bar-appear 0.22s ease-out forwards;
+}
+
+@keyframes creation-panel-bar-appear {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .creation-panel-bar:hover {
