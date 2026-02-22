@@ -40,6 +40,44 @@
   opacity: 0.8;
 }
 
+.creation-panel-search-empty {
+  flex: 1;
+  min-height: 0;
+  height: 288px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 12px;
+  color: var(--control-sidebar-text-color);
+}
+
+.creation-panel-search-empty-icon-wrap {
+  flex: 0 0 12%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.creation-panel-search-empty-icon {
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  color: var(--control-sidebar-text-color);
+  opacity: 0.5;
+}
+
+.creation-panel-search-empty-message {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.35;
+  opacity: 0.9;
+}
+
 .creation-panel-search-list {
   list-style: none;
   margin: 0;

@@ -14,7 +14,7 @@ import { fetchFeaturesAtPoint } from "../../utils/magicWandSearch";
 import { countCoordinates, fixMultiPolygon } from "../utils/geometryUtils";
 import { describeOsmObject } from "../utils/describeOsmObject";
 import { calculateAreaInKm2 } from "../utils/geometryUtils";
-import { ListResultIcon } from "../ui/Icons";
+import { ListResultIcon, SearchIcon, InfoBubbleIcon } from "../ui/Icons";
 import "./CreationPanelSearch.css";
 
 function getOsmIconType(feature: GeoJSONFeature): string {
@@ -241,6 +241,22 @@ export default function CreationPanelSearch({ query, searchTrigger, onPlaced }: 
         {error && <div className="creation-panel-search-error">{error}</div>}
         {isLoading && <div className="creation-panel-search-loading">Searching…</div>}
 
+        {candidates.length === 0 && !isLoading ? (
+          <div className="creation-panel-search-empty" aria-live="polite">
+            <div className="creation-panel-search-empty-icon-wrap">
+              {searchTrigger > 0 ? (
+                <InfoBubbleIcon className="creation-panel-search-empty-icon" />
+              ) : (
+                <SearchIcon className="creation-panel-search-empty-icon" />
+              )}
+            </div>
+            <p className="creation-panel-search-empty-message">
+              {searchTrigger > 0
+                ? "No results found. Try a different search."
+                : "Results will appear here after a search."}
+            </p>
+          </div>
+        ) : (
         <ul
           className={`creation-panel-search-list ${listExpanded ? "creation-panel-search-list-expanded" : ""}`}
         >
@@ -262,6 +278,7 @@ export default function CreationPanelSearch({ query, searchTrigger, onPlaced }: 
             </li>
           ))}
         </ul>
+        )}
         {!listExpanded && candidates.length > 6 && (
           <button
             type="button"
