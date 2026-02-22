@@ -280,7 +280,7 @@
 @media (max-width: 500px) {
   /* Push collapsed bar below browser chrome (address bar ~56px); respect safe-area for notches */
   .creation-panel.creation-panel-collapsed {
-    top: calc(env(safe-area-inset-top, 0px) + 56px);
+    top: calc(env(safe-area-inset-top, 0px) + 28px);
     left: 1rem;
     right: 60px; /* leave room for ellipsis (10px + 40px button + 10px) */
     width: auto;
@@ -291,7 +291,7 @@
   .creation-panel-expanded {
     top: 0;
     left: 0;
-    padding-top: calc(env(safe-area-inset-top, 0px) + 56px);
+    padding-top: calc(env(safe-area-inset-top, 0px) + 28px);
     border-radius: 0;
     width: 100%;
     max-width: 100%;
