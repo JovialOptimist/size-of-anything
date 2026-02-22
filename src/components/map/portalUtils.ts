@@ -80,11 +80,13 @@ export interface PortalPositionOptions {
  * Compute portal position (in container pixels) so the marker sits on the
  * viewport edge in the direction of the shape from the map center.
  */
+export type PortalEdge = "top" | "bottom" | "left" | "right";
+
 export function getPortalPositionOnEdge(
   map: L.Map,
   shapeCenterLatLng: L.LatLng,
   options?: PortalPositionOptions
-): { x: number; y: number } | null {
+): { x: number; y: number; edge: PortalEdge } | null {
   const creationPanelExpanded = options?.creationPanelExpanded ?? true;
   const EXCLUDE_CREATION_LEFT = creationPanelExpanded ? EXCLUDE_CREATION_LEFT_EXPANDED : EXCLUDE_CREATION_LEFT_COLLAPSED;
   const EXCLUDE_CREATION_TOP = creationPanelExpanded ? EXCLUDE_CREATION_TOP_EXPANDED : EXCLUDE_CREATION_TOP_COLLAPSED;
@@ -183,8 +185,7 @@ export function getPortalPositionOnEdge(
     x = Math.max(margin, Math.min(xMax, x));
   }
 
-  type Edge = "top" | "bottom" | "left" | "right";
-  let edge: Edge = "bottom";
+  let edge: PortalEdge = "bottom";
   if (x <= margin + tol) edge = "left";
   else if (x >= w - margin - tol) edge = "right";
   else if (y <= margin + tol) edge = "top";
@@ -192,7 +193,5 @@ export function getPortalPositionOnEdge(
 
   return { x, y, edge };
 }
-
-export type PortalEdge = "top" | "bottom" | "left" | "right";
 
 export { EDGE_MARGIN_PX };
