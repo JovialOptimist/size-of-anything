@@ -222,6 +222,7 @@ export default function CreationPanelSearch({ query, searchTrigger, onPlaced }: 
   const handleMapClick = async (latlng: { lat: number; lng: number }) => {
     setIsLoading(true);
     setError(null);
+    setMagicWandMode(false); // exit immediately after first click
     try {
       const features = await fetchFeaturesAtPoint(latlng.lat, latlng.lng);
       if (features.length === 0) {
