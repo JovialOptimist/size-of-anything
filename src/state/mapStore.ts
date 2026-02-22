@@ -1,7 +1,7 @@
 // src/state/mapStore.ts
 import { create } from "zustand";
 import { generateRandomColor } from "../components/utils/colorUtils";
-import { projectAndTranslateGeometry } from "../components/utils/geometryUtils";
+import { hybridProjectAndTranslateGeometry } from "../components/utils/geometryUtils";
 import type { MapArea, GeoJSONFeature, MapState } from "./mapStoreTypes";
 import * as turf from "@turf/turf"; // TODO: what does this import other than simplify?
 import { useSettings } from "./settingsStore";
@@ -156,8 +156,8 @@ export const useMapStore = create<MapState>((set) => ({
       let workingFeature = feature;
       if (options?.placeAtCenter && state.currentMapCenter[0] !== 0 && state.currentMapCenter[1] !== 0) {
         const [lat, lng] = state.currentMapCenter;
-        workingFeature = projectAndTranslateGeometry(
-          workingFeature as Parameters<typeof projectAndTranslateGeometry>[0],
+        workingFeature = hybridProjectAndTranslateGeometry(
+          workingFeature as Parameters<typeof hybridProjectAndTranslateGeometry>[0],
           [lng, lat]
         ) as GeoJSONFeature;
       }
