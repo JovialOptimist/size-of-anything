@@ -1,7 +1,7 @@
 /**
  * Portals: edge-of-screen markers for off-screen shapes.
  * - Click portal → fly view to that shape.
- * - Drag portal toward center → teleport shape to cursor.
+ * - Drag portal into map view → teleport shape to drop location.
  * - Hover → show minimap and shape name.
  */
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -51,10 +51,14 @@ interface PortalsProps {
   mapInstanceRef: React.RefObject<L.Map | null>;
 }
 
-/** Distance from map center (as fraction of min dimension) under which drop = teleport shape */
-const TELEPORT_THRESHOLD = 0.25;
-
 const TOOLTIP_OFFSET_PX = 19;
+
+/** Portal id for a feature: matches store lookup (id or geojson-{index}). */
+function getPortalId(feature: GeoJSONFeature): string {
+  if (feature.properties?.id) return feature.properties.id;
+  if (feature.properties?.index != null) return `geojson-${feature.properties.index}`;
+  return "";
+}
 
 function getTooltipStyle(
   edge: PortalEdge,
@@ -113,6 +117,10 @@ export default function Portals({ mapRef, mapInstanceRef }: PortalsProps) {
   const minimapInstanceRef = useRef<L.Map | null>(null);
   const minimapLayerRef = useRef<L.GeoJSON | null>(null);
   const justTeleportedRef = useRef(false);
+  const updateCurrentCoordinatesRef = useRef(updateCurrentCoordinates);
+  const setActiveAreaRef = useRef(setActiveArea);
+  updateCurrentCoordinatesRef.current = updateCurrentCoordinates;
+  setActiveAreaRef.current = setActiveArea;
 
   const [isMobile, setIsMobile] = useState(() =>
     typeof window !== "undefined" ? window.matchMedia("(max-width: 500px)").matches : false
@@ -133,7 +141,7 @@ export default function Portals({ mapRef, mapInstanceRef }: PortalsProps) {
     }
     const list: PortalEntry[] = [];
     geojsonAreas.forEach((feature) => {
-      const id = feature.properties?.id ?? feature.properties?.index?.toString() ?? "";
+      const id = getPortalId(feature);
       if (!id) return;
       if (!isShapeOffScreen(m, feature)) return;
       const center = getShapeCenter(feature);
@@ -163,10 +171,7 @@ export default function Portals({ mapRef, mapInstanceRef }: PortalsProps) {
 
   // Minimap for hover tooltip (desktop only; don't show on mobile)
   const hoveredFeature = hoveredId
-    ? geojsonAreas.find(
-        (f) =>
-          (f.properties?.id ?? f.properties?.index?.toString()) === hoveredId
-      )
+    ? geojsonAreas.find((f) => getPortalId(f) === hoveredId)
     : null;
   const hoveredFeatureForMinimap = isMobile ? null : hoveredFeature;
 
@@ -311,14 +316,10 @@ export default function Portals({ mapRef, mapInstanceRef }: PortalsProps) {
       }
       const { x, y } = xy;
       const size = m.getSize();
-      const centerPoint = m.latLngToContainerPoint(m.getCenter());
-      const dx = x - centerPoint.x;
-      const dy = y - centerPoint.y;
-      const minDim = Math.min(size.x, size.y);
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      const isNearCenter = dist < minDim * TELEPORT_THRESHOLD;
+      const insideMap =
+        size && x >= 0 && x <= size.x && y >= 0 && y <= size.y;
 
-      if (isNearCenter) {
+      if (insideMap) {
         justTeleportedRef.current = true;
         const latLng = m.containerPointToLatLng(L.point(x, y));
         const targetCoords: [number, number] = [latLng.lng, latLng.lat];
@@ -337,8 +338,8 @@ export default function Portals({ mapRef, mapInstanceRef }: PortalsProps) {
           targetCoords
         );
         const newCoords = (translated.geometry as GeoJSON.Polygon | GeoJSON.MultiPolygon).coordinates;
-        updateCurrentCoordinates(dragState.id, newCoords);
-        setActiveArea(dragState.id);
+        updateCurrentCoordinatesRef.current(dragState.id, newCoords);
+        setActiveAreaRef.current(dragState.id);
         m.flyTo([latLng.lat, latLng.lng], m.getZoom(), { duration: 0.3 });
       }
 
@@ -379,7 +380,7 @@ export default function Portals({ mapRef, mapInstanceRef }: PortalsProps) {
       window.removeEventListener("touchend", onTouchEnd);
       window.removeEventListener("touchcancel", onTouchEnd);
     };
-  }, [dragState, mapInstanceRef, mapRef, updateCurrentCoordinates, setActiveArea]);
+  }, [dragState, mapInstanceRef, mapRef]);
 
   if (!mapRef.current || !map) return null;
 
