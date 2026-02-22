@@ -29,23 +29,27 @@
   padding-left: 12px;
 }
 
-/* Mobile only: two rows – search results on top, minimap and details below; content scrollable */
+/* Mobile only: list fills space; minimap + buttons always visible; no panel scroll */
 @media (max-width: 500px) {
   .creation-panel-search {
     flex-direction: column;
-    flex: 1 1 auto;
-    min-height: min-content;
-    overflow: visible;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
   }
 
   .creation-panel-search-left {
     max-width: 100%;
-    flex: 0 0 auto;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
 
   .creation-panel-search-list {
-    height: auto;
-    max-height: 240px;
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
@@ -109,6 +113,26 @@
   font-size: 0.9rem;
   line-height: 1.35;
   opacity: 0.9;
+}
+
+/* Mobile: compact empty state so Place here / Outline original stay visible */
+@media (max-width: 500px) {
+  .creation-panel-search-empty {
+    height: auto;
+    min-height: 0;
+    flex: 0 0 auto;
+    padding: 16px 12px;
+  }
+
+  .creation-panel-search-empty-icon-wrap {
+    flex: 0 0 auto;
+    height: 32px;
+    margin-bottom: 0.5rem;
+  }
+
+  .creation-panel-search-empty-message {
+    font-size: 0.85rem;
+  }
 }
 
 .creation-panel-search-list {
