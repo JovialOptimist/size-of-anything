@@ -295,11 +295,11 @@
   }
 }
 
-/* Mobile: sit right above map buttons (105px + 60px + 8px gap) – overrides 768px bottom */
+/* Mobile: sit right above map buttons (132 + 60 + 8); match globals bottom buffer */
 @media (max-width: 500px) {
   .active-element-panel,
   .active-element-empty {
-    bottom: 100px !important;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 104px) !important;
   }
 }
 

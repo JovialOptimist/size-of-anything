@@ -25,10 +25,10 @@
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
 }
 
-/* Mobile only: horizontal layout (same vertical position as desktop) */
+/* Mobile only: horizontal layout; bottom buffer for system UI (above zoom) */
 @media (max-width: 500px) {
   .layer-toggle-button-container {
-    bottom: 105px;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 104px);
     right: 180px;
   }
 }
