@@ -27,8 +27,7 @@ const ThemeInitializer: React.FC = () => {
       if (!vv) return;
       const layoutBottom = window.innerHeight;
       const visibleBottom = vv.offsetTop + vv.height;
-      const raw = Math.max(0, layoutBottom - visibleBottom);
-      const inset = Math.max(raw, 72);
+      const inset = Math.max(0, layoutBottom - visibleBottom);
       document.documentElement.style.setProperty("--mobile-bottom-inset", `${Math.round(inset)}px`);
     };
 
