@@ -22,7 +22,7 @@ const ThemeInitializer: React.FC = () => {
     // Why it often reports 0: On Chrome Android before 135, the layout viewport does not extend into the
     // system nav bar, so the visual viewport and layout viewport are the same → difference is 0. From
     // Chrome 135 with viewport-fit=cover, the viewport can extend edge-to-edge and the browser sets
-    // env(safe-area-inset-bottom) dynamically; our CSS uses max(our var, env(), 72px) so the real
+    // env(safe-area-inset-bottom) dynamically; our CSS uses max(our var, env(), 36px) so the real
     // inset is used when available. See https://developer.chrome.com/docs/css-ui/edge-to-edge
     if (!isAndroid) return;
 
