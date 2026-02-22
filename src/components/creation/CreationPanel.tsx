@@ -40,6 +40,15 @@ export default function CreationPanel() {
 
   const setCreationPanelExpanded = useMapStore((s) => s.setCreationPanelExpanded);
 
+  // Desktop: start with panel open; mobile: start collapsed (matches 500px breakpoint used in CSS)
+  useEffect(() => {
+    const isDesktop = window.matchMedia("(min-width: 501px)").matches;
+    if (isDesktop) {
+      setExpanded(true);
+      setCreationPanelExpanded(true);
+    }
+  }, [setCreationPanelExpanded]);
+
   const handleExpand = () => {
     setExpanded(true);
     setIsExpanding(true);
