@@ -50,6 +50,8 @@ export interface MapState {
   magicWandMode: boolean;
   currentMapCenter: [number, number];
   hoveredCandidate: GeoJSONFeature | null;
+  creationPanelExpanded: boolean;
+  setCreationPanelExpanded: (expanded: boolean) => void;
   setIsSelectingArea: (isSelecting: boolean) => void;
   setClickedPosition: (position: [number, number] | null) => void;
   addGeoJSONFromSearch: (feature: GeoJSONFeature, options?: { placeAtCenter?: boolean }) => void;

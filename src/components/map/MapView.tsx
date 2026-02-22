@@ -4,7 +4,7 @@
  * Handles rendering the map, area polygons, and associated interactive elements.
  * Enables functionality for dragging, selecting, and manipulating map areas.
  */
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "../../styles/mapDarkMode.css";
@@ -22,6 +22,7 @@ import {
 import { createMarker, attachMarkerDragHandlers } from "../utils/markerUtils";
 import type { GeoJSONFeature, MapState } from "../../state/mapStoreTypes";
 import { setupAutoRefreshOnSettingsChange } from "../utils/markerUtils";
+import Portals from "./Portals";
 
 // Function to create tile layer based on layer type
 function createTileLayer(layerType: MapLayerType): L.TileLayer {
@@ -87,6 +88,7 @@ async function findUserLocation(timeout = 3000) {
 export default function MapView() {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
+  const [mapReady, setMapReady] = useState(false);
   const geoJSONLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const markersLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const hoveredCandidateLayerRef = useRef<L.LayerGroup | null>(null);
@@ -141,6 +143,7 @@ export default function MapView() {
         setCurrentMapCenter(center);
 
         mapInstanceRef.current = map;
+        setMapReady(true);
 
         L.control.zoom({ position: "bottomright" }).addTo(map);
 
@@ -536,6 +539,9 @@ export default function MapView() {
       }`}
     >
       <div id="map" ref={mapRef}></div>
+      {mapReady && (
+        <Portals mapRef={mapRef} mapInstanceRef={mapInstanceRef} />
+      )}
     </div>
   );
 }

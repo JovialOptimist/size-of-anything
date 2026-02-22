@@ -1,0 +1,114 @@
+/* Portals overlay: sits over the map, only portal elements receive pointer events */
+.portals-overlay {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 600;
+}
+
+.portals-overlay .portal-marker {
+  pointer-events: auto;
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid;
+  background: var(--portal-marker-bg, rgba(255, 255, 255, 0.95));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.portals-overlay .portal-marker:hover {
+  transform: translate(-50%, -50%) scale(1.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.portals-overlay .portal-marker.portal-dragging {
+  opacity: 0.4;
+  cursor: grabbing;
+}
+
+.portals-overlay .portal-marker-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.9;
+}
+
+.portals-overlay .portal-drag-preview {
+  pointer-events: none;
+  cursor: grabbing;
+  opacity: 1;
+}
+
+/* Tooltip: name + minimap, shown above the portal */
+.portal-tooltip {
+  pointer-events: auto;
+  position: absolute;
+  min-width: 180px;
+  max-width: 260px;
+  padding: 10px 12px;
+  background: var(--portal-tooltip-bg, #fff);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  border: 1px solid var(--portal-tooltip-border, rgba(0, 0, 0, 0.08));
+  z-index: 700;
+}
+
+.portal-tooltip-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--portal-tooltip-fg, #111);
+  margin-bottom: 8px;
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.portal-tooltip-minimap-wrap {
+  position: relative;
+  width: 100%;
+  height: 120px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--map-loading-tile-bg, #e5e7eb);
+  border: 1px solid var(--portal-tooltip-border, rgba(0, 0, 0, 0.08));
+}
+
+.portal-tooltip-minimap {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.portal-tooltip-minimap-wrap .leaflet-control-zoom,
+.portal-tooltip-minimap-wrap .leaflet-control-attribution {
+  display: none !important;
+}
+
+/* Dark mode */
+.dark-mode .portals-overlay .portal-marker {
+  background: var(--portal-marker-bg, rgba(36, 36, 36, 0.95));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.dark-mode .portal-tooltip {
+  background: var(--portal-tooltip-bg, #2a2a2a);
+  border-color: var(--portal-tooltip-border, rgba(255, 255, 255, 0.1));
+}
+
+.dark-mode .portal-tooltip-name {
+  color: var(--portal-tooltip-fg, #eee);
+}
+
+.dark-mode .portal-tooltip-minimap-wrap {
+  background: var(--map-loading-tile-bg, #1a1a1a);
+  border-color: var(--portal-tooltip-border, rgba(255, 255, 255, 0.1));
+}

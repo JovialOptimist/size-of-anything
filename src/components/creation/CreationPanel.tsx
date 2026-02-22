@@ -38,9 +38,12 @@ export default function CreationPanel() {
     setIsClosing(true);
   };
 
+  const setCreationPanelExpanded = useMapStore((s) => s.setCreationPanelExpanded);
+
   const handleExpand = () => {
     setExpanded(true);
     setIsExpanding(true);
+    setCreationPanelExpanded(true);
   };
 
   // After painting the expanded panel at initial (small) size, remove expanding class to trigger transition
@@ -56,6 +59,7 @@ export default function CreationPanel() {
     if (e.propertyName === "height" && isClosing) {
       setExpanded(false);
       setIsClosing(false);
+      setCreationPanelExpanded(false);
     }
   };
 

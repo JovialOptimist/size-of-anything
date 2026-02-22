@@ -149,6 +149,8 @@ export const useMapStore = create<MapState>((set) => ({
   magicWandMode: false,
   currentMapCenter: [0, 0],
   hoveredCandidate: null,
+  creationPanelExpanded: false,
+  setCreationPanelExpanded: (expanded) => set({ creationPanelExpanded: expanded }),
   setIsSelectingArea: (isSelecting) => set({ isSelectingArea: isSelecting }),
   setClickedPosition: (position) => set({ clickedPosition: position }),
   addGeoJSONFromSearch: (feature: GeoJSONFeature, options?: AddFromSearchOptions) =>
