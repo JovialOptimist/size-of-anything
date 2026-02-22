@@ -444,21 +444,38 @@ body {
     overflow: hidden;
 }
 
-/* Mobile only: hide share, satellite, comments when creation panel is expanded */
+/* Mobile only: prevent scroll (keep address bar visible); Android gets bottom buffer for system nav */
 @media (max-width: 500px) {
+    html, body {
+        overflow: hidden;
+        overscroll-behavior: none;
+        height: 100%;
+    }
+
     .map-view-container:has(.creation-panel-expanded) .share-button-container,
     .map-view-container:has(.creation-panel-expanded) .feedback-button-container,
     .map-view-container:has(.creation-panel-expanded) .layer-toggle-button-container {
         display: none !important;
     }
 
-    /* Active element display: respect both margins; sit right above map buttons (105px + 60px + gap) */
+    /* Active element display: respect both margins; sit right above map buttons */
     .active-element-display {
         left: 1rem;
         right: 1rem;
         bottom: 173px;
         width: auto;
         max-width: none;
+    }
+
+    /* Android only: bottom buffer so zoom, attribution, and map buttons aren't hidden by system nav */
+    .platform-android .map-view-container .leaflet-control-zoom {
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 72px) !important;
+    }
+    .platform-android .map-view-container .leaflet-control-attribution {
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 72px) !important;
+    }
+    .platform-android .active-element-display {
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 200px);
     }
 }
 

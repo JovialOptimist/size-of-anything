@@ -9,6 +9,16 @@ const ThemeInitializer: React.FC = () => {
   const { theme, pinSettings } = useSettings();
 
   useEffect(() => {
+    // Set platform class for CSS (e.g. Android needs bottom buffer for nav bar; iOS does not)
+    const ua = navigator.userAgent || "";
+    if (/Android/i.test(ua)) {
+      document.documentElement.classList.add("platform-android");
+    } else {
+      document.documentElement.classList.remove("platform-android");
+    }
+  }, []);
+
+  useEffect(() => {
     // Apply theme on component mount
     applyTheme(theme);
     

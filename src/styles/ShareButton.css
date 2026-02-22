@@ -25,11 +25,14 @@
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
 }
 
-/* Mobile only: horizontal layout (same vertical position as desktop) */
+/* Mobile only: horizontal layout; Android gets bottom buffer for system nav */
 @media (max-width: 500px) {
   .share-button-container {
     bottom: 105px;
     right: 110px;
+  }
+  .platform-android .share-button-container {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 132px);
   }
 }
 

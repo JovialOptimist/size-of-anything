@@ -295,11 +295,15 @@
   }
 }
 
-/* Mobile: sit right above map buttons (105px + 60px + 8px gap) – overrides 768px bottom */
+/* Mobile: sit right above map buttons; Android uses higher bottom so panel stays above system nav buffer */
 @media (max-width: 500px) {
   .active-element-panel,
   .active-element-empty {
     bottom: 100px !important;
+  }
+  .platform-android .active-element-panel,
+  .platform-android .active-element-empty {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 200px) !important;
   }
 }
 
