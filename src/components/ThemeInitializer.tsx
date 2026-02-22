@@ -11,11 +11,47 @@ const ThemeInitializer: React.FC = () => {
   useEffect(() => {
     // Set platform class for CSS (e.g. Android needs bottom buffer for nav bar; iOS does not)
     const ua = navigator.userAgent || "";
-    if (/Android/i.test(ua)) {
+    const isAndroid = /Android/i.test(ua);
+    if (isAndroid) {
       document.documentElement.classList.add("platform-android");
     } else {
       document.documentElement.classList.remove("platform-android");
     }
+
+    // Android + mobile: use Visual Viewport API so bottom inset adapts to any system UI height
+    // (e.g. large accessibility nav bar). See https://developer.mozilla.org/en-US/docs/Web/API/VisualViewport
+    if (!isAndroid) return;
+
+    const setBottomInset = () => {
+      const vv = window.visualViewport;
+      if (!vv) return;
+      const layoutBottom = window.innerHeight;
+      const visibleBottom = vv.offsetTop + vv.height;
+      const raw = Math.max(0, layoutBottom - visibleBottom);
+      const inset = Math.max(raw, 72);
+      document.documentElement.style.setProperty("--mobile-bottom-inset", `${Math.round(inset)}px`);
+    };
+
+    const media = window.matchMedia("(max-width: 500px)");
+    const setup = () => {
+      if (media.matches) {
+        setBottomInset();
+        window.visualViewport?.addEventListener("resize", setBottomInset);
+        window.visualViewport?.addEventListener("scroll", setBottomInset);
+      } else {
+        window.visualViewport?.removeEventListener("resize", setBottomInset);
+        window.visualViewport?.removeEventListener("scroll", setBottomInset);
+        document.documentElement.style.removeProperty("--mobile-bottom-inset");
+      }
+    };
+    setup();
+    media.addEventListener("change", setup);
+    return () => {
+      media.removeEventListener("change", setup);
+      window.visualViewport?.removeEventListener("resize", setBottomInset);
+      window.visualViewport?.removeEventListener("scroll", setBottomInset);
+      document.documentElement.style.removeProperty("--mobile-bottom-inset");
+    };
   }, []);
 
   useEffect(() => {

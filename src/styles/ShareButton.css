@@ -32,7 +32,7 @@
     right: 110px;
   }
   .platform-android .share-button-container {
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 132px);
+    bottom: calc(var(--mobile-bottom-inset, 72px) + 60px);
   }
 }
 

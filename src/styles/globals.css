@@ -467,15 +467,15 @@ body {
         max-width: none;
     }
 
-    /* Android only: bottom buffer so zoom, attribution, and map buttons aren't hidden by system nav */
+    /* Android only: bottom from Visual Viewport API (adapts to any nav bar size); fallback 72px */
     .platform-android .map-view-container .leaflet-control-zoom {
-        bottom: calc(env(safe-area-inset-bottom, 0px) + 72px) !important;
+        bottom: calc(var(--mobile-bottom-inset, 72px) + 0px) !important;
     }
     .platform-android .map-view-container .leaflet-control-attribution {
-        bottom: calc(env(safe-area-inset-bottom, 0px) + 72px) !important;
+        bottom: calc(var(--mobile-bottom-inset, 72px) + 0px) !important;
     }
     .platform-android .active-element-display {
-        bottom: calc(env(safe-area-inset-bottom, 0px) + 200px);
+        bottom: calc(var(--mobile-bottom-inset, 72px) + 128px);
     }
 }
 

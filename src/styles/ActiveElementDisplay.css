@@ -303,7 +303,7 @@
   }
   .platform-android .active-element-panel,
   .platform-android .active-element-empty {
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 200px) !important;
+    bottom: calc(var(--mobile-bottom-inset, 72px) + 128px) !important;
   }
 }
 
