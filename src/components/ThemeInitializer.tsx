@@ -18,8 +18,12 @@ const ThemeInitializer: React.FC = () => {
       document.documentElement.classList.remove("platform-android");
     }
 
-    // Android + mobile: use Visual Viewport API so bottom inset adapts to any system UI height
-    // (e.g. large accessibility nav bar). See https://developer.mozilla.org/en-US/docs/Web/API/VisualViewport
+    // Android + mobile: set --mobile-bottom-inset from Visual Viewport API when it reports a value.
+    // Why it often reports 0: On Chrome Android before 135, the layout viewport does not extend into the
+    // system nav bar, so the visual viewport and layout viewport are the same → difference is 0. From
+    // Chrome 135 with viewport-fit=cover, the viewport can extend edge-to-edge and the browser sets
+    // env(safe-area-inset-bottom) dynamically; our CSS uses max(our var, env(), 72px) so the real
+    // inset is used when available. See https://developer.chrome.com/docs/css-ui/edge-to-edge
     if (!isAndroid) return;
 
     const setBottomInset = () => {
@@ -27,8 +31,8 @@ const ThemeInitializer: React.FC = () => {
       if (!vv) return;
       const layoutBottom = window.innerHeight;
       const visibleBottom = vv.offsetTop + vv.height;
-      const inset = Math.max(0, layoutBottom - visibleBottom);
-      document.documentElement.style.setProperty("--mobile-bottom-inset", `${Math.round(inset)}px`);
+      const raw = Math.max(0, layoutBottom - visibleBottom);
+      document.documentElement.style.setProperty("--mobile-bottom-inset", `${Math.round(raw)}px`);
     };
 
     const media = window.matchMedia("(max-width: 500px)");

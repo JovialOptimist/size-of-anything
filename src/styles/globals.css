@@ -467,9 +467,11 @@ body {
         max-width: none;
     }
 
-    /* Android only: shrink map container so it doesn't extend under system nav; controls use default positioning */
+    /* Android only: shrink map container so it doesn't extend under system nav; controls use default positioning.
+       Use best available inset: env(safe-area-inset-bottom) when browser provides it (Chrome 135+ with viewport-fit=cover),
+       else our JS --mobile-bottom-inset (Visual Viewport API), else 72px fallback for older Android. */
     .platform-android .map-view-container {
-        height: calc(100vh - var(--mobile-bottom-inset, 72px));
+        height: calc(100vh - max(var(--mobile-bottom-inset, 0px), env(safe-area-inset-bottom, 0px), 72px));
     }
 }
 
