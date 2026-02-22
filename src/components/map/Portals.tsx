@@ -114,6 +114,16 @@ export default function Portals({ mapRef, mapInstanceRef }: PortalsProps) {
   const minimapLayerRef = useRef<L.GeoJSON | null>(null);
   const justTeleportedRef = useRef(false);
 
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== "undefined" ? window.matchMedia("(max-width: 500px)").matches : false
+  );
+  useEffect(() => {
+    const m = window.matchMedia("(max-width: 500px)");
+    const handler = () => setIsMobile(m.matches);
+    m.addEventListener("change", handler);
+    return () => m.removeEventListener("change", handler);
+  }, []);
+
   // Recompute portal list when map moves or areas change
   const updatePortals = useCallback(() => {
     const m = mapInstanceRef.current;
@@ -151,16 +161,17 @@ export default function Portals({ mapRef, mapInstanceRef }: PortalsProps) {
     };
   }, [updatePortals, mapInstanceRef]);
 
-  // Minimap for hover tooltip
+  // Minimap for hover tooltip (desktop only; don't show on mobile)
   const hoveredFeature = hoveredId
     ? geojsonAreas.find(
         (f) =>
           (f.properties?.id ?? f.properties?.index?.toString()) === hoveredId
       )
     : null;
+  const hoveredFeatureForMinimap = isMobile ? null : hoveredFeature;
 
   useEffect(() => {
-    if (!hoveredFeature) {
+    if (!hoveredFeatureForMinimap) {
       if (minimapInstanceRef.current) {
         minimapInstanceRef.current.remove();
         minimapInstanceRef.current = null;
@@ -170,6 +181,8 @@ export default function Portals({ mapRef, mapInstanceRef }: PortalsProps) {
     }
 
     if (!minimapRef.current) return;
+
+    const feature = hoveredFeatureForMinimap;
 
     if (!minimapInstanceRef.current) {
       const mini = L.map(minimapRef.current, {
@@ -192,10 +205,10 @@ export default function Portals({ mapRef, mapInstanceRef }: PortalsProps) {
       minimapLayerRef.current = null;
     }
 
-    if (hoveredFeature.geometry) {
+    if (feature.geometry) {
       const geo = {
-        ...hoveredFeature,
-        geometry: { ...hoveredFeature.geometry },
+        ...feature,
+        geometry: { ...feature.geometry },
       } as GeoJSONFeature;
       const coords = (geo.geometry as any).currentCoordinates ?? geo.geometry.coordinates;
       (geo.geometry as any).coordinates = coords;
@@ -217,7 +230,7 @@ export default function Portals({ mapRef, mapInstanceRef }: PortalsProps) {
         minimapLayerRef.current = null;
       }
     };
-  }, [hoveredFeature, mapLayerType]);
+  }, [hoveredFeatureForMinimap, mapLayerType]);
 
   const handlePortalClick = (id: string, feature: GeoJSONFeature) => {
     if (dragState) return;
@@ -408,7 +421,7 @@ export default function Portals({ mapRef, mapInstanceRef }: PortalsProps) {
         </div>
       ))}
 
-      {hoveredPortal && (
+      {hoveredPortal && !isMobile && (
         <div
           className="portal-tooltip"
           style={getTooltipStyle(hoveredPortal.edge, hoveredPortal.x, hoveredPortal.y)}
