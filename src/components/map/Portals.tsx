@@ -139,10 +139,14 @@ export default function Portals({ mapRef, mapInstanceRef }: PortalsProps) {
     const m = mapInstanceRef.current;
     if (!m) return;
     updatePortals();
+    m.on("move", updatePortals);
     m.on("moveend", updatePortals);
+    m.on("zoom", updatePortals);
     m.on("zoomend", updatePortals);
     return () => {
+      m.off("move", updatePortals);
       m.off("moveend", updatePortals);
+      m.off("zoom", updatePortals);
       m.off("zoomend", updatePortals);
     };
   }, [updatePortals, mapInstanceRef]);
