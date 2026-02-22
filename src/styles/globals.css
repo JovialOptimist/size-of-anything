@@ -444,6 +444,24 @@ body {
     overflow: hidden;
 }
 
+/* Mobile only: hide share, satellite, comments when creation panel is expanded */
+@media (max-width: 500px) {
+    .map-view-container:has(.creation-panel-expanded) .share-button-container,
+    .map-view-container:has(.creation-panel-expanded) .feedback-button-container,
+    .map-view-container:has(.creation-panel-expanded) .layer-toggle-button-container {
+        display: none !important;
+    }
+
+    /* Active element display: respect both margins; sit right above map buttons (105px + 60px + gap) */
+    .active-element-display {
+        left: 1rem;
+        right: 1rem;
+        bottom: 173px;
+        width: auto;
+        max-width: none;
+    }
+}
+
 .panel-header {
     display: flex;
     flex-direction: row;

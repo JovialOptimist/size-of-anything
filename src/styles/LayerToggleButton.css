@@ -24,3 +24,11 @@
   transform: scale(1.05);
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
 }
+
+/* Mobile only: horizontal layout (same vertical position as desktop) */
+@media (max-width: 500px) {
+  .layer-toggle-button-container {
+    bottom: 105px;
+    right: 180px;
+  }
+}

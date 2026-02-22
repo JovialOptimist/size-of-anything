@@ -70,6 +70,11 @@
     border-radius: 8px 8px 0 0;
 }
 
+.dark-mode .element-header {
+    background: var(--icon-sidebar-button-bg, #1e293b);
+    color: var(--control-sidebar-text-color);
+}
+
 .element-title {
     flex: 1;
     text-align: left;
@@ -287,6 +292,14 @@
 
   .icon-action-button {
     padding: 6px;
+  }
+}
+
+/* Mobile: sit right above map buttons (105px + 60px + 8px gap) – overrides 768px bottom */
+@media (max-width: 500px) {
+  .active-element-panel,
+  .active-element-empty {
+    bottom: 100px !important;
   }
 }
 

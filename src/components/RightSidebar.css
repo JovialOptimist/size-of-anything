@@ -65,3 +65,11 @@
 .right-sidebar-content .panel-header {
   display: none;
 }
+
+/* Mobile only: settings, help, about full screen */
+@media (max-width: 500px) {
+  .right-sidebar {
+    width: 100%;
+    max-width: 100%;
+  }
+}
