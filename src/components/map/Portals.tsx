@@ -54,7 +54,7 @@ interface PortalsProps {
 /** Distance from map center (as fraction of min dimension) under which drop = teleport shape */
 const TELEPORT_THRESHOLD = 0.25;
 
-const TOOLTIP_OFFSET_PX = 14;
+const TOOLTIP_OFFSET_PX = 19;
 
 function getTooltipStyle(
   edge: PortalEdge,
