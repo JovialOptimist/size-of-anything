@@ -232,6 +232,18 @@ export default function Portals({ mapRef, mapInstanceRef }: PortalsProps) {
     setActiveArea(id);
   };
 
+  const handlePortalPointerDown = (
+    clientX: number,
+    clientY: number,
+    id: string,
+    feature: GeoJSONFeature,
+    portalX: number,
+    portalY: number
+  ) => {
+    setDragState({ id, feature, startX: clientX, startY: clientY });
+    setDragPosition({ x: portalX, y: portalY });
+  };
+
   const handlePortalMouseDown = (
     e: React.MouseEvent,
     id: string,
@@ -241,32 +253,50 @@ export default function Portals({ mapRef, mapInstanceRef }: PortalsProps) {
   ) => {
     e.preventDefault();
     e.stopPropagation();
-    setDragState({ id, feature, startX: e.clientX, startY: e.clientY });
-    setDragPosition({ x: portalX, y: portalY });
+    handlePortalPointerDown(e.clientX, e.clientY, id, feature, portalX, portalY);
+  };
+
+  const handlePortalTouchStart = (
+    e: React.TouchEvent,
+    id: string,
+    feature: GeoJSONFeature,
+    portalX: number,
+    portalY: number
+  ) => {
+    if (e.touches.length === 0) return;
+    e.preventDefault();
+    const t = e.touches[0];
+    handlePortalPointerDown(t.clientX, t.clientY, id, feature, portalX, portalY);
   };
 
   useEffect(() => {
     if (!dragState) return;
 
-    const onMove = (e: MouseEvent) => {
-      const mapEl = mapRef.current;
-      if (!mapEl) return;
+    const mapEl = mapRef.current;
+    const m = mapInstanceRef.current;
+
+    const clientToMapXY = (clientX: number, clientY: number) => {
+      if (!mapEl) return null;
       const rect = mapEl.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      setDragPosition({ x, y });
+      return {
+        x: clientX - rect.left,
+        y: clientY - rect.top,
+      };
     };
-    const onUp = (e: MouseEvent) => {
-      const m = mapInstanceRef.current;
-      const mapEl = mapRef.current;
+
+    const finishDrag = (clientX: number, clientY: number) => {
       if (!m || !mapEl || !dragState) {
         setDragState(null);
         setDragPosition(null);
         return;
       }
-      const rect = mapEl.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      const xy = clientToMapXY(clientX, clientY);
+      if (!xy) {
+        setDragState(null);
+        setDragPosition(null);
+        return;
+      }
+      const { x, y } = xy;
       const size = m.getSize();
       const centerPoint = m.latLngToContainerPoint(m.getCenter());
       const dx = x - centerPoint.x;
@@ -303,11 +333,38 @@ export default function Portals({ mapRef, mapInstanceRef }: PortalsProps) {
       setDragPosition(null);
     };
 
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
+    const onMouseMove = (e: MouseEvent) => {
+      const xy = clientToMapXY(e.clientX, e.clientY);
+      if (xy) setDragPosition(xy);
+    };
+    const onMouseUp = (e: MouseEvent) => {
+      finishDrag(e.clientX, e.clientY);
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      e.preventDefault();
+      if (e.touches.length === 0) return;
+      const t = e.touches[0];
+      const xy = clientToMapXY(t.clientX, t.clientY);
+      if (xy) setDragPosition(xy);
+    };
+    const onTouchEnd = (e: TouchEvent) => {
+      if (e.changedTouches.length === 0) return;
+      const t = e.changedTouches[0];
+      finishDrag(t.clientX, t.clientY);
+    };
+
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
+    window.addEventListener("touchend", onTouchEnd);
+    window.addEventListener("touchcancel", onTouchEnd);
     return () => {
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onUp);
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onTouchEnd);
+      window.removeEventListener("touchcancel", onTouchEnd);
     };
   }, [dragState, mapInstanceRef, mapRef, updateCurrentCoordinates, setActiveArea]);
 
@@ -334,6 +391,7 @@ export default function Portals({ mapRef, mapInstanceRef }: PortalsProps) {
           }}
           onClick={() => handlePortalClick(id, feature)}
           onMouseDown={(e) => handlePortalMouseDown(e, id, feature, x, y)}
+          onTouchStart={(e) => handlePortalTouchStart(e, id, feature, x, y)}
           onMouseEnter={() => setHoveredId(id)}
           onMouseLeave={() => setHoveredId(null)}
           role="button"

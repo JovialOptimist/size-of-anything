@@ -23,6 +23,7 @@
   align-items: center;
   justify-content: center;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
+  touch-action: none; /* allow drag without browser scroll/zoom on mobile */
 }
 
 .portals-overlay .portal-marker:hover {
