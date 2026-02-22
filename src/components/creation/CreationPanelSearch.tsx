@@ -295,7 +295,7 @@ export default function CreationPanelSearch({ query, searchTrigger, onPlaced }: 
         <ul
           className={`creation-panel-search-list ${listExpanded ? "creation-panel-search-list-expanded" : ""}`}
         >
-          {candidates.map((f, i) => (
+          {(listExpanded ? candidates : candidates.slice(0, 5)).map((f, i) => (
             <li key={i}>
               <button
                 type="button"
@@ -314,7 +314,7 @@ export default function CreationPanelSearch({ query, searchTrigger, onPlaced }: 
           ))}
         </ul>
         )}
-        {!listExpanded && candidates.length > 6 && (
+        {!listExpanded && candidates.length > 5 && (
           <button
             type="button"
             className="creation-panel-search-view-more"

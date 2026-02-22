@@ -29,10 +29,13 @@
   padding-left: 12px;
 }
 
-/* Mobile only: two rows – search results on top, minimap and details below */
+/* Mobile only: two rows – search results on top, minimap and details below; content scrollable */
 @media (max-width: 500px) {
   .creation-panel-search {
     flex-direction: column;
+    flex: 1 1 auto;
+    min-height: min-content;
+    overflow: visible;
   }
 
   .creation-panel-search-left {
@@ -40,12 +43,18 @@
     flex: 0 0 auto;
   }
 
+  .creation-panel-search-list {
+    height: auto;
+    max-height: 240px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .creation-panel-search-right {
     width: 100%;
     min-width: 0;
     max-width: 100%;
-    flex: 1;
-    min-height: 0;
+    flex: 0 0 auto;
     border-left: none;
     border-top: 1px solid rgba(0, 0, 0, 0.08);
     padding-left: 0;
