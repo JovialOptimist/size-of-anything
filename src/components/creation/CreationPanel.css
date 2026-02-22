@@ -292,7 +292,7 @@
     top: 0;
     left: 0;
     padding-top: env(safe-area-inset-top, 0px);
-    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 24px);
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 48px);
     border-radius: 0;
     width: 100%;
     max-width: 100%;
