@@ -58,7 +58,7 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   padding: 20px;
   position: relative;
-  max-height: 90vh;
+  max-height: 90dvh;
   overflow-y: auto;
   animation: slideUp 0.3s ease;
 }

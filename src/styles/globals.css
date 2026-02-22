@@ -176,7 +176,7 @@ body {
 /* Layout */
 .app-container {
     position: relative;
-    height: 100vh;
+    height: 100dvh;
     width: 100vw;
     overflow: hidden;
 }
@@ -187,7 +187,7 @@ body {
     top: 0;
     left: 0;
     width: var(--sidebar-width);
-    height: calc(100vh - 2rem);
+    height: calc(100dvh - 2rem);
     background-color: var(--icon-sidebar-bg);
     color: white;
     display: flex;
@@ -267,7 +267,7 @@ body {
     left: var(--sidebar-width);
     width: var(--control-panel-width);
     background: var(--control-sidebar-bg);
-    height: 100vh;
+    height: 100dvh;
     min-width: 200px;
     /* Ensure the panel doesn't exceed viewport width, accounting for icon sidebar */
     max-width: min(600px, calc(100vw - var(--sidebar-width) - 20px));
@@ -444,7 +444,7 @@ body {
     overflow: hidden;
 }
 
-/* Mobile only: prevent scroll (keep address bar visible); Android shrinks map container above system nav */
+/* Mobile only: prevent scroll (keep address bar visible); map container uses safe-area-inset-bottom */
 @media (max-width: 500px) {
     html, body {
         overflow: hidden;
@@ -467,11 +467,9 @@ body {
         max-width: none;
     }
 
-    /* Android only: shrink map container so it doesn't extend under system nav; controls use default positioning.
-       Use best available inset: env(safe-area-inset-bottom) when browser provides it (Chrome 135+ with viewport-fit=cover),
-       else our JS --mobile-bottom-inset (Visual Viewport API), else 36px fallback for older Android. */
-    .platform-android .map-view-container {
-        height: calc(100vh - max(var(--mobile-bottom-inset, 0px), env(safe-area-inset-bottom, 0px), 36px));
+    /* Shrink map container by safe area so it doesn't extend under system nav (viewport-fit=cover in index.html). */
+    .map-view-container {
+        height: calc(100dvh - env(safe-area-inset-bottom, 0px));
     }
 }
 

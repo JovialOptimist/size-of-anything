@@ -204,7 +204,7 @@ export default function MapView() {
     // we reference stable setters — include them to keep eslint happy
   }, [setClickedPosition, setActiveArea, setCurrentMapCenter]);
 
-  // When the map container resizes (e.g. Android --mobile-bottom-inset), tell Leaflet to recalc
+  // When the map container resizes (e.g. safe-area-inset-bottom change), tell Leaflet to recalc
   useEffect(() => {
     if (!mapReady || !mapRef.current || !mapInstanceRef.current) return;
     const el = mapRef.current;
