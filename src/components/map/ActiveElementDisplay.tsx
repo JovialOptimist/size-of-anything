@@ -51,6 +51,9 @@ const ActiveElementDisplay: React.FC = () => {
   const flipElementHorizontal = useMapStore(
     (state: any) => state.flipElementHorizontal
   );
+  const flipElementVertical = useMapStore(
+    (state: any) => state.flipElementVertical
+  );
   const updateElementRotation = useMapStore(
     (state: any) => state.updateElementRotation
   );
@@ -291,54 +294,100 @@ const ActiveElementDisplay: React.FC = () => {
             </p>
           </div>
 
-          <RotationWheel
-            rotationAngle={rotationAngle}
-            onChange={(angle) => {
-              // Only update if the angle has actually changed by a significant amount
-              if (Math.abs(angle - rotationAngle) >= 1) {
-                setRotationAngle(angle);
+          <div className="rotation-control-group">
+            <RotationWheel
+              rotationAngle={rotationAngle}
+              onChange={(angle) => {
+                // Only update if the angle has actually changed by a significant amount
+                if (Math.abs(angle - rotationAngle) >= 1) {
+                  setRotationAngle(angle);
 
-                // Get the active element to apply rotation to its current position
-                const element = getActiveElement();
-                if (element && activeAreaId) {
-                  // Apply rotation to the current position and store the result
-                  // This ensures rotation is only applied when explicitly changed
-                  try {
-                    // Only rotate if we have an element and a valid angle
-                    if (angle !== 0) {
-                      // Make sure we use the current coordinates as the base for rotation
-                      // This ensures the shape rotates in place instead of teleporting
-                      const baseCoordinates =
-                        element.geometry.currentCoordinates ||
-                        element.geometry.coordinates;
+                  // Get the active element to apply rotation to its current position
+                  const element = getActiveElement();
+                  if (element && activeAreaId) {
+                    // Apply rotation to the current position and store the result
+                    // This ensures rotation is only applied when explicitly changed
+                    try {
+                      // Only rotate if we have an element and a valid angle
+                      if (angle !== 0) {
+                        // Make sure we use the current coordinates as the base for rotation
+                        // This ensures the shape rotates in place instead of teleporting
+                        const baseCoordinates =
+                          element.geometry.currentCoordinates ||
+                          element.geometry.coordinates;
 
-                      // Apply rotation using the current position as the base
-                      const rotated = applyRotation(
-                        element,
-                        angle,
-                        baseCoordinates
-                      );
-                      // Store both the rotation angle and the pre-calculated rotated coordinates
-                      updateElementRotation(
-                        activeAreaId,
-                        angle,
-                        rotated.geometry.coordinates
-                      );
-                    } else {
-                      // For zero rotation, just clear any rotation
-                      updateElementRotation(activeAreaId, 0);
+                        // Apply rotation using the current position as the base
+                        const rotated = applyRotation(
+                          element,
+                          angle,
+                          baseCoordinates
+                        );
+                        // Store both the rotation angle and the pre-calculated rotated coordinates
+                        updateElementRotation(
+                          activeAreaId,
+                          angle,
+                          rotated.geometry.coordinates
+                        );
+                      } else {
+                        // For zero rotation, just clear any rotation
+                        updateElementRotation(activeAreaId, 0);
+                      }
+                    } catch (error) {
+                      console.error("Error applying rotation:", error);
+                      updateElementRotation(activeAreaId, angle);
                     }
-                  } catch (error) {
-                    console.error("Error applying rotation:", error);
+                  } else {
                     updateElementRotation(activeAreaId, angle);
                   }
-                } else {
-                  updateElementRotation(activeAreaId, angle);
                 }
-              }
-            }}
-            size={60}
-          />
+              }}
+              size={60}
+            />
+            <div className="flip-buttons-column">
+              <button
+                className="icon-action-button"
+                onClick={() => activeAreaId && flipElementHorizontal(activeAreaId)}
+                title="Flip area left to right"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M8 7l-4 4 4 4"></path>
+                  <path d="M16 7l4 4-4 4"></path>
+                  <path d="M4 11h14"></path>
+                </svg>
+              </button>
+              <button
+                className="icon-action-button"
+                onClick={() => activeAreaId && flipElementVertical(activeAreaId)}
+                title="Flip area top to bottom"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 3v18"></path>
+                  <path d="M12 3l-3 3 6 0"></path>
+                  <path d="M12 21l-3-3 6 0"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Updated button group with all buttons in a single row */}
@@ -361,28 +410,6 @@ const ActiveElementDisplay: React.FC = () => {
             >
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-            </svg>
-          </button>
-
-          <button
-            className="icon-action-button"
-            onClick={() => activeAreaId && flipElementHorizontal(activeAreaId)}
-            title="Flip area left to right"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M8 7l-4 4 4 4"></path>
-              <path d="M16 7l4 4-4 4"></path>
-              <path d="M4 11h14"></path>
             </svg>
           </button>
 

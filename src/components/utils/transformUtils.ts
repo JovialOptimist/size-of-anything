@@ -118,3 +118,38 @@ export function applyFlipHorizontal(
   flippedFeature.geometry.coordinates = flipCoords(coords);
   return flippedFeature;
 }
+
+/**
+ * Flip a feature's coordinates top-to-bottom (mirror over the horizontal axis through its centroid).
+ *
+ * @param feature - The GeoJSON feature to flip
+ * @param baseCoordinates - Base coordinates to use (optional, defaults to feature.geometry.coordinates or currentCoordinates)
+ * @returns A new feature with flipped coordinates
+ */
+export function applyFlipVertical(
+  feature: Feature<Polygon | MultiPolygon>,
+  baseCoordinates?: any
+): Feature<Polygon | MultiPolygon> {
+  const featureCopy = JSON.parse(JSON.stringify(feature));
+  const coords =
+    baseCoordinates ??
+    featureCopy.geometry.currentCoordinates ??
+    featureCopy.geometry.coordinates;
+  featureCopy.geometry.coordinates = coords;
+
+  const centroid = turf.centroid(featureCopy);
+  const [, centerLat] = centroid.geometry.coordinates;
+
+  function flipCoords(coord: any): any {
+    if (typeof coord[0] === "number") {
+      return [coord[0], 2 * centerLat - coord[1], ...(coord.slice(2) ?? [])];
+    }
+    return coord.map(flipCoords);
+  }
+
+  const flippedFeature: Feature<Polygon | MultiPolygon> = JSON.parse(
+    JSON.stringify(feature)
+  );
+  flippedFeature.geometry.coordinates = flipCoords(coords);
+  return flippedFeature;
+}

@@ -2,7 +2,7 @@
 import { create } from "zustand";
 import { generateRandomColor } from "../components/utils/colorUtils";
 import { hybridProjectAndTranslateGeometry } from "../components/utils/geometryUtils";
-import { applyFlipHorizontal, applyRotation } from "../components/utils/transformUtils";
+import { applyFlipHorizontal, applyFlipVertical, applyRotation } from "../components/utils/transformUtils";
 import type { MapArea, GeoJSONFeature, MapState } from "./mapStoreTypes";
 import type { Feature, Polygon, MultiPolygon } from "geojson";
 import * as turf from "@turf/turf"; // TODO: what does this import other than simplify?
@@ -541,6 +541,61 @@ export const useMapStore = create<MapState>((set) => ({
       const baseCoords =
         feature.geometry.currentCoordinates ?? feature.geometry.coordinates;
       const flippedFeature = applyFlipHorizontal(feature, baseCoords);
+      const flippedCoords = flippedFeature.geometry.coordinates;
+      const rotation = feature.properties?.rotation ?? 0;
+
+      const geometry: typeof feature.geometry = {
+        ...feature.geometry,
+        coordinates: flippedCoords,
+        currentCoordinates: flippedCoords,
+        rotatedCoordinates: undefined,
+      };
+      if (rotation !== 0) {
+        const featureForRotation: Feature<Polygon | MultiPolygon> = {
+          type: "Feature",
+          properties: feature.properties,
+          geometry: {
+            type: feature.geometry.type,
+            coordinates: flippedCoords,
+          } as Polygon | MultiPolygon,
+        };
+        const rotated = applyRotation(
+          featureForRotation,
+          rotation,
+          flippedCoords
+        );
+        geometry.rotatedCoordinates = rotated.geometry.coordinates;
+      }
+
+      const updatedAreas = [...state.geojsonAreas];
+      updatedAreas[featureIndex] = {
+        ...updatedAreas[featureIndex],
+        geometry,
+      };
+      return { geojsonAreas: updatedAreas };
+    });
+  },
+
+  flipElementVertical: (id) => {
+    set((state) => {
+      let featureIndex = state.geojsonAreas.findIndex(
+        (feature) => feature.properties.id === id
+      );
+      if (featureIndex < 0 && id.startsWith("geojson-")) {
+        const idNumber = id.replace("geojson-", "");
+        if (/^\d+$/.test(idNumber)) {
+          const index = parseInt(idNumber, 10);
+          featureIndex = state.geojsonAreas.findIndex(
+            (feature) => feature.properties.index === index
+          );
+        }
+      }
+      if (featureIndex < 0) return state;
+
+      const feature = state.geojsonAreas[featureIndex];
+      const baseCoords =
+        feature.geometry.currentCoordinates ?? feature.geometry.coordinates;
+      const flippedFeature = applyFlipVertical(feature, baseCoords);
       const flippedCoords = flippedFeature.geometry.coordinates;
       const rotation = feature.properties?.rotation ?? 0;
 

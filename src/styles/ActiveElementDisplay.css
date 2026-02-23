@@ -379,6 +379,19 @@
     margin-right: 10px;
 }
 
+.rotation-control-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.flip-buttons-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
 .rotation-wheel-container {
     display: flex;
     flex: 1;

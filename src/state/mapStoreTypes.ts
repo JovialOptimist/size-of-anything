@@ -71,6 +71,7 @@ export interface MapState {
     rotatedCoordinates?: any | null
   ) => void;
   flipElementHorizontal: (id: string) => void;
+  flipElementVertical: (id: string) => void;
   updateElementName: (id: string, name: string) => void;
   updateCurrentCoordinates: (id: string, coordinates: any) => void;
   setHoveredCandidate: (candidate: GeoJSONFeature | null) => void;
