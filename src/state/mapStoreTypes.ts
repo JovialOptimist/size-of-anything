@@ -28,6 +28,10 @@ export interface GeoJSONFeature {
     color?: string; // Add color property
     rotation?: number; // Rotation angle in degrees
     shouldBringToFocus?: boolean; // Whether this shape should be zoomed to when added
+    /** When true, shape fill shows satellite imagery of the area at toggle time (moves with shape). */
+    satelliteSnapshot?: boolean;
+    /** Bounds [minLng, minLat, maxLng, maxLat] used for satellite imagery (set when snapshot enabled). */
+    satelliteSnapshotBounds?: [number, number, number, number];
     [key: string]: any;
     whatIsIt: string;
   };
@@ -71,6 +75,7 @@ export interface MapState {
     rotatedCoordinates?: any | null
   ) => void;
   updateElementName: (id: string, name: string) => void;
+  setSatelliteSnapshot: (id: string, enabled: boolean) => void;
   updateCurrentCoordinates: (id: string, coordinates: any) => void;
   setHoveredCandidate: (candidate: GeoJSONFeature | null) => void;
   addToHistory: (feature: GeoJSONFeature) => void;

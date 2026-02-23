@@ -23,6 +23,10 @@ import { createMarker, attachMarkerDragHandlers } from "../utils/markerUtils";
 import type { GeoJSONFeature, MapState } from "../../state/mapStoreTypes";
 import { setupAutoRefreshOnSettingsChange } from "../utils/markerUtils";
 import Portals from "./Portals";
+import {
+  createSatelliteSnapshotLayer,
+  getOuterRingsFromGeoJSONLayer,
+} from "./SatelliteSnapshotLayer";
 
 // Function to create tile layer based on layer type
 function createTileLayer(layerType: MapLayerType): L.TileLayer {
@@ -257,22 +261,41 @@ export default function MapView() {
           featureToRender.geometry.rotatedCoordinates;
       }
 
+      const useSatelliteSnapshot =
+        Boolean(featureToRender.properties?.satelliteSnapshot) &&
+        Array.isArray(featureToRender.properties?.satelliteSnapshotBounds) &&
+        featureToRender.properties.satelliteSnapshotBounds.length === 4;
+
       const layer = L.geoJSON(featureToRender, {
         style: {
           color: polygonColor,
           weight: isActive ? 4 : 2,
-          fillOpacity: 0.4,
+          fillOpacity: useSatelliteSnapshot ? 0 : 0.4,
           opacity: isActive ? 0.9 : 0.7,
         },
-      }).addTo(group);
-
-      // Add click handler to set active element
-      layer.on("click", (e) => {
-        L.DomEvent.stopPropagation(e);
       });
 
-      // Only enable dragging if this is the active element or there is no active element
-      enablePolygonDragging(layer, map);
+      if (useSatelliteSnapshot) {
+        const snapshotLayer = createSatelliteSnapshotLayer({
+          snapshotBounds: featureToRender.properties
+            .satelliteSnapshotBounds as [number, number, number, number],
+          getClipLatLngs: () => getOuterRingsFromGeoJSONLayer(layer),
+        });
+        snapshotLayer.addTo(group);
+        layer.addTo(group);
+        layer.on("click", (e) => {
+          L.DomEvent.stopPropagation(e);
+        });
+        enablePolygonDragging(layer, map, () => {
+          (snapshotLayer as any)._update?.();
+        });
+      } else {
+        layer.addTo(group);
+        layer.on("click", (e) => {
+          L.DomEvent.stopPropagation(e);
+        });
+        enablePolygonDragging(layer, map);
+      }
     });
 
     if (geojsonAreas.length > numShapesRef.current) {

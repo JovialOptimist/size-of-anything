@@ -221,10 +221,12 @@ export function transformPolygonCoordinates(
   }
 }
 
-// Enable click-and-drag on a polygon layer to move it interactively
+// Enable click-and-drag on a polygon layer to move it interactively.
+// Optional onPolygonMove is called on each mousemove during drag so overlays (e.g. satellite snapshot) can redraw.
 export function enablePolygonDragging(
   geoJsonLayer: L.GeoJSON,
-  map: L.Map | null
+  map: L.Map | null,
+  onPolygonMove?: () => void
 ) {
   if (!map) return;
 
@@ -335,6 +337,8 @@ export function enablePolygonDragging(
               if ((window as any).updatePolygonLabels) {
                 (window as any).updatePolygonLabels(innerLayer, geoJsonLayer);
               }
+
+              onPolygonMove?.();
             }
           } else {
             // Fallback to the legacy method if feature is not available
@@ -359,6 +363,8 @@ export function enablePolygonDragging(
             if ((window as any).updatePolygonLabels) {
               (window as any).updatePolygonLabels(innerLayer, geoJsonLayer);
             }
+
+            onPolygonMove?.();
           }
         } catch (error) {
           console.error("Error during polygon drag:", error);
@@ -385,6 +391,8 @@ export function enablePolygonDragging(
           if ((window as any).updatePolygonLabels) {
             (window as any).updatePolygonLabels(innerLayer, geoJsonLayer);
           }
+
+          onPolygonMove?.();
         }
       };
 

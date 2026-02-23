@@ -553,6 +553,47 @@ export const useMapStore = create<MapState>((set) => ({
     });
   },
 
+  setSatelliteSnapshot: (id, enabled) => {
+    set((state) => {
+      let featureIndex = state.geojsonAreas.findIndex(
+        (feature) => feature.properties.id === id
+      );
+      if (featureIndex < 0 && id.startsWith("geojson-")) {
+        const idNumber = id.replace("geojson-", "");
+        if (/^\d+$/.test(idNumber)) {
+          const index = parseInt(idNumber, 10);
+          featureIndex = state.geojsonAreas.findIndex(
+            (feature) => feature.properties.index === index
+          );
+        }
+      }
+      if (featureIndex < 0) return state;
+
+      const feature = state.geojsonAreas[featureIndex];
+      const coords =
+        feature.geometry.currentCoordinates ?? feature.geometry.coordinates;
+      const geojsonFeature = {
+        type: "Feature" as const,
+        properties: {},
+        geometry: {
+          type: feature.geometry.type,
+          coordinates: coords,
+        },
+      };
+      const bbox = enabled ? turf.bbox(geojsonFeature as any) : undefined;
+      const updatedAreas = [...state.geojsonAreas];
+      updatedAreas[featureIndex] = {
+        ...updatedAreas[featureIndex],
+        properties: {
+          ...updatedAreas[featureIndex].properties,
+          satelliteSnapshot: enabled,
+          satelliteSnapshotBounds: bbox as [number, number, number, number] | undefined,
+        },
+      };
+      return { geojsonAreas: updatedAreas };
+    });
+  },
+
   updateCurrentCoordinates: (id, coordinates) => {
     set((state) => {
       // Find the element by ID first (new approach)

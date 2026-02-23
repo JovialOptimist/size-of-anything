@@ -161,6 +161,14 @@
     transform: translateY(0);
 }
 
+.icon-action-button.satellite-snapshot-on {
+    background-color: #2d6a4f;
+}
+
+.icon-action-button.satellite-snapshot-on:hover {
+    background-color: #1b4332;
+}
+
 .icon-action-button svg {
     width: 18px;
     height: 18px;
