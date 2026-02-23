@@ -48,6 +48,9 @@ const ActiveElementDisplay: React.FC = () => {
   const [isEditingName, setIsEditingName] = useState(false);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const duplicateArea = useMapStore((state: any) => state.duplicateArea);
+  const flipElementHorizontal = useMapStore(
+    (state: any) => state.flipElementHorizontal
+  );
   const updateElementRotation = useMapStore(
     (state: any) => state.updateElementRotation
   );
@@ -358,6 +361,28 @@ const ActiveElementDisplay: React.FC = () => {
             >
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+          </button>
+
+          <button
+            className="icon-action-button"
+            onClick={() => activeAreaId && flipElementHorizontal(activeAreaId)}
+            title="Flip area left to right"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M8 7l-4 4 4 4"></path>
+              <path d="M16 7l4 4-4 4"></path>
+              <path d="M4 11h14"></path>
             </svg>
           </button>
 
