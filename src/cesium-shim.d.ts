@@ -106,7 +106,7 @@ declare module "cesium" {
     constructor(options: { url: string });
   }
   export namespace SceneTransforms {
-    export function wgs84ToWindowCoordinates(scene: Scene, position: Cartesian3): Cartesian2 | undefined;
+    export function worldToWindowCoordinates(scene: Scene, position: Cartesian3): Cartesian2 | undefined;
   }
   export interface CesiumEvent {
     addEventListener(callback: () => void): () => void;

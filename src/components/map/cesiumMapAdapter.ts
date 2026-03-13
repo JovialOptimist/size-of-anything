@@ -86,7 +86,7 @@ export function createCesiumMapAdapter(viewer: Viewer): IMapAdapter {
         carto.latitude,
         carto.height
       );
-      const windowPos = SceneTransforms.wgs84ToWindowCoordinates(
+      const windowPos = SceneTransforms.worldToWindowCoordinates(
         scene,
         cartesian
       );

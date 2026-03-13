@@ -30,6 +30,7 @@ import {
   featureToEntities,
   featureToHoverEntities,
   createAreasDataSource,
+  getCoords,
 } from "./cesiumUtils";
 import { ScreenSpaceEventType, Cartesian3 as CesiumCartesian3 } from "cesium";
 import { hybridProjectAndTranslateGeometry } from "../utils/geometryUtils";
@@ -92,6 +93,9 @@ export default function MapView() {
   const hoverDataSourceRef = useRef<CustomDataSource | null>(null);
   const dragStateRef = useRef<{ featureId: string } | null>(null);
   const didDragRef = useRef(false);
+  const dragLastCoordsRef = useRef<number[][][] | number[][][][] | null>(null);
+  /** Live coordinates for area polygons; CallbackProperty reads this so drag updates in real time. */
+  const liveCoordsRef = useRef<Record<string, number[][][] | number[][][][]>>({});
 
   // Create Cesium Viewer and map adapter once
   useEffect(() => {
@@ -183,11 +187,11 @@ export default function MapView() {
           }
         }, ScreenSpaceEventType.LEFT_CLICK);
 
-        handler.setInputAction((movement: { position?: { x: number; y: number } }) => {
+        handler.setInputAction((movement: { endPosition?: { x: number; y: number } }) => {
           const dragState = dragStateRef.current;
-          if (!dragState || !movement.position) return;
+          if (!dragState || !movement.endPosition) return;
           didDragRef.current = true;
-          const ray = viewer.camera.getPickRay(movement.position);
+          const ray = viewer.camera.getPickRay(movement.endPosition);
           if (!ray) return;
           const position = viewer.scene.globe.pick(ray, viewer.scene) ?? viewer.scene.globe.ellipsoid.intersectRay(ray);
           if (!position) return;
@@ -203,15 +207,17 @@ export default function MapView() {
               (f.properties?.index != null && `geojson-${f.properties.index}` === dragState.featureId)
           );
           if (!feature) return;
+          const baseCoords =
+            dragLastCoordsRef.current ??
+            (feature.geometry as any).currentCoordinates ??
+            (feature.geometry as any).rotatedCoordinates ??
+            feature.geometry.coordinates;
           const featureForTransform = {
             type: "Feature" as const,
             properties: feature.properties,
             geometry: {
               type: feature.geometry.type,
-              coordinates:
-                (feature.geometry as any).currentCoordinates ??
-                (feature.geometry as any).rotatedCoordinates ??
-                feature.geometry.coordinates,
+              coordinates: baseCoords,
             },
           };
           const translated = hybridProjectAndTranslateGeometry(
@@ -219,12 +225,23 @@ export default function MapView() {
             targetCoordinates
           );
           const newCoords = (translated.geometry as any).coordinates;
-          store.updateCurrentCoordinates(dragState.featureId, newCoords);
+          dragLastCoordsRef.current = newCoords;
+          liveCoordsRef.current[dragState.featureId] = newCoords;
         }, ScreenSpaceEventType.MOUSE_MOVE);
 
         handler.setInputAction((_click: unknown) => {
+          const controller = viewer.scene.screenSpaceCameraController;
+          controller.enableRotate = true;
+          controller.enableTranslate = true;
+          const wasDragging = didDragRef.current;
+          const dragState = dragStateRef.current;
+          const lastCoords = dragLastCoordsRef.current;
           dragStateRef.current = null;
           didDragRef.current = false;
+          dragLastCoordsRef.current = null;
+          if (wasDragging && dragState && lastCoords) {
+            useMapStore.getState().updateCurrentCoordinates(dragState.featureId, lastCoords);
+          }
         }, ScreenSpaceEventType.LEFT_UP);
 
         handler.setInputAction((click: { position?: { x: number; y: number } }) => {
@@ -233,6 +250,9 @@ export default function MapView() {
           const entity = picked?.id;
           if (entity && entity.name) {
             dragStateRef.current = { featureId: entity.name };
+            const controller = viewer.scene.screenSpaceCameraController;
+            controller.enableRotate = false;
+            controller.enableTranslate = false;
           }
         }, ScreenSpaceEventType.LEFT_DOWN);
 
@@ -336,13 +356,31 @@ export default function MapView() {
     layers.addImageryProvider(provider);
   }, [mapReady, mapLayerType]);
 
-  // Sync geojsonAreas to Cesium polygon entities (with extrusion and active highlight)
+  // Sync geojsonAreas to Cesium polygon entities (with extrusion and active highlight).
+  // Entities use CallbackProperty for hierarchy reading from liveCoordsRef so drag is smooth.
   useEffect(() => {
     const ds = areasDataSourceRef.current;
+    const live = liveCoordsRef.current;
     if (!ds) return;
-    ds.entities.removeAll();
+    // Snapshot coords for this run so callbacks have data even on first frame (creation from History etc.)
+    const initialCoords: Record<string, number[][][] | number[][][][]> = {};
     geojsonAreas.forEach((feature) => {
-      const entities = featureToEntities(feature, activeAreaId);
+      const featureId = feature.properties?.id ?? (feature.properties?.index != null ? `geojson-${feature.properties.index}` : "");
+      const coords = getCoords(feature);
+      if (featureId) {
+        live[featureId] = coords;
+        initialCoords[featureId] = coords;
+      }
+    });
+    ds.entities.removeAll();
+    const getCoordsForEntity = (featureId: string, partIndex?: number): number[][][] => {
+      const c = live[featureId] ?? initialCoords[featureId];
+      if (!c) return [];
+      if (partIndex === undefined) return c as number[][][];
+      return (c as number[][][][])[partIndex] ?? [];
+    };
+    geojsonAreas.forEach((feature) => {
+      const entities = featureToEntities(feature, activeAreaId, getCoordsForEntity);
       entities.forEach((e) => ds.entities.add(e));
     });
   }, [geojsonAreas, activeAreaId]);
