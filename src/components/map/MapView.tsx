@@ -14,6 +14,7 @@ import {
   UrlTemplateImageryProvider,
   ArcGisMapServerImageryProvider,
   Color,
+  CallbackProperty,
 } from "cesium";
 import "cesium/Build/Cesium/Widgets/widgets.css";
 import "../../styles/mapDarkMode.css";
@@ -34,7 +35,7 @@ import {
 } from "./cesiumUtils";
 import { ScreenSpaceEventType, Cartesian3 as CesiumCartesian3 } from "cesium";
 import { hybridProjectAndTranslateGeometry } from "../utils/geometryUtils";
-import { getShapeCenter } from "./portalUtils";
+import { getShapeCenter, getShapeCenterFromCoords } from "./portalUtils";
 
 async function findUserLocation(timeout = 3000): Promise<[number, number]> {
   const defaultCenter: [number, number] = [47.615, -122.035];
@@ -80,6 +81,9 @@ export default function MapView() {
   const setCurrentMapCenter = useMapStore(
     (state: MapState) => state.setCurrentMapCenter
   );
+  const clearBringToFocus = useMapStore(
+    (state: MapState) => state.clearBringToFocus
+  );
   const hoveredCandidate = useMapStore(
     (state: MapState) => state.hoveredCandidate
   );
@@ -91,11 +95,19 @@ export default function MapView() {
   const areasDataSourceRef = useRef<ReturnType<typeof createAreasDataSource> | null>(null);
   const labelsDataSourceRef = useRef<CustomDataSource | null>(null);
   const hoverDataSourceRef = useRef<CustomDataSource | null>(null);
-  const dragStateRef = useRef<{ featureId: string } | null>(null);
+  const dragStateRef = useRef<{
+    featureId: string;
+    /** [lng, lat] where the mouse was on the globe when drag started */
+    initialMouse: [number, number];
+    /** [lng, lat] shape center when drag started */
+    initialCenter: [number, number];
+  } | null>(null);
   const didDragRef = useRef(false);
   const dragLastCoordsRef = useRef<number[][][] | number[][][][] | null>(null);
   /** Live coordinates for area polygons; CallbackProperty reads this so drag updates in real time. */
   const liveCoordsRef = useRef<Record<string, number[][][] | number[][][][]>>({});
+  /** Center [lat, lng] per featureId so labels follow the shape during drag. */
+  const centerRef = useRef<Record<string, [number, number]>>({});
 
   // Create Cesium Viewer and map adapter once
   useEffect(() => {
@@ -196,9 +208,13 @@ export default function MapView() {
           const position = viewer.scene.globe.pick(ray, viewer.scene) ?? viewer.scene.globe.ellipsoid.intersectRay(ray);
           if (!position) return;
           const carto = viewer.scene.globe.ellipsoid.cartesianToCartographic(position);
+          const currentMouseLng = CesiumMath.toDegrees(carto.longitude);
+          const currentMouseLat = CesiumMath.toDegrees(carto.latitude);
+          const deltaLng = currentMouseLng - dragState.initialMouse[0];
+          const deltaLat = currentMouseLat - dragState.initialMouse[1];
           const targetCoordinates: [number, number] = [
-            CesiumMath.toDegrees(carto.longitude),
-            CesiumMath.toDegrees(carto.latitude),
+            dragState.initialCenter[0] + deltaLng,
+            dragState.initialCenter[1] + deltaLat,
           ];
           const store = useMapStore.getState();
           const feature = store.geojsonAreas.find(
@@ -227,6 +243,10 @@ export default function MapView() {
           const newCoords = (translated.geometry as any).coordinates;
           dragLastCoordsRef.current = newCoords;
           liveCoordsRef.current[dragState.featureId] = newCoords;
+          centerRef.current[dragState.featureId] = getShapeCenterFromCoords(
+            newCoords,
+            feature.geometry.type as "Polygon" | "MultiPolygon"
+          );
         }, ScreenSpaceEventType.MOUSE_MOVE);
 
         handler.setInputAction((_click: unknown) => {
@@ -249,7 +269,36 @@ export default function MapView() {
           const picked = viewer.scene.pick(click.position);
           const entity = picked?.id;
           if (entity && entity.name) {
-            dragStateRef.current = { featureId: entity.name };
+            const featureId = entity.name;
+            const feature = useMapStore.getState().geojsonAreas.find(
+              (f) =>
+                f.properties?.id === featureId ||
+                (f.properties?.index != null && `geojson-${f.properties.index}` === featureId)
+            );
+            if (!feature) return;
+            const baseCoords =
+              (feature.geometry as any).currentCoordinates ??
+              (feature.geometry as any).rotatedCoordinates ??
+              feature.geometry.coordinates;
+            const [centerLat, centerLng] = getShapeCenterFromCoords(
+              baseCoords,
+              feature.geometry.type as "Polygon" | "MultiPolygon"
+            );
+            const ray = viewer.camera.getPickRay(click.position);
+            const position = ray
+              ? (viewer.scene.globe.pick(ray, viewer.scene) ?? viewer.scene.globe.ellipsoid.intersectRay(ray))
+              : null;
+            if (!position) return;
+            const carto = viewer.scene.globe.ellipsoid.cartesianToCartographic(position);
+            const initialMouse: [number, number] = [
+              CesiumMath.toDegrees(carto.longitude),
+              CesiumMath.toDegrees(carto.latitude),
+            ];
+            dragStateRef.current = {
+              featureId,
+              initialMouse,
+              initialCenter: [centerLng, centerLat],
+            };
             const controller = viewer.scene.screenSpaceCameraController;
             controller.enableRotate = false;
             controller.enableTranslate = false;
@@ -370,6 +419,7 @@ export default function MapView() {
       if (featureId) {
         live[featureId] = coords;
         initialCoords[featureId] = coords;
+        centerRef.current[featureId] = getShapeCenter(feature);
       }
     });
     ds.entities.removeAll();
@@ -385,26 +435,31 @@ export default function MapView() {
     });
   }, [geojsonAreas, activeAreaId]);
 
-  // Sync labels (and optional pins) from pin settings
+  // Sync labels (and optional pins) from pin settings. Position uses CallbackProperty so labels move with shape during drag.
   useEffect(() => {
     const ds = labelsDataSourceRef.current;
+    const centers = centerRef.current;
     if (!ds) return;
     ds.entities.removeAll();
     if (pinSettings.mode === "disabled") return;
     geojsonAreas.forEach((feature) => {
       const name = feature.properties?.name ?? "Unnamed Area";
       if (!name && pinSettings.labelMode !== "always") return;
-      const [lat, lng] = getShapeCenter(feature);
-      const position = CesiumCartesian3.fromDegrees(lng, lat, 0);
+      const featureId = feature.properties?.id ?? (feature.properties?.index != null ? `geojson-${feature.properties.index}` : "");
+      if (!featureId) return;
+      const positionCallback = new CallbackProperty(() => {
+        const c = centers[featureId];
+        return c ? CesiumCartesian3.fromDegrees(c[1], c[0], 0) : undefined;
+      }, false);
       if (pinSettings.labelMode === "always" || pinSettings.mode === "always") {
         ds.entities.add({
-          position,
+          position: positionCallback,
           label: {
             text: name,
-            font: `${pinSettings.fontSize ?? 16}px sans-serif`,
+            font: `bold ${pinSettings.fontSize ?? 16}px sans-serif`,
             fillColor: Color.WHITE,
             outlineColor: Color.BLACK,
-            outlineWidth: 2,
+            outlineWidth: 3,
             style: 0,
             verticalOrigin: 1,
             pixelOffset: new Cartesian2(0, -20),
@@ -452,8 +507,9 @@ export default function MapView() {
         destination: Rectangle.fromRadians(west, south, east, north),
         duration: 0.5,
       });
+      clearBringToFocus(toFocus.properties?.id ?? "");
     }
-  }, [geojsonAreas]);
+  }, [geojsonAreas, clearBringToFocus]);
 
   return (
     <div

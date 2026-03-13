@@ -600,6 +600,15 @@ export const useMapStore = create<MapState>((set) => ({
     });
   },
 
+  clearBringToFocus: (featureId) =>
+    set((state) => ({
+      geojsonAreas: state.geojsonAreas.map((f) =>
+        f.properties?.id === featureId
+          ? { ...f, properties: { ...f.properties, shouldBringToFocus: false } }
+          : f
+      ),
+    })),
+
   setHoveredCandidate: (candidate) => {
     set({ hoveredCandidate: candidate });
   },

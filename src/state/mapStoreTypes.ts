@@ -76,6 +76,7 @@ export interface MapState {
   ) => void;
   updateElementName: (id: string, name: string) => void;
   updateCurrentCoordinates: (id: string, coordinates: any) => void;
+  clearBringToFocus: (featureId: string) => void;
   setHoveredCandidate: (candidate: GeoJSONFeature | null) => void;
   addToHistory: (feature: GeoJSONFeature) => void;
   clearHistory: () => void;

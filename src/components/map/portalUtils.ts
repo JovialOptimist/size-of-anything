@@ -53,6 +53,23 @@ export function getShapeCenter(feature: GeoJSONFeature): [number, number] {
 }
 
 /**
+ * Get shape center [lat, lng] from raw coordinates (e.g. during drag).
+ */
+export function getShapeCenterFromCoords(
+  coords: number[][][] | number[][][][],
+  type: "Polygon" | "MultiPolygon"
+): [number, number] {
+  const f = {
+    type: "Feature" as const,
+    properties: {},
+    geometry: { type, coordinates: coords },
+  } as GeoJSON.Feature;
+  const centroid = turf.centroid(f);
+  const [lng, lat] = centroid.geometry.coordinates;
+  return [lat, lng];
+}
+
+/**
  * Get LatLngBounds for a feature (current position).
  */
 export function getShapeBounds(feature: GeoJSONFeature): L.LatLngBounds {
