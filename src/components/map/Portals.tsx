@@ -20,6 +20,7 @@ import {
   type PortalEdge,
 } from "./portalUtils";
 import { hybridProjectAndTranslateGeometry } from "../utils/geometryUtils";
+import type { IMapAdapter } from "./mapAdapter";
 import "./Portals.css";
 
 function createMinimapTileLayer(layerType: MapLayerType): L.TileLayer {
@@ -48,7 +49,8 @@ interface PortalEntry {
 
 interface PortalsProps {
   mapRef: React.RefObject<HTMLDivElement | null>;
-  mapInstanceRef: React.RefObject<L.Map | null>;
+  /** Main map as adapter (Cesium). Portals use this for viewport, flyTo, and portal positions. */
+  mapAdapterRef: React.RefObject<IMapAdapter | null>;
 }
 
 const TOOLTIP_OFFSET_PX = 19;
@@ -93,8 +95,8 @@ function getTooltipStyle(
   }
 }
 
-export default function Portals({ mapRef, mapInstanceRef }: PortalsProps) {
-  const map = mapInstanceRef.current;
+export default function Portals({ mapRef, mapAdapterRef }: PortalsProps) {
+  const map = mapAdapterRef.current;
   const geojsonAreas = useMapStore((s: MapState) => s.geojsonAreas);
   const setActiveArea = useMapStore((s: MapState) => s.setActiveArea);
   const updateCurrentCoordinates = useMapStore(
@@ -134,7 +136,7 @@ export default function Portals({ mapRef, mapInstanceRef }: PortalsProps) {
 
   // Recompute portal list when map moves or areas change
   const updatePortals = useCallback(() => {
-    const m = mapInstanceRef.current;
+    const m = mapAdapterRef.current;
     if (!m || !mapRef.current) {
       setPortals([]);
       return;
@@ -145,16 +147,16 @@ export default function Portals({ mapRef, mapInstanceRef }: PortalsProps) {
       if (!id) return;
       if (!isShapeOffScreen(m, feature)) return;
       const center = getShapeCenter(feature);
-      const pos = getPortalPositionOnEdge(m, L.latLng(center[0], center[1]), {
+      const pos = getPortalPositionOnEdge(m, { lat: center[0], lng: center[1] }, {
         creationPanelExpanded,
       });
       if (pos) list.push({ feature, id, x: pos.x, y: pos.y, edge: pos.edge });
     });
     setPortals(list);
-  }, [geojsonAreas, mapInstanceRef, mapRef, creationPanelExpanded]);
+  }, [geojsonAreas, mapAdapterRef, mapRef, creationPanelExpanded]);
 
   useEffect(() => {
-    const m = mapInstanceRef.current;
+    const m = mapAdapterRef.current;
     if (!m) return;
     updatePortals();
     m.on("move", updatePortals);
@@ -167,7 +169,7 @@ export default function Portals({ mapRef, mapInstanceRef }: PortalsProps) {
       m.off("zoom", updatePortals);
       m.off("zoomend", updatePortals);
     };
-  }, [updatePortals, mapInstanceRef]);
+  }, [updatePortals, mapAdapterRef]);
 
   // Minimap for hover tooltip (desktop only; don't show on mobile)
   const hoveredFeature = hoveredId
@@ -243,7 +245,7 @@ export default function Portals({ mapRef, mapInstanceRef }: PortalsProps) {
       justTeleportedRef.current = false;
       return;
     }
-    const m = mapInstanceRef.current;
+    const m = mapAdapterRef.current;
     if (!m) return;
     const center = getShapeCenter(feature);
     m.flyTo(center, m.getZoom(), { duration: 0.4 });
@@ -291,7 +293,7 @@ export default function Portals({ mapRef, mapInstanceRef }: PortalsProps) {
     if (!dragState) return;
 
     const mapEl = mapRef.current;
-    const m = mapInstanceRef.current;
+    const m = mapAdapterRef.current;
 
     const clientToMapXY = (clientX: number, clientY: number) => {
       if (!mapEl) return null;
@@ -321,7 +323,7 @@ export default function Portals({ mapRef, mapInstanceRef }: PortalsProps) {
 
       if (insideMap) {
         justTeleportedRef.current = true;
-        const latLng = m.containerPointToLatLng(L.point(x, y));
+        const latLng = m.containerPointToLatLng({ x, y });
         const targetCoords: [number, number] = [latLng.lng, latLng.lat];
         const featureForTransform = {
           ...dragState.feature,
@@ -380,7 +382,7 @@ export default function Portals({ mapRef, mapInstanceRef }: PortalsProps) {
       window.removeEventListener("touchend", onTouchEnd);
       window.removeEventListener("touchcancel", onTouchEnd);
     };
-  }, [dragState, mapInstanceRef, mapRef]);
+  }, [dragState, mapAdapterRef, mapRef]);
 
   if (!mapRef.current || !map) return null;
 

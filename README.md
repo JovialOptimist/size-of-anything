@@ -28,7 +28,7 @@ This project was written and developed by Jac Chambers (that's me!), a student a
 ## Technologies Used
 
 - **Frontend**: React with TypeScript
-- **Map Rendering**: Leaflet.js
+- **Map Rendering**: Cesium (3D globe with extruded areas), Leaflet (minimaps in Portals and creation panel)
 - **State Management**: Zustand
 - **Geospatial Processing**: Turf.js, Proj4js
 - **Build Tools**: Vite, TypeScript

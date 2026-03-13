@@ -4,8 +4,10 @@
  * Enables sharing map state through URLs and restoring state from URL parameters.
  */
 import { useEffect } from "react";
+import { Cartesian3 } from "cesium";
 import { useMapStore } from "./mapStore";
 import type { GeoJSONFeature } from "./mapStoreTypes";
+import { zoomLevelToCameraHeight } from "../components/map/cesiumMapAdapter";
 
 // Define the shape of the state we want to share
 interface ShareableState {
@@ -69,10 +71,21 @@ export const applySharedState = (state: ShareableState): void => {
   if (state.mapCenter) {
     mapStore.setCurrentMapCenter(state.mapCenter);
 
-    // Get the map instance to update its view
+    const cesiumViewerRef = (window as any).cesiumViewerRef as { current: { camera: { flyTo: (opts: { destination: unknown; duration?: number }) => void } } | null } | undefined;
+    const viewer = cesiumViewerRef?.current;
+    if (viewer?.camera) {
+      const [lat, lng] = state.mapCenter;
+      const zoomLevel = state.zoomLevel ?? 11;
+      const height = zoomLevelToCameraHeight(zoomLevel);
+      viewer.camera.flyTo({
+        destination: Cartesian3.fromDegrees(lng, lat, height),
+        duration: 0.5,
+      });
+      return;
+    }
+
     const mapInstance = (window as any).mapInstanceRef?.current;
     if (mapInstance && typeof mapInstance.setView === "function") {
-      // Set both center and zoom level
       mapInstance.setView(state.mapCenter, state.zoomLevel);
     }
   }

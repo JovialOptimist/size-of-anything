@@ -1,193 +1,243 @@
 // src/components/map/MapView.tsx
 /**
  * Main map component for the Size of Anything application.
- * Handles rendering the map, area polygons, and associated interactive elements.
- * Enables functionality for dragging, selecting, and manipulating map areas.
+ * Uses Cesium for 3D globe with extruded area polygons.
  */
 import { useEffect, useRef, useState } from "react";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import {
+  Viewer,
+  Cartesian2,
+  Cartesian3,
+  CustomDataSource,
+  Math as CesiumMath,
+  Rectangle,
+  UrlTemplateImageryProvider,
+  ArcGisMapServerImageryProvider,
+  Color,
+} from "cesium";
+import "cesium/Build/Cesium/Widgets/widgets.css";
 import "../../styles/mapDarkMode.css";
 import "../../styles/ShareButton.css";
 import "../../styles/LayerToggleButton.css";
 import "../../styles/markerLabels.css";
 import { useMapStore } from "../../state/mapStore";
 import { useSettings, applyMapTheme } from "../../state/settingsStore";
-import type { MapLayerType } from "../../state/settingsStore";
-import {
-  enablePolygonDragging,
-  shouldShowMarkerForPolygon,
-  findCenterForMarker,
-} from "../utils/geometryUtils";
-import { createMarker, attachMarkerDragHandlers } from "../utils/markerUtils";
 import type { GeoJSONFeature, MapState } from "../../state/mapStoreTypes";
-import { setupAutoRefreshOnSettingsChange } from "../utils/markerUtils";
 import Portals from "./Portals";
+import { createCesiumMapAdapter } from "./cesiumMapAdapter";
+import type { IMapAdapter } from "./mapAdapter";
+import {
+  featureToEntities,
+  featureToHoverEntities,
+  createAreasDataSource,
+} from "./cesiumUtils";
+import { ScreenSpaceEventType, Cartesian3 as CesiumCartesian3 } from "cesium";
+import { hybridProjectAndTranslateGeometry } from "../utils/geometryUtils";
+import { getShapeCenter } from "./portalUtils";
 
-// Function to create tile layer based on layer type
-function createTileLayer(layerType: MapLayerType): L.TileLayer {
-  if (layerType === "satellite") {
-    return L.tileLayer(
-      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-      {
-        attribution:
-          'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
-        maxNativeZoom: 19,
-        maxZoom: 22,
-        minZoom: 2,
-        noWrap: true,
-        bounds: [
-          [-90, -180],
-          [90, 180],
-        ],
-      }
-    );
-  } else {
-    return L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/">OSM</a> contributors',
-      maxNativeZoom: 19,
-      maxZoom: 22,
-      minZoom: 2,
-      noWrap: true,
-      bounds: [
-        [-90, -180],
-        [90, 180],
-      ],
-    });
-  }
-}
-
-// improved findUserLocation with timeout + async/await
-async function findUserLocation(timeout = 3000) {
+async function findUserLocation(timeout = 3000): Promise<[number, number]> {
   const defaultCenter: [number, number] = [47.615, -122.035];
   try {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeout);
-
     const res = await fetch("https://geolocation-db.com/json/", {
       signal: controller.signal,
     });
     clearTimeout(id);
-
     if (!res.ok) return defaultCenter;
     const data = await res.json();
     if (data?.latitude && data?.longitude) {
-      return [Number(data.latitude), Number(data.longitude)] as [
-        number,
-        number
-      ];
+      return [Number(data.latitude), Number(data.longitude)] as [number, number];
     }
     return defaultCenter;
-  } catch (e) {
-    // fallback to default on error/timeout
+  } catch {
     return defaultCenter;
   }
 }
 
 export default function MapView() {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<L.Map | null>(null);
+  const viewerRef = useRef<Viewer | null>(null);
+  const mapAdapterRef = useRef<IMapAdapter | null>(null);
   const [mapReady, setMapReady] = useState(false);
-  const geoJSONLayerGroupRef = useRef<L.LayerGroup | null>(null);
-  const markersLayerGroupRef = useRef<L.LayerGroup | null>(null);
-  const hoveredCandidateLayerRef = useRef<L.LayerGroup | null>(null);
-  const markerToLayerMap = useRef<Map<L.Marker, L.GeoJSON>>(new Map());
-  const labelToLayerMap = useRef<Map<L.Marker, L.GeoJSON>>(new Map());
-  const numShapesRef = useRef(0);
-  const currentTileLayerRef = useRef<L.TileLayer | null>(null);
 
-  const geojsonAreas: GeoJSONFeature[] = useMapStore(
+  const geojsonAreas = useMapStore(
     (state: MapState) => state.geojsonAreas
-  );
-  const isSelectingArea: boolean = useMapStore(
+  ) as GeoJSONFeature[];
+  const isSelectingArea = useMapStore(
     (state: MapState) => state.isSelectingArea
   );
-  const setClickedPosition: (position: [number, number] | null) => void =
-    useMapStore((state: MapState) => state.setClickedPosition);
-  const activeAreaId: string | null = useMapStore(
+  const setClickedPosition = useMapStore(
+    (state: MapState) => state.setClickedPosition
+  );
+  const activeAreaId = useMapStore(
     (state: MapState) => state.activeAreaId
   );
-  const setActiveArea: (id: string | null) => void = useMapStore(
+  const setActiveArea = useMapStore(
     (state: MapState) => state.setActiveArea
   );
-  const setCurrentMapCenter: (center: [number, number]) => void = useMapStore(
+  const setCurrentMapCenter = useMapStore(
     (state: MapState) => state.setCurrentMapCenter
   );
-
-  const hoveredCandidate: GeoJSONFeature | null = useMapStore(
+  const hoveredCandidate = useMapStore(
     (state: MapState) => state.hoveredCandidate
   );
-
-  const magicWandMode: boolean = useMapStore(
+  const magicWandMode = useMapStore(
     (state: MapState) => state.magicWandMode
   );
+  const { mapLayerType, pinSettings } = useSettings();
 
-  // single init effect — create map once and use the store getState() inside handlers
+  const areasDataSourceRef = useRef<ReturnType<typeof createAreasDataSource> | null>(null);
+  const labelsDataSourceRef = useRef<CustomDataSource | null>(null);
+  const hoverDataSourceRef = useRef<CustomDataSource | null>(null);
+  const dragStateRef = useRef<{ featureId: string } | null>(null);
+  const didDragRef = useRef(false);
+
+  // Create Cesium Viewer and map adapter once
   useEffect(() => {
     if (!mapRef.current) return;
-
     let cancelled = false;
 
     const initMap = async () => {
       const center = await findUserLocation();
-      console.log(`Map center determined: ${center}`);
       if (cancelled) return;
 
-      // If map not created yet, create it. Otherwise just setView.
-      if (!mapInstanceRef.current) {
-        const map = L.map(mapRef.current!, {
-          zoomControl: false,
-          worldCopyJump: false,
-        }).setView(center, 11);
+      if (!viewerRef.current) {
+        const viewer = new Viewer(mapRef.current!, {
+          timeline: false,
+          animation: false,
+          baseLayerPicker: false,
+          geocoder: false,
+          homeButton: false,
+          sceneModePicker: false,
+          navigationHelpButton: false,
+          fullscreenButton: false,
+          vrButton: false,
+          infoBox: false,
+          selectionIndicator: false,
+          useDefaultRenderLoop: true,
+          requestRenderMode: false,
+        });
+
+        viewerRef.current = viewer;
+        const adapter = createCesiumMapAdapter(viewer);
+        mapAdapterRef.current = adapter;
+
         setCurrentMapCenter(center);
+        viewer.camera.flyTo({
+          destination: Cartesian3.fromDegrees(center[1], center[0], 500000),
+          duration: 0,
+        });
 
-        mapInstanceRef.current = map;
-        setMapReady(true);
+        viewer.camera.moveEnd.addEventListener(() => {
+          const carto = viewer.camera.positionCartographic;
+          setCurrentMapCenter([
+            CesiumMath.toDegrees(carto.latitude),
+            CesiumMath.toDegrees(carto.longitude),
+          ]);
+        });
 
-        L.control.zoom({ position: "bottomright" }).addTo(map);
+        const areasDataSource = createAreasDataSource();
+        viewer.dataSources.add(areasDataSource);
+        areasDataSourceRef.current = areasDataSource;
 
-        // Initialize with the current layer type from settings
-        const { mapLayerType } = useSettings.getState();
-        const tileLayer = createTileLayer(mapLayerType);
-        currentTileLayerRef.current = tileLayer;
-        tileLayer.addTo(map);
+        const labelsDataSource = new CustomDataSource("areaLabels");
+        viewer.dataSources.add(labelsDataSource);
+        labelsDataSourceRef.current = labelsDataSource;
 
-        // use getState() inside handlers so they always see the latest store values
-        map.on("click", (e: L.LeafletMouseEvent) => {
+        const hoverDataSource = new CustomDataSource("hoverHighlight");
+        viewer.dataSources.add(hoverDataSource);
+        hoverDataSourceRef.current = hoverDataSource;
+
+        const handler = viewer.screenSpaceEventHandler;
+        handler.setInputAction((click: { position?: { x: number; y: number } }) => {
+          if (didDragRef.current || !click.position) return;
+          const picked = viewer.scene.pick(click.position);
+          const entity = picked?.id;
+          if (entity && entity.name) {
+            setActiveArea(entity.name);
+            return;
+          }
+          setActiveArea(null);
           const isSelecting = useMapStore.getState().isSelectingArea;
           if (isSelecting) {
-            setClickedPosition([e.latlng.lat, e.latlng.lng]);
+            const ray = viewer.camera.getPickRay(click.position);
+            if (ray) {
+              const position = viewer.scene.globe.pick(ray, viewer.scene);
+              if (position) {
+                const carto = viewer.scene.globe.ellipsoid.cartesianToCartographic(position);
+                setClickedPosition([
+                  CesiumMath.toDegrees(carto.latitude),
+                  CesiumMath.toDegrees(carto.longitude),
+                ]);
+              }
+            }
           }
-          const onMapClick = useMapStore.getState().onMapClick;
-          if (onMapClick) onMapClick(e.latlng);
-          setActiveArea(null);
-        });
+          const onMapClickFn = useMapStore.getState().onMapClick;
+          if (onMapClickFn && viewer.scene.globe.ellipsoid) {
+            const cartesian = viewer.camera.pickEllipsoid(click.position, viewer.scene.globe.ellipsoid);
+            if (cartesian) {
+              const carto = viewer.scene.globe.ellipsoid.cartesianToCartographic(cartesian);
+              onMapClickFn({ lat: CesiumMath.toDegrees(carto.latitude), lng: CesiumMath.toDegrees(carto.longitude) } as any);
+            }
+          }
+        }, ScreenSpaceEventType.LEFT_CLICK);
 
-        map.on("zoomend", () => {
-          const c = map.getBounds().pad(0.1).getCenter();
-          setCurrentMapCenter([c.lat, c.lng]);
-          updateMarkers();
-        });
+        handler.setInputAction((movement: { position?: { x: number; y: number } }) => {
+          const dragState = dragStateRef.current;
+          if (!dragState || !movement.position) return;
+          didDragRef.current = true;
+          const ray = viewer.camera.getPickRay(movement.position);
+          if (!ray) return;
+          const position = viewer.scene.globe.pick(ray, viewer.scene) ?? viewer.scene.globe.ellipsoid.intersectRay(ray);
+          if (!position) return;
+          const carto = viewer.scene.globe.ellipsoid.cartesianToCartographic(position);
+          const targetCoordinates: [number, number] = [
+            CesiumMath.toDegrees(carto.longitude),
+            CesiumMath.toDegrees(carto.latitude),
+          ];
+          const store = useMapStore.getState();
+          const feature = store.geojsonAreas.find(
+            (f) =>
+              f.properties?.id === dragState.featureId ||
+              (f.properties?.index != null && `geojson-${f.properties.index}` === dragState.featureId)
+          );
+          if (!feature) return;
+          const featureForTransform = {
+            type: "Feature" as const,
+            properties: feature.properties,
+            geometry: {
+              type: feature.geometry.type,
+              coordinates:
+                (feature.geometry as any).currentCoordinates ??
+                (feature.geometry as any).rotatedCoordinates ??
+                feature.geometry.coordinates,
+            },
+          };
+          const translated = hybridProjectAndTranslateGeometry(
+            featureForTransform as any,
+            targetCoordinates
+          );
+          const newCoords = (translated.geometry as any).coordinates;
+          store.updateCurrentCoordinates(dragState.featureId, newCoords);
+        }, ScreenSpaceEventType.MOUSE_MOVE);
 
-        map.on("moveend", () => {
-          // safer: always update markers on moveend
-          updateMarkers();
-          const c = map.getBounds().pad(0.1).getCenter();
-          setCurrentMapCenter([c.lat, c.lng]);
-        });
+        handler.setInputAction((_click: unknown) => {
+          dragStateRef.current = null;
+          didDragRef.current = false;
+        }, ScreenSpaceEventType.LEFT_UP);
 
-        markersLayerGroupRef.current = L.layerGroup().addTo(map);
-        hoveredCandidateLayerRef.current = L.layerGroup().addTo(map);
+        handler.setInputAction((click: { position?: { x: number; y: number } }) => {
+          if (!click.position) return;
+          const picked = viewer.scene.pick(click.position);
+          const entity = picked?.id;
+          if (entity && entity.name) {
+            dragStateRef.current = { featureId: entity.name };
+          }
+        }, ScreenSpaceEventType.LEFT_DOWN);
 
-        // Expose the layer refs and functions to the window for access from marker utils and share functionality
-        (window as any).markersLayerGroupRef = markersLayerGroupRef;
-        (window as any).markerToLayerMap = markerToLayerMap;
-        (window as any).mapInstanceRef = mapInstanceRef;
-        (window as any).updateAllMapMarkers = updateMarkers;
-      } else {
-        // if map exists, just move it
-        mapInstanceRef.current.setView(center, 11);
+        (window as any).cesiumViewerRef = viewerRef;
+        setMapReady(true);
       }
     };
 
@@ -195,354 +245,177 @@ export default function MapView() {
 
     return () => {
       cancelled = true;
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.off();
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
+      if (viewerRef.current) {
+        if (areasDataSourceRef.current) {
+          viewerRef.current.dataSources.remove(areasDataSourceRef.current);
+          areasDataSourceRef.current = null;
+        }
+        if (labelsDataSourceRef.current) {
+          viewerRef.current.dataSources.remove(labelsDataSourceRef.current);
+          labelsDataSourceRef.current = null;
+        }
+        if (hoverDataSourceRef.current) {
+          viewerRef.current.dataSources.remove(hoverDataSourceRef.current);
+          hoverDataSourceRef.current = null;
+        }
+        viewerRef.current.destroy();
+        viewerRef.current = null;
       }
+      mapAdapterRef.current = null;
+      (window as any).cesiumViewerRef = undefined;
     };
-    // we reference stable setters — include them to keep eslint happy
-  }, [setClickedPosition, setActiveArea, setCurrentMapCenter]);
+  }, [setCurrentMapCenter]);
 
-  // When the map container resizes (e.g. safe-area-inset-bottom change), tell Leaflet to recalc
+  // Resize observer
   useEffect(() => {
-    if (!mapReady || !mapRef.current || !mapInstanceRef.current) return;
+    if (!mapReady || !viewerRef.current) return;
     const el = mapRef.current;
-    const map = mapInstanceRef.current;
+    if (!el) return;
     const ro = new ResizeObserver(() => {
-      map.invalidateSize();
+      viewerRef.current?.resize();
     });
     ro.observe(el);
     return () => ro.disconnect();
   }, [mapReady]);
 
+  // Apply map theme (CSS variables + Cesium globe base color)
   useEffect(() => {
-    const map = mapInstanceRef.current;
-    if (!map) {
-      return;
-    }
-
-    if (geoJSONLayerGroupRef.current) {
-      geoJSONLayerGroupRef.current.clearLayers();
-      map.removeLayer(geoJSONLayerGroupRef.current);
-    }
-
-    const group = L.layerGroup().addTo(map);
-    geoJSONLayerGroupRef.current = group;
-
-    geojsonAreas.forEach((feature: GeoJSONFeature) => {
-      const idx = feature.properties.id;
-      const polygonColor = feature.properties?.color || "blue";
-      const isActive = activeAreaId === idx;
-
-      // Clone the feature to avoid modifying the original
-      let featureToRender: GeoJSONFeature = JSON.parse(JSON.stringify(feature));
-
-      // Use currentCoordinates if available, otherwise use original coordinates
-      if (featureToRender.geometry.currentCoordinates) {
-        featureToRender.geometry.coordinates =
-          featureToRender.geometry.currentCoordinates;
-      }
-
-      // We'll only apply rotation when it's newly set through the rotation wheel,
-      // not automatically during rendering after movement.
-      // The rotation is now managed separately in the RotationWheel component
-      // and stored in a "rotatedCoordinates" property in the feature's geometry.
-      // If we have pre-calculated rotated coordinates, use those instead of recalculating
-      if (
-        featureToRender.geometry.rotatedCoordinates &&
-        featureToRender.properties.rotation !== 0
-      ) {
-        featureToRender.geometry.coordinates =
-          featureToRender.geometry.rotatedCoordinates;
-      }
-
-      const layer = L.geoJSON(featureToRender, {
-        style: {
-          color: polygonColor,
-          weight: isActive ? 4 : 2,
-          fillOpacity: 0.4,
-          opacity: isActive ? 0.9 : 0.7,
-        },
-      }).addTo(group);
-
-      // Add click handler to set active element
-      layer.on("click", (e) => {
-        L.DomEvent.stopPropagation(e);
-      });
-
-      // Only enable dragging if this is the active element or there is no active element
-      enablePolygonDragging(layer, map);
-    });
-
-    if (geojsonAreas.length > numShapesRef.current) {
-      // Find the newest shape(s) - those that were just added
-      const newShapes = geojsonAreas.slice(numShapesRef.current);
-
-      // Check if any new shape should be brought into focus
-      const shapesToFocus = newShapes.filter(
-        (shape) => shape.properties.shouldBringToFocus === true
-      );
-
-      if (shapesToFocus.length > 0) {
-        // Focus on the first shape that should be brought into focus
-        const shapeToFocus = shapesToFocus[0];
-
-        // Create a temporary GeoJSON layer to get bounds
-        const tempLayer = L.geoJSON(shapeToFocus.geometry);
-        const bounds = tempLayer.getBounds();
-
-        if (bounds.isValid()) {
-          map.fitBounds(bounds, {
-            paddingTopLeft: [120, 120],
-            paddingBottomRight: [120, 120],
-            maxZoom: 19,
-          });
-        } else {
-          console.warn("MapView: Bounds are not valid, skipping fitBounds");
-        }
-      }
-    }
-
-    numShapesRef.current = geojsonAreas.length;
-  }, [geojsonAreas, activeAreaId]);
-
-  // Function to update a specific polygon's marker or centered label
-  function updatePolygonLabels(polygon: L.Polygon, layer: L.GeoJSON) {
-    const map = mapInstanceRef.current;
-    const markerLayerGroup = markersLayerGroupRef.current;
-    if (!map || !markerLayerGroup) return;
-
-    // Calculate the new center position using bounds for stability
-    const bounds = polygon.getBounds();
-    const centerPosition = bounds.getCenter();
-
-    // Check if this polygon has a centered label
-    labelToLayerMap.current.forEach((labelLayer, label) => {
-      if (labelLayer === layer) {
-        // Update existing centered label position
-        label.setLatLng(centerPosition);
-      }
-    });
-
-    // Also check if there's a marker for this polygon
-    markerToLayerMap.current.forEach((markerLayer, marker) => {
-      if (markerLayer === layer) {
-        // Update marker position using the same stable center calculation
-        marker.setLatLng(centerPosition);
-      }
-    });
-  }
-
-  // Expose the function globally for access from geometryUtils
-  (window as any).updatePolygonLabels = updatePolygonLabels;
-
-  // Update all markers on the map based on current settings and state
-  const POLYGON_SIZE_THRESHOLD_PERCENT = 0.2; // Default threshold for showing markers
-  function updateMarkers() {
-    const map = mapInstanceRef.current;
-    const geoLayerGroup = geoJSONLayerGroupRef.current;
-    const markerLayerGroup = markersLayerGroupRef.current;
-    if (!map || !geoLayerGroup || !markerLayerGroup) return;
-
-    // Get current pin settings
-    const { pinSettings } = useSettings.getState();
-
-    // Clear existing markers and labels
-    markerLayerGroup.clearLayers();
-    markerToLayerMap.current.clear();
-    labelToLayerMap.current.clear();
-
-    // Re-evaluate each polygon for marker display
-    geoLayerGroup.eachLayer((layer) => {
-      if (!(layer instanceof L.GeoJSON)) return;
-
-      layer.eachLayer((poly) => {
-        if (!(poly instanceof L.Polygon)) return;
-
-        // Get the shape's name if available
-        let shapeName = "Unnamed Area";
-
-        try {
-          // Try getting feature from the polygon first (most direct approach)
-          const polygonFeature = (poly as any).feature;
-          if (
-            polygonFeature &&
-            polygonFeature.properties &&
-            polygonFeature.properties.name
-          ) {
-            shapeName = polygonFeature.properties.name;
-          }
-          // If that fails, try getting from the layer
-          else {
-            const layerFeature = (layer as any).feature;
-            if (layerFeature && typeof layerFeature === "object") {
-              const properties = layerFeature.properties;
-              if (properties && properties.name) {
-                shapeName = properties.name;
-              }
-            }
-          }
-        } catch (error) {
-          console.error("Error accessing shape name:", error);
-        }
-
-        // Get the position for the marker/label
-        const centerPosition = findCenterForMarker(poly);
-
-        // Check if this polygon should have a marker based on current settings
-        // Pass POLYGON_SIZE_THRESHOLD_PERCENT as the default threshold (will be overridden by settings)
-        if (
-          shouldShowMarkerForPolygon(poly, map, POLYGON_SIZE_THRESHOLD_PERCENT)
-        ) {
-          // Get the color directly from the polygon's style options
-          const polygonColor = poly.options.color || "blue";
-          const marker = createMarker(centerPosition, polygonColor, shapeName);
-          marker.addTo(markerLayerGroup);
-
-          // Store the association between marker and layer
-          markerToLayerMap.current.set(marker, layer);
-
-          // Attach drag handlers to the marker
-          attachMarkerDragHandlers(marker, layer, map);
-        } else if (shapeName && pinSettings.mode !== "disabled") {
-          // If no marker is shown but we have a shape name, check if we should show a centered label
-          // Only show centered labels if labelMode is set to "always" (not for "onlyMarker" or "disabled")
-          if (pinSettings.labelMode === "always") {
-            // Split the shapeName into two lines if it has multiple words
-            let displayName = shapeName;
-            const words = shapeName.trim().split(/\s+/);
-            if (words.length > 1 && displayName.length > 10) {
-              const mid = Math.ceil(words.length / 2);
-              displayName =
-                words.slice(0, mid).join(" ") +
-                "<br>" +
-                words.slice(mid).join(" ");
-            }
-
-            // Get font size from settings
-            const fontSize = pinSettings.fontSize || 16;
-
-            const nameLabel = L.marker(centerPosition, {
-              interactive: false, // Not clickable or draggable
-              icon: L.divIcon({
-                className: "shape-center-name",
-                html: `<div class="shape-center-name-text" style="font-size: ${fontSize}px">${displayName}</div>`,
-                iconSize: [0, 0], // Minimal size to avoid affecting the text positioning
-                iconAnchor: [0, 0], // Use center of the icon as the anchor point
-              }),
-            });
-            nameLabel.addTo(markerLayerGroup);
-
-            // Store the association between label and layer
-            labelToLayerMap.current.set(nameLabel, layer);
-          }
-        }
-      });
-    });
-  }
-
-  // Update markers when geojson areas or active area changes
-  useEffect(() => {
-    if (mapInstanceRef.current) updateMarkers();
-  }, [geojsonAreas, activeAreaId]);
-
-  // Apply map theme when settings change
-  useEffect(() => {
-    // Get the current theme settings
     const { mapTheme, theme } = useSettings.getState();
-
-    // Apply the map theme if the map is initialized
-    if (mapInstanceRef.current) {
-      applyMapTheme(mapTheme, theme);
-    }
-
-    // Subscribe to theme setting changes
-    const unsubscribe = useSettings.subscribe((state) => {
-      const { mapTheme, theme } = state;
-      applyMapTheme(mapTheme, theme);
-    });
-
-    return () => {
-      unsubscribe();
-    };
-  }, []);
-
-  // Set up auto-refresh of markers when pin settings change
-  useEffect(() => {
-    // Start listening for settings changes
-    const unsubscribe = setupAutoRefreshOnSettingsChange();
-
-    // Clean up subscription on unmount
-    return () => {
-      if (unsubscribe) unsubscribe();
-    };
-  }, []);
-
-  // Apply map theme when settings change
-  useEffect(() => {
-    // Get the current theme settings
-    const { mapTheme, theme } = useSettings.getState();
-
-    // Apply the map theme immediately
     applyMapTheme(mapTheme, theme);
-
-    // Subscribe to theme setting changes
     const unsubscribe = useSettings.subscribe((state) => {
-      const { mapTheme, theme } = state;
-      applyMapTheme(mapTheme, theme);
+      applyMapTheme(state.mapTheme, state.theme);
     });
-
-    return () => {
-      unsubscribe();
-    };
+    return () => unsubscribe();
   }, []);
 
-  // Effect for handling the hover highlight
+  // Cesium globe base color from theme
   useEffect(() => {
-    const map = mapInstanceRef.current;
-    const hoveredLayer = hoveredCandidateLayerRef.current;
+    if (!viewerRef.current) return;
+    const { mapTheme, theme } = useSettings.getState();
+    const effective =
+      mapTheme === "system"
+        ? theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches)
+        : mapTheme === "dark";
+    viewerRef.current.scene.globe.baseColor = effective
+      ? new Color(0.15, 0.15, 0.2, 1)
+      : new Color(0.5, 0.6, 0.7, 1);
+  }, [mapReady]);
 
-    if (!map || !hoveredLayer) return;
+  useEffect(() => {
+    const unsub = useSettings.subscribe((state) => {
+      if (!viewerRef.current) return;
+      const { mapTheme, theme } = state;
+      const effective =
+        mapTheme === "system"
+          ? theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches)
+          : mapTheme === "dark";
+      viewerRef.current.scene.globe.baseColor = effective
+        ? new Color(0.15, 0.15, 0.2, 1)
+        : new Color(0.5, 0.6, 0.7, 1);
+    });
+    return () => unsub();
+  }, []);
 
-    // Clear previous hover highlights
-    hoveredLayer.clearLayers();
-
-    // If there's a hovered candidate, render it with a highlight style
-    if (hoveredCandidate) {
-      L.geoJSON(hoveredCandidate, {
-        style: {
-          color: "#FF4500", // Orange-red highlight color
-          weight: 5,
-          fillOpacity: 0.2,
-          opacity: 1,
-          dashArray: "5, 10", // Dashed line for distinction
-        },
-      }).addTo(hoveredLayer);
+  // Imagery layer: OSM or Esri World Imagery (replace default)
+  useEffect(() => {
+    if (!viewerRef.current) return;
+    const viewer = viewerRef.current;
+    const layers = viewer.imageryLayers;
+    while (layers.length > 0) {
+      layers.remove(layers.get(0));
     }
+    const provider =
+      mapLayerType === "satellite"
+        ? new ArcGisMapServerImageryProvider({
+            url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+          })
+        : new UrlTemplateImageryProvider({
+            url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            subdomains: ["a", "b", "c"],
+          });
+    layers.addImageryProvider(provider);
+  }, [mapReady, mapLayerType]);
 
-    return () => {
-      // Cleanup function to clear the layer if the component unmounts
-      if (hoveredLayer) hoveredLayer.clearLayers();
-    };
+  // Sync geojsonAreas to Cesium polygon entities (with extrusion and active highlight)
+  useEffect(() => {
+    const ds = areasDataSourceRef.current;
+    if (!ds) return;
+    ds.entities.removeAll();
+    geojsonAreas.forEach((feature) => {
+      const entities = featureToEntities(feature, activeAreaId);
+      entities.forEach((e) => ds.entities.add(e));
+    });
+  }, [geojsonAreas, activeAreaId]);
+
+  // Sync labels (and optional pins) from pin settings
+  useEffect(() => {
+    const ds = labelsDataSourceRef.current;
+    if (!ds) return;
+    ds.entities.removeAll();
+    if (pinSettings.mode === "disabled") return;
+    geojsonAreas.forEach((feature) => {
+      const name = feature.properties?.name ?? "Unnamed Area";
+      if (!name && pinSettings.labelMode !== "always") return;
+      const [lat, lng] = getShapeCenter(feature);
+      const position = CesiumCartesian3.fromDegrees(lng, lat, 0);
+      if (pinSettings.labelMode === "always" || pinSettings.mode === "always") {
+        ds.entities.add({
+          position,
+          label: {
+            text: name,
+            font: `${pinSettings.fontSize ?? 16}px sans-serif`,
+            fillColor: Color.WHITE,
+            outlineColor: Color.BLACK,
+            outlineWidth: 2,
+            style: 0,
+            verticalOrigin: 1,
+            pixelOffset: new Cartesian2(0, -20),
+          },
+        });
+      }
+    });
+  }, [geojsonAreas, pinSettings.mode, pinSettings.labelMode, pinSettings.fontSize]);
+
+  // Hover candidate highlight
+  useEffect(() => {
+    const ds = hoverDataSourceRef.current;
+    if (!ds) return;
+    ds.entities.removeAll();
+    if (hoveredCandidate) {
+      featureToHoverEntities(hoveredCandidate).forEach((e) => ds.entities.add(e));
+    }
   }, [hoveredCandidate]);
 
-  // Get the current map layer type from settings
-  const { mapLayerType } = useSettings();
-
-  // Effect to handle map layer changes
+  // Fly to new shape when shouldBringToFocus
   useEffect(() => {
-    const map = mapInstanceRef.current;
-    if (!map || !currentTileLayerRef.current) return;
-
-    // Remove current tile layer
-    map.removeLayer(currentTileLayerRef.current);
-    
-    // Create and add new tile layer
-    const newTileLayer = createTileLayer(mapLayerType);
-    currentTileLayerRef.current = newTileLayer;
-    newTileLayer.addTo(map);
-  }, [mapLayerType]);
+    const viewer = viewerRef.current;
+    if (!viewer) return;
+    const toFocus = geojsonAreas.find((f) => f.properties?.shouldBringToFocus === true);
+    if (!toFocus) return;
+    const coords = (toFocus.geometry as any).currentCoordinates ?? (toFocus.geometry as any).rotatedCoordinates ?? toFocus.geometry.coordinates;
+    let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity;
+    const expand = (ring: number[][]) => {
+      for (const [lng, lat] of ring) {
+        minLng = Math.min(minLng, lng); minLat = Math.min(minLat, lat);
+        maxLng = Math.max(maxLng, lng); maxLat = Math.max(maxLat, lat);
+      }
+    };
+    if (toFocus.geometry.type === "Polygon") {
+      (coords as number[][][]).forEach(expand);
+    } else {
+      (coords as number[][][][]).forEach((part) => part.forEach(expand));
+    }
+    if (minLng !== Infinity) {
+      const west = (minLng * Math.PI) / 180;
+      const south = (minLat * Math.PI) / 180;
+      const east = (maxLng * Math.PI) / 180;
+      const north = (maxLat * Math.PI) / 180;
+      viewer.camera.flyTo({
+        destination: Rectangle.fromRadians(west, south, east, north),
+        duration: 0.5,
+      });
+    }
+  }, [geojsonAreas]);
 
   return (
     <div
@@ -550,9 +423,9 @@ export default function MapView() {
         magicWandMode ? "magic-wand-active" : ""
       }`}
     >
-      <div id="map" ref={mapRef}></div>
+      <div id="map" ref={mapRef} className="cesium-map-container" />
       {mapReady && (
-        <Portals mapRef={mapRef} mapInstanceRef={mapInstanceRef} />
+        <Portals mapRef={mapRef} mapAdapterRef={mapAdapterRef} />
       )}
     </div>
   );

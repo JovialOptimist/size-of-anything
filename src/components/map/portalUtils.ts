@@ -1,9 +1,11 @@
 /**
  * Utilities for portal markers: shape center, bounds, and edge position on screen.
+ * Works with either Leaflet (minimaps) or IMapAdapter (main Cesium map).
  */
 import L from "leaflet";
 import * as turf from "@turf/turf";
 import type { GeoJSONFeature } from "../../state/mapStoreTypes";
+import type { IMapAdapter } from "./mapAdapter";
 
 const EDGE_MARGIN_PX = 28;
 
@@ -62,13 +64,32 @@ export function getShapeBounds(feature: GeoJSONFeature): L.LatLngBounds {
 
 /**
  * Check if the shape is fully off-screen (no intersection with viewport).
+ * Works with IMapAdapter (e.g. Cesium): projects shape bbox corners to screen.
  */
 export function isShapeOffScreen(
-  map: L.Map,
+  map: IMapAdapter | L.Map,
   feature: GeoJSONFeature
 ): boolean {
-  const bounds = getShapeBounds(feature);
-  return !map.getBounds().intersects(bounds);
+  if ("getBounds" in map && typeof map.getBounds === "function") {
+    const bounds = getShapeBounds(feature);
+    return !(map as L.Map).getBounds().intersects(bounds);
+  }
+  const adapter = map as IMapAdapter;
+  const f = getFeatureForPosition(feature);
+  const bbox = turf.bbox(f);
+  const [minLng, minLat, maxLng, maxLat] = bbox;
+  const corners = [
+    [minLat, minLng],
+    [minLat, maxLng],
+    [maxLat, maxLng],
+    [maxLat, minLng],
+  ] as [number, number][];
+  const size = adapter.getSize();
+  for (const [lat, lng] of corners) {
+    const pt = adapter.latLngToContainerPoint({ lat, lng });
+    if (pt.x >= 0 && pt.x <= size.x && pt.y >= 0 && pt.y <= size.y) return false;
+  }
+  return true;
 }
 
 export interface PortalPositionOptions {
@@ -83,20 +104,30 @@ export interface PortalPositionOptions {
 export type PortalEdge = "top" | "bottom" | "left" | "right";
 
 export function getPortalPositionOnEdge(
-  map: L.Map,
-  shapeCenterLatLng: L.LatLng,
+  map: IMapAdapter | L.Map,
+  shapeCenterLatLng: L.LatLng | { lat: number; lng: number },
   options?: PortalPositionOptions
 ): { x: number; y: number; edge: PortalEdge } | null {
   const creationPanelExpanded = options?.creationPanelExpanded ?? true;
   const EXCLUDE_CREATION_LEFT = creationPanelExpanded ? EXCLUDE_CREATION_LEFT_EXPANDED : EXCLUDE_CREATION_LEFT_COLLAPSED;
   const EXCLUDE_CREATION_TOP = creationPanelExpanded ? EXCLUDE_CREATION_TOP_EXPANDED : EXCLUDE_CREATION_TOP_COLLAPSED;
-  const size = map.getSize();
+  const isLeaflet = "getBounds" in map && typeof (map as L.Map).getBounds === "function";
+  const size = isLeaflet ? (map as L.Map).getSize() : (map as IMapAdapter).getSize();
   if (!size) return null;
   const w = size.x;
   const h = size.y;
-  const center = map.getCenter();
-  const centerPoint = map.latLngToContainerPoint(center);
-  const shapePoint = map.latLngToContainerPoint(shapeCenterLatLng);
+  const center = isLeaflet
+    ? { lat: (map as L.Map).getCenter().lat, lng: (map as L.Map).getCenter().lng }
+    : (map as IMapAdapter).getCenter();
+  const centerPoint = isLeaflet
+    ? (map as L.Map).latLngToContainerPoint(L.latLng(center.lat, center.lng))
+    : (map as IMapAdapter).latLngToContainerPoint(center);
+  const shapeLatLng = "lat" in shapeCenterLatLng && "lng" in shapeCenterLatLng
+    ? shapeCenterLatLng
+    : { lat: (shapeCenterLatLng as L.LatLng).lat, lng: (shapeCenterLatLng as L.LatLng).lng };
+  const shapePoint = isLeaflet
+    ? (map as L.Map).latLngToContainerPoint(L.latLng(shapeLatLng.lat, shapeLatLng.lng))
+    : (map as IMapAdapter).latLngToContainerPoint(shapeLatLng);
 
   const cx = centerPoint.x;
   const cy = centerPoint.y;

@@ -26,6 +26,10 @@ export interface GeoJSONFeature {
     osmId: string | null;
     osmClass: string;
     color?: string; // Add color property
+    /** Optional height in meters for 3D extrusion on the map (e.g. building height). */
+    heightInMeters?: number;
+    /** Alias for heightInMeters used by some data sources. */
+    extrudedHeight?: number;
     rotation?: number; // Rotation angle in degrees
     shouldBringToFocus?: boolean; // Whether this shape should be zoomed to when added
     [key: string]: any;
