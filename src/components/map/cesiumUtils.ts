@@ -8,6 +8,7 @@ import {
   Entity,
   CustomDataSource,
   CallbackProperty,
+  HeightReference,
 } from "cesium";
 import type { GeoJSONFeature } from "../../state/mapStoreTypes";
 
@@ -91,6 +92,7 @@ export function featureToEntities(
         outlineWidth: isActive ? 4 : 2,
         height: 0,
         extrudedHeight: heightM,
+        heightReference: HeightReference.CLAMP_TO_GROUND,
       },
     });
     entities.push(entity);
@@ -113,6 +115,7 @@ export function featureToEntities(
           outlineWidth: isActive ? 4 : 2,
           height: 0,
           extrudedHeight: heightM,
+          heightReference: HeightReference.CLAMP_TO_GROUND,
         },
       });
       entities.push(entity);

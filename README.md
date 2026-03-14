@@ -25,6 +25,20 @@ This project was written and developed by Jac Chambers (that's me!), a student a
 - **Drag and Drop**: Easily move areas around the map to make size comparisons.
 - **Treasures**: Special shapes like whales and airplanes that don't exist as geographical features but are useful for size comparison.
 
+## 3D Terrain and Buildings (optional)
+
+For 3D terrain (elevation) and the global 3D buildings layer, the app uses [Cesium Ion](https://cesium.com/ion/). You need a free Cesium Ion account and an access token:
+
+1. Sign up at https://cesium.com/ion/
+2. Create or copy your default access token (Dashboard → Access Tokens)
+3. Create a `.env` file in the project root with:
+   ```
+   VITE_CESIUM_ION_TOKEN=your_token_here
+   ```
+4. Restart the dev server. With the token set, the map will show 3D terrain and you can enable "Show 3D buildings" in Settings.
+
+Without the token, the map still works with a smooth globe and your placed areas.
+
 ## Technologies Used
 
 - **Frontend**: React with TypeScript

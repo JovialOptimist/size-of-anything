@@ -4,6 +4,7 @@
 import type { GeoJSONFeature } from "../state/mapStoreTypes";
 import { countCoordinates, fixMultiPolygon } from "../components/utils/geometryUtils";
 import { describeOsmObject } from "../components/utils/describeOsmObject";
+import { parseOsmHeight } from "./osmHeightUtils";
 
 export async function fetchFeaturesAtPoint(lat: number, lng: number): Promise<GeoJSONFeature[]> {
   const features = await fetchFeaturesUsingOverpass(lat, lng);
@@ -50,6 +51,7 @@ async function fetchFeaturesUsingOverpass(lat: number, lng: number): Promise<Geo
     const places = await res.json();
     for (const place of places) {
       if (!place.geojson || (place.geojson.type !== "Polygon" && place.geojson.type !== "MultiPolygon")) continue;
+      const heightM = parseOsmHeight(place.extratags);
       const feature: GeoJSONFeature = {
         type: "Feature",
         geometry: {
@@ -66,6 +68,7 @@ async function fetchFeaturesUsingOverpass(lat: number, lng: number): Promise<Geo
           source: place.address && (place.address.city || place.address.county || place.address.state) ? "containing" : "nearby",
           adminLevel: place.extratags?.admin_level ? parseInt(place.extratags.admin_level, 10) : 0,
           tags: place.extratags || {},
+          ...(heightM != null && { heightInMeters: heightM }),
         },
       };
       features.push(fixMultiPolygon(feature));

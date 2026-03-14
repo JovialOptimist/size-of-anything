@@ -15,11 +15,20 @@ const MapSettings: React.FC = () => {
     setHighContrastMode,
     useMetricUnits,
     setUseMetricUnits,
+    show3DBuildings,
+    setShow3DBuildings,
   } = useSettings();
 
   return (
     <div className="settings-section">
       <h3>Map Display</h3>
+
+      <ToggleSetting
+        title="Show 3D Buildings"
+        description="Display global 3D buildings layer (requires Cesium Ion token)."
+        value={show3DBuildings}
+        onChange={setShow3DBuildings}
+      />
 
       <ToggleSetting
         title="High Contrast Mode"

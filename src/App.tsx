@@ -14,6 +14,7 @@ import KeyboardHandler from "./components/KeyboardHandler";
 import ShareButton from "./components/map/ShareButton";
 import FeedbackButton from "./components/map/FeedbackButton";
 import LayerToggleButton from "./components/map/LayerToggleButton";
+import Buildings3DToggle from "./components/map/Buildings3DToggle";
 import CreationPanel from "./components/creation/CreationPanel";
 import EllipsisMenu, { type RightSidebarContent } from "./components/EllipsisMenu";
 import RightSidebar from "./components/RightSidebar";
@@ -58,6 +59,7 @@ function App() {
         <ShareButton />
         <FeedbackButton />
         <LayerToggleButton />
+        <Buildings3DToggle />
       </div>
 
       <RightSidebar content={rightSidebar} onClose={() => setRightSidebar(null)} />

@@ -12,14 +12,19 @@ import {
   Math as CesiumMath,
   Rectangle,
   UrlTemplateImageryProvider,
-  ArcGisMapServerImageryProvider,
   Color,
   CallbackProperty,
+  Terrain,
+  Ion,
+  createOsmBuildingsAsync,
+  Cesium3DTileset,
+  IonResource,
 } from "cesium";
 import "cesium/Build/Cesium/Widgets/widgets.css";
 import "../../styles/mapDarkMode.css";
 import "../../styles/ShareButton.css";
 import "../../styles/LayerToggleButton.css";
+import "../../styles/Buildings3DToggle.css";
 import "../../styles/markerLabels.css";
 import { useMapStore } from "../../state/mapStore";
 import { useSettings, applyMapTheme } from "../../state/settingsStore";
@@ -90,7 +95,7 @@ export default function MapView() {
   const magicWandMode = useMapStore(
     (state: MapState) => state.magicWandMode
   );
-  const { mapLayerType, pinSettings } = useSettings();
+  const { mapLayerType, pinSettings, show3DBuildings, buildings3DType } = useSettings();
 
   const areasDataSourceRef = useRef<ReturnType<typeof createAreasDataSource> | null>(null);
   const labelsDataSourceRef = useRef<CustomDataSource | null>(null);
@@ -108,6 +113,10 @@ export default function MapView() {
   const liveCoordsRef = useRef<Record<string, number[][][] | number[][][][]>>({});
   /** Center [lat, lng] per featureId so labels follow the shape during drag. */
   const centerRef = useRef<Record<string, [number, number]>>({});
+  /** OSM Buildings 3D Tileset when show3DBuildings is on (requires Ion token). */
+  const osmBuildingsRef = useRef<Awaited<ReturnType<typeof createOsmBuildingsAsync>> | null>(null);
+  /** Google Photorealistic 3D Tileset when using Google 3D tiles (requires Google Maps API key). */
+  const googleTilesRef = useRef<Cesium3DTileset | null>(null);
 
   // Create Cesium Viewer and map adapter once
   useEffect(() => {
@@ -119,6 +128,10 @@ export default function MapView() {
       if (cancelled) return;
 
       if (!viewerRef.current) {
+        const ionToken = import.meta.env.VITE_CESIUM_ION_TOKEN;
+        if (ionToken) {
+          Ion.defaultAccessToken = ionToken;
+        }
         const viewer = new Viewer(mapRef.current!, {
           timeline: false,
           animation: false,
@@ -133,7 +146,13 @@ export default function MapView() {
           selectionIndicator: false,
           useDefaultRenderLoop: true,
           requestRenderMode: false,
+          terrain: ionToken
+            ? Terrain.fromWorldTerrain({ requestVertexNormals: true })
+            : undefined,
         });
+        if (ionToken) {
+          viewer.scene.globe.enableLighting = true;
+        }
 
         viewerRef.current = viewer;
         const adapter = createCesiumMapAdapter(viewer);
@@ -395,8 +414,9 @@ export default function MapView() {
     }
     const provider =
       mapLayerType === "satellite"
-        ? new ArcGisMapServerImageryProvider({
-            url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+        ? new UrlTemplateImageryProvider({
+            url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+            credit: "Tiles © Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community"
           })
         : new UrlTemplateImageryProvider({
             url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -404,6 +424,175 @@ export default function MapView() {
           });
     layers.addImageryProvider(provider);
   }, [mapReady, mapLayerType]);
+
+  // 3D Buildings layer (OSM Buildings or Google Photorealistic 3D Tiles)
+  useEffect(() => {
+    const viewer = viewerRef.current;
+    if (!viewer) return;
+
+    console.log("3D Buildings effect running with:", { 
+      show3DBuildings, 
+      buildings3DType,
+      mapReady,
+      viewer: !!viewer 
+    });
+
+    // Clean up any existing 3D buildings
+    const cleanupOsmBuildings = () => {
+      const current = osmBuildingsRef.current;
+      if (current && viewer.scene.primitives.contains(current)) {
+        viewer.scene.primitives.remove(current);
+        osmBuildingsRef.current = null;
+        console.log("Cleaned up OSM buildings");
+      }
+    };
+
+    const cleanupGoogleTiles = () => {
+      const current = googleTilesRef.current;
+      if (current && viewer.scene.primitives.contains(current)) {
+        viewer.scene.primitives.remove(current);
+        googleTilesRef.current = null;
+        console.log("Cleaned up Google tiles");
+      }
+    };
+
+    console.log("Testing Cesium3DTileset availability:", typeof Cesium3DTileset);
+    
+    if (!show3DBuildings || buildings3DType === "disabled") {
+      console.log("3D buildings disabled, cleaning up");
+      cleanupOsmBuildings();
+      cleanupGoogleTiles();
+      return;
+    }
+
+    let cancelled = false;
+
+    // Smart fallback: try Google first, fall back to OSM if no API key
+    const googleApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+    const ionToken = import.meta.env.VITE_CESIUM_ION_TOKEN;
+    
+    console.log("API keys available:", { 
+      googleApiKey: !!googleApiKey, 
+      ionToken: !!ionToken 
+    });
+    
+    if (buildings3DType === "google" && !googleApiKey && ionToken) {
+      // Fallback to OSM when Google is selected but no API key is available
+      cleanupGoogleTiles();
+      console.log("Google API key not found, falling back to OSM Buildings...");
+      
+      createOsmBuildingsAsync()
+        .then((tileset) => {
+          if (cancelled || !viewerRef.current) return;
+          cleanupOsmBuildings();
+          viewer.scene.primitives.add(tileset);
+          osmBuildingsRef.current = tileset;
+          console.log("OSM Buildings loaded (fallback from Google)");
+        })
+        .catch((err) => console.warn("Failed to load OSM Buildings fallback:", err));
+
+    } else if (buildings3DType === "osm" && ionToken) {
+      // Use OSM Buildings explicitly
+      cleanupGoogleTiles();
+      console.log("Loading OSM Buildings explicitly...");
+      
+      createOsmBuildingsAsync()
+        .then((tileset) => {
+          if (cancelled || !viewerRef.current) return;
+          cleanupOsmBuildings();
+          viewer.scene.primitives.add(tileset);
+          osmBuildingsRef.current = tileset;
+          console.log("OSM Buildings loaded successfully!");
+        })
+        .catch((err) => console.warn("Failed to load OSM Buildings layer:", err));
+
+    } else if (buildings3DType === "google" && googleApiKey) {
+      // Use Google Photorealistic 3D Tiles
+      cleanupOsmBuildings();
+      
+      const loadGoogleTiles = async () => {
+        try {
+          console.log("Loading Google Photorealistic 3D Tiles...");
+          // Use the correct Cesium API - fromUrl returns a Promise
+          const tileset = await Cesium3DTileset.fromUrl(
+            `https://tile.googleapis.com/v1/3dtiles/root.json?key=${googleApiKey}`
+          );
+
+          if (cancelled || !viewerRef.current) return;
+          cleanupGoogleTiles();
+          viewer.scene.primitives.add(tileset);
+          googleTilesRef.current = tileset;
+          console.log("Google Photorealistic 3D Tiles loaded successfully");
+
+        } catch (error) {
+          console.warn("Failed to load Google Photorealistic 3D Tiles:", error);
+          console.warn("Make sure your Google Maps API key is valid and has the Map Tiles API enabled");
+          
+          // Fallback to OSM buildings if Google fails and Ion token is available
+          if (ionToken && !cancelled) {
+            console.log("Falling back to OSM Buildings due to Google failure...");
+            try {
+              const osmTileset = await createOsmBuildingsAsync();
+              if (cancelled || !viewerRef.current) return;
+              viewer.scene.primitives.add(osmTileset);
+              osmBuildingsRef.current = osmTileset;
+              console.log("OSM Buildings loaded as fallback");
+            } catch (osmErr) {
+              console.warn("Failed to load OSM Buildings fallback:", osmErr);
+            }
+          }
+        }
+      };
+      
+      loadGoogleTiles();
+
+    } else if (buildings3DType === "google" && !googleApiKey && ionToken) {
+      // Fallback to OSM when Google is selected but no API key is available
+      cleanupGoogleTiles();
+      console.log("Google API key not found, falling back to OSM Buildings...");
+      
+      createOsmBuildingsAsync()
+        .then((tileset) => {
+          if (cancelled || !viewerRef.current) return;
+          cleanupOsmBuildings(); // Clean up any existing OSM buildings
+          viewer.scene.primitives.add(tileset);
+          osmBuildingsRef.current = tileset;
+          console.log("OSM Buildings loaded (fallback from Google)");
+        })
+        .catch((err) => console.warn("Failed to load OSM Buildings fallback:", err));
+
+    } else if (buildings3DType === "osm" && ionToken) {
+      // Use OSM Buildings explicitly
+      cleanupGoogleTiles();
+      console.log("Loading OSM Buildings explicitly...");
+      
+      createOsmBuildingsAsync()
+        .then((tileset) => {
+          if (cancelled || !viewerRef.current) return;
+          cleanupOsmBuildings(); // Clean up any existing OSM buildings
+          viewer.scene.primitives.add(tileset);
+          osmBuildingsRef.current = tileset;
+          console.log("OSM Buildings loaded");
+        })
+        .catch((err) => console.warn("Failed to load OSM Buildings layer:", err));
+
+    } else {
+      // No valid configuration found
+      console.log("No valid 3D buildings configuration found");
+      if (!ionToken) {
+        console.warn("Cesium Ion token required for 3D buildings");
+      }
+      if (buildings3DType === "google" && !googleApiKey) {
+        console.warn("Google Maps API key required for Photorealistic 3D Tiles. Add VITE_GOOGLE_MAPS_API_KEY to your .env file.");
+      }
+    }
+
+    return () => {
+      cancelled = true;
+      cleanupOsmBuildings();
+      cleanupGoogleTiles();
+    };
+  }, [mapReady, show3DBuildings, buildings3DType]);
 
   // Sync geojsonAreas to Cesium polygon entities (with extrusion and active highlight).
   // Entities use CallbackProperty for hierarchy reading from liveCoordsRef so drag is smooth.

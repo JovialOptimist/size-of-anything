@@ -30,6 +30,9 @@ export interface PinSettings {
 // Outline quality setting (for shape simplification)
 export type OutlineQuality = "perfect" | "great" | "good" | "low";
 
+// 3D buildings type
+export type Buildings3DType = "osm" | "google" | "disabled";
+
 // Complete settings state interface
 export interface SettingsState {
   // Theme settings
@@ -63,6 +66,14 @@ export interface SettingsState {
   // Units display settings
   useMetricUnits: boolean;
   setUseMetricUnits: (useMetricUnits: boolean) => void;
+
+  // 3D buildings layer (Cesium Ion OSM Buildings or Google Photorealistic 3D Tiles)
+  show3DBuildings: boolean;
+  setShow3DBuildings: (show: boolean) => void;
+  
+  // 3D buildings type selection
+  buildings3DType: Buildings3DType;
+  setBuildings3DType: (type: Buildings3DType) => void;
 }
 
 // Check for system preference
@@ -102,7 +113,7 @@ export const useSettings = create<SettingsState>()(
       setMapTheme: (mapTheme) => set({ mapTheme }),
 
       // Map layer settings
-      mapLayerType: "osm", // Default to OSM
+      mapLayerType: "satellite", // Default to satellite imagery
       setMapLayerType: (layerType) => set({ mapLayerType: layerType }),
 
       // Pin settings with defaults
@@ -141,6 +152,14 @@ export const useSettings = create<SettingsState>()(
       // Units display settings
       useMetricUnits: true, // Default to metric units
       setUseMetricUnits: (useMetricUnits) => set({ useMetricUnits }),
+
+      // 3D buildings layer
+      show3DBuildings: true,
+      setShow3DBuildings: (show3DBuildings) => set({ show3DBuildings }),
+      
+      // 3D buildings type
+      buildings3DType: "google", // Default to Google Photorealistic 3D Tiles
+      setBuildings3DType: (buildings3DType) => set({ buildings3DType }),
     }),
     {
       name: "size-of-anything-settings",
@@ -153,6 +172,8 @@ export const useSettings = create<SettingsState>()(
         outlineQuality: state.outlineQuality,
         highContrastMode: state.highContrastMode,
         useMetricUnits: state.useMetricUnits,
+        show3DBuildings: state.show3DBuildings,
+        buildings3DType: state.buildings3DType,
       }),
     }
   )

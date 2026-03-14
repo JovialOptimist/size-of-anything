@@ -8,6 +8,7 @@ import { describeOsmObject } from "../utils/describeOsmObject";
 import { InformationBubble } from "../ui/informationBubble";
 import { DismissableMessage } from "../ui/DismissableMessage";
 import { countCoordinates, fixMultiPolygon } from "../utils/geometryUtils";
+import { parseOsmHeight } from "../../utils/osmHeightUtils";
 import "../../styles/MagicWandPanel.css";
 import "../../styles/TextSearchPanel.css";
 import { useSettings } from "../../state/settingsStore";
@@ -214,7 +215,7 @@ export default function TextSearchPanel() {
                 place.geojson.type === "MultiPolygon")
           )
           .map((place: any) => {
-            // Create a GeoJSON feature similar to TextSearchPanel
+            const heightM = parseOsmHeight(place.extratags);
             const feature: GeoJSONFeature = {
               type: "Feature" as "Feature",
               geometry: {
@@ -241,6 +242,7 @@ export default function TextSearchPanel() {
                   ? parseInt(place.extratags.admin_level, 10)
                   : 0,
                 tags: place.extratags || {},
+                ...(heightM != null && { heightInMeters: heightM }),
               },
             };
 
