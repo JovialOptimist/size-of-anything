@@ -1,6 +1,6 @@
 # The Size of Anything
 
-The Size of Anything is a website that lets you drag and drop any area in the real world; buildings, parks, countries, states - literally anything! For example, you can compare the sizes of Seattle and London, find a new place for Disneyland that is conveniently close to where you live, or just put 50 blue whales in your backyard. 
+The Size of Anything (https://thesizeofanything.com) is a website that lets you drag and drop any area in the real world; buildings, parks, countries, states - literally anything! For example, you can compare the sizes of Seattle and London, find a new place for Disneyland that is conveniently close to where you live, or just put 50 blue whales in your backyard. 
 
 <img width="1410" height="628" alt="A screenshot from https://thesizeofanything.com, showcasing a comparison of Disneyland, the Univeristy of Washington Bothell campus, Vatican City, and Central Park, overlayed on a subsection of the Seattle metro area" src="https://github.com/user-attachments/assets/7ff7ad57-5c7d-4825-a5f7-2b742e3b200b" />
 
