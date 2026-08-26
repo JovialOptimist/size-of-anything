@@ -53,8 +53,8 @@ export const SPECIAL_SHAPES: SpecialShapeDefinition[] = [
     id: "grand-piano",
     name: "Grand Piano",
     description: "Full-size concert grand piano",
-    widthInMeters: 2.74,
-    heightInMeters: 1.57,
+    widthInMeters: 1.57,
+    heightInMeters: 2.74,
   },
 ];
 
