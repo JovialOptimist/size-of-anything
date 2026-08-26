@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg id="Layer_1"
     xmlns="http://www.w3.org/2000/svg" version="1.1"
-    viewBox="0 0 292 157">
+    viewBox="0 0 280 180">
     <!-- Top-down silhouette of a grand piano: straight keyboard edge and
-         spine on the left/top, curved bent side sweeping to the tail on the right. -->
-    <path d="M0,10 L230,25 Q292,40 292,70 Q292,100 250,110 C210,150 120,157 60,150 Q20,145 15,130 L0,120 L0,10 Z" fill="none" stroke="#000000" stroke-width="4" />
+         straight side at the top-left, with the characteristic notch at
+         the front corner where the case steps out into the curved bent
+         side sweeping around to the tail. -->
+    <path d="M0,0 L230,0 Q280,5 280,60 Q280,100 250,125 C200,170 120,180 60,165 C30,158 15,150 15,145 L0,160 L0,0 Z" fill="none" stroke="#000000" stroke-width="4" />
 </svg>
