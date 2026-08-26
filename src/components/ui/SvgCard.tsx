@@ -148,6 +148,8 @@ function svgPathToGeoJSONFeature(
         : [...geoPoints, geoPoints[0]];
 
     // Step 6: Return GeoJSON Feature
+    const shapeId =
+      "special-" + featureDisplayName.toLowerCase().replace(/\s+/g, "-");
     return {
       type: "Feature",
       geometry: {
@@ -158,10 +160,11 @@ function svgPathToGeoJSONFeature(
       properties: {
         name: featureDisplayName,
         whatIsIt,
-        osmType:
-          "special-" + featureDisplayName.toLowerCase().replace(/\s+/g, "-"),
+        osmType: shapeId,
         osmId: `svg-${Math.random().toString(36).slice(2)}`,
         osmClass: "svg-shape",
+        shapeKind: "special",
+        shapeId,
         location: "",
       },
     };

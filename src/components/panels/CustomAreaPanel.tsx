@@ -141,6 +141,7 @@ const CustomAreaPanel: React.FC = () => {
         osmId: null,
         customId: `custom-square-${Math.random().toString(36).slice(2)}`,
         osmClass: "custom-shape",
+        shapeKind: "custom-square",
       },
     };
   };
@@ -192,6 +193,7 @@ const CustomAreaPanel: React.FC = () => {
         osmId: null,
         customId: `custom-circle-${Math.random().toString(36).slice(2)}`,
         osmClass: "custom-shape",
+        shapeKind: "custom-circle",
       },
     };
   };
