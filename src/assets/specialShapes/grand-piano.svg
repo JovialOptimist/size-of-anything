@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1"
+    xmlns="http://www.w3.org/2000/svg" version="1.1"
+    viewBox="0 0 267 464">
+    <!-- Top-down silhouette of a grand piano, traced from a scale floor plan:
+         keyboard/straight side at the bottom, curved bent side and tail at the top. -->
+    <path d="M265.5,464 L1.5,464 L0,462.5 L0,57.5 L4,39.5 L11,26.5 L21.5,16 L33.5,8 L50.5,2 L66.5,1 L67.5,0 L96.5,1 L112.5,4 L129.5,10 L143.5,17 L153.5,24 L162,32.5 L166,38.5 L173,55.5 L175,65.5 L177,86.5 L178,87.5 L178,97.5 L179,98.5 L184,180.5 L185,181.5 L187,202.5 L195,232.5 L202,247.5 L212,261.5 L222.5,270 L244.5,281 L253.5,287 L261,295.5 L267,311.5 L267,462.5 L265.5,464 Z" fill="none" stroke="#000000" stroke-width="6" />
+</svg>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10.97 23.77">
+    <path d="M0,0 L10.97,0 L10.97,23.77 L0,23.77 Z" fill="none" stroke="#000000" stroke-width="0.34" />
+    <line x1="0" y1="11.885" x2="10.97" y2="11.885" stroke="#000000" stroke-width="0.34" />
+    <line x1="1.37" y1="0" x2="1.37" y2="23.77" stroke="#000000" stroke-width="0.34" />
+    <line x1="9.600000000000001" y1="0" x2="9.600000000000001" y2="23.77" stroke="#000000" stroke-width="0.34" />
+    <line x1="1.37" y1="5.484999999999999" x2="9.600000000000001" y2="5.484999999999999" stroke="#000000" stroke-width="0.34" />
+    <line x1="1.37" y1="18.285" x2="9.600000000000001" y2="18.285" stroke="#000000" stroke-width="0.34" />
+    <line x1="5.485" y1="5.484999999999999" x2="5.485" y2="18.285" stroke="#000000" stroke-width="0.34" />
+</svg>

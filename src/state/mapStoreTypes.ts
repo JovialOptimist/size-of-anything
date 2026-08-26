@@ -9,6 +9,17 @@ export interface MapArea {
   properties?: Record<string, any>;
 }
 
+/**
+ * What kind of shape a GeoJSONFeature represents.
+ * - undefined: a real place, looked up via OSM search (Nominatim/Overpass).
+ * - "special": one of the predefined catalog shapes (see src/data/specialShapes.ts).
+ * - "custom-circle" / "custom-square": a user-defined circle or square from the Custom panel.
+ *
+ * This is the single source of truth for "what kind of shape is this" -
+ * check `shapeKind` directly instead of pattern-matching osmType/osmClass/customId strings.
+ */
+export type ShapeKind = "special" | "custom-circle" | "custom-square";
+
 export interface GeoJSONFeature {
   type: "Feature";
   geometry: {
@@ -25,6 +36,8 @@ export interface GeoJSONFeature {
     osmType: string;
     osmId: string | null;
     osmClass: string;
+    shapeKind?: ShapeKind; // Set for generated shapes; absent for real OSM search results
+    shapeId?: string; // Stable identifier for a generated shape's identity, e.g. "special-blue-whale"
     color?: string; // Add color property
     rotation?: number; // Rotation angle in degrees
     shouldBringToFocus?: boolean; // Whether this shape should be zoomed to when added

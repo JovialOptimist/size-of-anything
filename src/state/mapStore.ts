@@ -249,14 +249,10 @@ export const useMapStore = create<MapState>((set) => ({
       // Store the sequential index for backward compatibility
       const sequentialIndex = state.geojsonAreas.length;
 
-      // Check if this is a special shape based on osmType
-      const isSpecialShape =
-        feature.properties?.osmType?.includes("special-") || false;
-      const isCustomShape =
-        feature.properties?.osmClass === "custom-shape" ||
-        feature.properties?.osmType === "custom-square" ||
-        feature.properties?.osmType === "custom-circle" ||
-        false;
+      // Generated shapes (special catalog shapes, custom circles/squares) are
+      // tagged with shapeKind; real OSM search results have none. Only OSM
+      // results should trigger the map auto-zoom-to-focus behavior.
+      const isGeneratedShape = feature.properties?.shapeKind !== undefined;
 
       // Split name into name and location if it contains a comma
       let shapeName = feature.properties?.name || "Unnamed Area";
@@ -285,7 +281,7 @@ export const useMapStore = create<MapState>((set) => ({
           color,
           index: sequentialIndex, // Keep the index for backward compatibility
           id: uniqueId, // Store the unique ID in properties too
-          shouldBringToFocus: !isSpecialShape && !placeAtCenter && !isCustomShape, // Don't zoom for special/custom or place-at-center
+          shouldBringToFocus: !isGeneratedShape && !placeAtCenter, // Don't zoom for special/custom or place-at-center
         },
       };
 
@@ -627,33 +623,30 @@ export const useMapStore = create<MapState>((set) => ({
         featureCopy.properties.location = shapeLocation;
       }
 
-      if (
-        featureCopy.properties.customId &&
-        featureCopy.properties.customId.includes("special-shape")
-      ) {
-        state.historyItems.some((item) => {
-          if (
-            item.properties.customId.includes(featureCopy.properties.customId)
-          )
-            return false;
-        });
-      }
-
-      // Check if this feature is already in history
+      // Check if this feature is already in history. Identity depends on
+      // what kind of shape it is:
+      //  - special catalog shapes are always identical for a given
+      //    shapeId, so one history entry per landmark is enough.
+      //  - custom circles/squares vary by size, so they're deduped by
+      //    name (which encodes the size, e.g. "5 km Circle").
+      //  - real OSM search results are deduped by osmId, falling back to name.
       const isAlreadyInHistory = state.historyItems.some((item) => {
+        if (featureCopy.properties.shapeKind === "special") {
+          return item.properties.shapeId === featureCopy.properties.shapeId;
+        }
         if (
-          featureCopy.properties.osmType === item.properties.osmType &&
-          (featureCopy.properties.osmType.includes("special-") ||
-            featureCopy.properties.osmType.includes("custom-"))
+          featureCopy.properties.shapeKind === "custom-circle" ||
+          featureCopy.properties.shapeKind === "custom-square"
         ) {
-          return true;
+          return (
+            item.properties.shapeKind === featureCopy.properties.shapeKind &&
+            item.properties.name === featureCopy.properties.name
+          );
         }
         // Check by osmId if available
         if (item.properties.osmId && featureCopy.properties.osmId) {
           return item.properties.osmId === featureCopy.properties.osmId;
         }
-        // For custom shapes without osmId, check by name and any custom identifier
-
         // As a fallback, check by name
         return item.properties.name === featureCopy.properties.name;
       });

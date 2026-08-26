@@ -20,6 +20,9 @@ interface CardProps {
   description?: string;
   // Optional icon/image
   iconUrl?: string;
+  // "row" (default): icon + name + description in a row, used by Search/History.
+  // "tile": icon on top, name below, no description - used by the Special panel's grid.
+  variant?: "row" | "tile";
 }
 
 /**
@@ -31,6 +34,7 @@ const Card: React.FC<CardProps> = ({
   name,
   description,
   iconUrl,
+  variant = "row",
 }) => {
   const addGeoJSONFromSearch = useMapStore(
     (state) => state.addGeoJSONFromSearch
@@ -106,25 +110,37 @@ const Card: React.FC<CardProps> = ({
 
   return (
     <div
-      className="area-card"
+      className={`area-card area-card-${variant}`}
       onClick={handleCardClick}
       tabIndex={0}
       role="button"
+      title={variant === "tile" ? displayName : undefined}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") handleCardClick();
       }}
     >
-      <div className="area-card-content">
-        {iconUrl && (
-          <div className="area-card-icon">
-            <img src={iconUrl} alt="" width={24} height={24} />
+      {variant === "tile" ? (
+        <>
+          {iconUrl && (
+            <div className="area-card-tile-icon">
+              <img src={iconUrl} alt="" />
+            </div>
+          )}
+          <h3 className="area-card-tile-title">{displayName}</h3>
+        </>
+      ) : (
+        <div className="area-card-content">
+          {iconUrl && (
+            <div className="area-card-icon">
+              <img src={iconUrl} alt="" width={24} height={24} />
+            </div>
+          )}
+          <div className="area-card-text">
+            <h3 className="area-card-title">{displayName}</h3>
+            <p className="area-card-description">{displayDescription}</p>
           </div>
-        )}
-        <div className="area-card-text">
-          <h3 className="area-card-title">{displayName}</h3>
-          <p className="area-card-description">{displayDescription}</p>
         </div>
-      </div>
+      )}
     </div>
   );
 };

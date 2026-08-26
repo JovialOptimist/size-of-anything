@@ -23,6 +23,7 @@ interface SvgCardProps {
   widthInMeters?: number;
   heightInMeters?: number;
   samplePoints?: number;
+  variant?: "row" | "tile";
 }
 
 /**
@@ -37,6 +38,7 @@ const SvgCard: React.FC<SvgCardProps> = ({
   widthInMeters = 100, // Default width if not specified
   heightInMeters = 100, // Default height if not specified
   samplePoints = 1000, // Default number of sample points
+  variant = "row",
 }) => {
   const currentMapCenter = useMapStore((state) => state.currentMapCenter);
 
@@ -90,7 +92,7 @@ const SvgCard: React.FC<SvgCardProps> = ({
   if (!geoJsonFeature) return null;
 
   // Return a Card with the feature and the SVG as the icon
-  return <Card feature={geoJsonFeature} iconUrl={svgUrl} />;
+  return <Card feature={geoJsonFeature} iconUrl={svgUrl} variant={variant} />;
 };
 
 // Import the function from SpecialPanel to avoid circular dependencies
@@ -148,6 +150,8 @@ function svgPathToGeoJSONFeature(
         : [...geoPoints, geoPoints[0]];
 
     // Step 6: Return GeoJSON Feature
+    const shapeId =
+      "special-" + featureDisplayName.toLowerCase().replace(/\s+/g, "-");
     return {
       type: "Feature",
       geometry: {
@@ -158,10 +162,11 @@ function svgPathToGeoJSONFeature(
       properties: {
         name: featureDisplayName,
         whatIsIt,
-        osmType:
-          "special-" + featureDisplayName.toLowerCase().replace(/\s+/g, "-"),
+        osmType: shapeId,
         osmId: `svg-${Math.random().toString(36).slice(2)}`,
         osmClass: "svg-shape",
+        shapeKind: "special",
+        shapeId,
         location: "",
       },
     };

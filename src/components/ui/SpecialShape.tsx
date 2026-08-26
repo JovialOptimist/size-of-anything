@@ -13,6 +13,7 @@ interface SpecialShapeProps {
   description: string;
   widthInMeters?: number;
   heightInMeters?: number;
+  variant?: "row" | "tile";
 }
 
 /**
@@ -25,6 +26,7 @@ const SpecialShape: React.FC<SpecialShapeProps> = ({
   description,
   widthInMeters,
   heightInMeters,
+  variant = "row",
 }) => {
   const [svgContent, setSvgContent] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -46,11 +48,19 @@ const SpecialShape: React.FC<SpecialShapeProps> = ({
   }, [svgUrl]);
 
   if (isLoading) {
-    return <div className="loading-card">Loading {name}...</div>;
+    return (
+      <div className={`loading-card loading-card-${variant}`}>
+        Loading {name}...
+      </div>
+    );
   }
 
   if (error || !svgContent) {
-    return <div className="error-card">{error || "Failed to load shape"}</div>;
+    return (
+      <div className={`error-card error-card-${variant}`}>
+        {error || "Failed to load shape"}
+      </div>
+    );
   }
 
   return (
@@ -61,6 +71,7 @@ const SpecialShape: React.FC<SpecialShapeProps> = ({
       description={description}
       widthInMeters={widthInMeters}
       heightInMeters={heightInMeters}
+      variant={variant}
     />
   );
 };

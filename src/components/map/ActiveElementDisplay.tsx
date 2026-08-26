@@ -103,7 +103,10 @@ const ActiveElementDisplay: React.FC = () => {
       : areaSizeNum >= 1e3
       ? formatNumberWithCommas(Number(areaSizeNum.toFixed(0))) + " km²"
       : areaSizeNum < 0.1
-      ? (areaSizeNum * 1e6).toFixed(0) + " m²"
+      ? (() => {
+          const areaInM2 = areaSizeNum * 1e6;
+          return (areaInM2 < 1 ? areaInM2.toFixed(2) : areaInM2.toFixed(0)) + " m²";
+        })()
       : areaSizeNum.toFixed(2) + " km²"
     : // Imperial units
     areaSizeNum >= 1e6
