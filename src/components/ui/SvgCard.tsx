@@ -23,6 +23,7 @@ interface SvgCardProps {
   widthInMeters?: number;
   heightInMeters?: number;
   samplePoints?: number;
+  variant?: "row" | "tile";
 }
 
 /**
@@ -37,6 +38,7 @@ const SvgCard: React.FC<SvgCardProps> = ({
   widthInMeters = 100, // Default width if not specified
   heightInMeters = 100, // Default height if not specified
   samplePoints = 1000, // Default number of sample points
+  variant = "row",
 }) => {
   const currentMapCenter = useMapStore((state) => state.currentMapCenter);
 
@@ -90,7 +92,7 @@ const SvgCard: React.FC<SvgCardProps> = ({
   if (!geoJsonFeature) return null;
 
   // Return a Card with the feature and the SVG as the icon
-  return <Card feature={geoJsonFeature} iconUrl={svgUrl} />;
+  return <Card feature={geoJsonFeature} iconUrl={svgUrl} variant={variant} />;
 };
 
 // Import the function from SpecialPanel to avoid circular dependencies
