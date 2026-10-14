@@ -3,7 +3,7 @@
  * Functionality to synchronize application state with the URL.
  * Enables sharing map state through URLs and restoring state from URL parameters.
  */
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useMapStore } from "./mapStore";
 import type { GeoJSONFeature } from "./mapStoreTypes";
 
@@ -83,6 +83,10 @@ export const applySharedState = (state: ShareableState): void => {
  */
 export const useUrlSync = () => {
   const { activeAreaId, areas, setActiveArea } = useMapStore();
+  // The ?area= param from page load selects that shape once it exists; after that the URL follows the selection
+  const initialAreaParamRef = useRef<string | null>(
+    new URLSearchParams(window.location.search).get("area")
+  );
 
   // Check for shared state on initial load
   useEffect(() => {
@@ -108,12 +112,9 @@ export const useUrlSync = () => {
     }
 
     // Regular URL sync for non-shared states
-    const params = new URLSearchParams(window.location.search);
-
-    // Panel tracking from URL removed as per requirements
-
-    const areaParam = params.get("area");
+    const areaParam = initialAreaParamRef.current;
     if (areaParam && areas.some((area) => area.id === areaParam)) {
+      initialAreaParamRef.current = null;
       setActiveArea(areaParam);
     }
   }, [areas, setActiveArea]);
