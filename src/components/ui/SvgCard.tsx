@@ -10,10 +10,8 @@ import {
   getLongestPath,
   extractViewBox,
 } from "../utils/svgUtils";
-import type { GeoJSONFeature } from "../../state/mapStoreTypes";
 import { useMapStore } from "../../state/mapStore";
-import { svgPathProperties } from "svg-path-properties";
-import { countCoordinates } from "../utils/geometryUtils";
+import { svgPathToGeoJSONFeature } from "../utils/specialShapes";
 
 interface SvgCardProps {
   svgUrl: string;
@@ -93,84 +91,4 @@ const SvgCard: React.FC<SvgCardProps> = ({
   return <Card feature={geoJsonFeature} iconUrl={svgUrl} />;
 };
 
-// Import the function from SpecialPanel to avoid circular dependencies
-// In a real implementation, this should be moved to a shared utility file
-function svgPathToGeoJSONFeature(
-  svgPath: string,
-  widthInMeters: number,
-  heightInMeters: number,
-  centerLatLng: [number, number], // [lng, lat] in degrees
-  samplePoints: number = 100,
-  featureDisplayName = "Custom Shape",
-  whatIsIt = "Converted from SVG"
-): GeoJSONFeature | null {
-  try {
-    const [centerLng, centerLat] = centerLatLng;
-
-    const props = new svgPathProperties(svgPath);
-    const totalLength = props.getTotalLength();
-
-    const rawPoints = Array.from({ length: samplePoints }, (_, i) =>
-      props.getPointAtLength((i / (samplePoints - 1)) * totalLength)
-    );
-
-    // Step 2: Get bounding box dimensions of the raw SVG path
-    const minX = Math.min(...rawPoints.map((p) => p.x));
-    const maxX = Math.max(...rawPoints.map((p) => p.x));
-    const minY = Math.min(...rawPoints.map((p) => p.y));
-    const maxY = Math.max(...rawPoints.map((p) => p.y));
-    const bboxWidth = maxX - minX;
-    const bboxHeight = maxY - minY;
-
-    // Step 3: Normalize and scale to meters
-    const scaledToMeters: [number, number][] = rawPoints.map((p) => {
-      const x = ((p.x - minX) / bboxWidth - 0.5) * widthInMeters; // center at 0
-      const y = -((p.y - minY) / bboxHeight - 0.5) * heightInMeters;
-      return [x, y]; // in meters
-    });
-
-    // Step 4: Convert meters to lat/lng degrees
-    const metersToLatLng = ([mx, my]: [number, number]): [number, number] => {
-      // Use a more stable calculation that's less affected by latitude
-      const latOffset = my / 111_320; // meters per degree latitude
-      const lngOffset = mx / (111_320 * Math.cos((centerLat * Math.PI) / 180));
-
-      return [centerLng + lngOffset, centerLat + latOffset];
-    };
-
-    const geoPoints = scaledToMeters.map(metersToLatLng);
-
-    // Step 5: Ensure polygon is closed
-    const closedGeoPoints =
-      JSON.stringify(geoPoints[0]) ===
-      JSON.stringify(geoPoints[geoPoints.length - 1])
-        ? geoPoints
-        : [...geoPoints, geoPoints[0]];
-
-    // Step 6: Return GeoJSON Feature
-    return {
-      type: "Feature",
-      geometry: {
-        type: "Polygon",
-        coordinates: [closedGeoPoints],
-        coordinateCount: countCoordinates([closedGeoPoints]),
-      },
-      properties: {
-        name: featureDisplayName,
-        whatIsIt,
-        osmType:
-          "special-" + featureDisplayName.toLowerCase().replace(/\s+/g, "-"),
-        osmId: `svg-${Math.random().toString(36).slice(2)}`,
-        osmClass: "svg-shape",
-        location: "",
-      },
-    };
-  } catch (error) {
-    console.error(
-      `svgPathToGeoJSONFeature: Error occurred while converting SVG path to GeoJSON`,
-      error
-    );
-    return null; // Return null if conversion fails
-  }
-}
 export default SvgCard;

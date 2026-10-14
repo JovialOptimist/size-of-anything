@@ -6,6 +6,7 @@ import type { RightSidebarContent } from "./EllipsisMenu";
 import SettingsPanel from "./panels/SettingsPanel";
 import HelpPanel from "./panels/HelpPanel";
 import AboutContent from "./AboutContent";
+import { useSettings } from "../state/settingsStore";
 import "./RightSidebar.css";
 
 interface RightSidebarProps {
@@ -14,6 +15,8 @@ interface RightSidebarProps {
 }
 
 export default function RightSidebar({ content, onClose }: RightSidebarProps) {
+  // With the prototype Settings/Help buttons there's no About entry, so About follows Help
+  const aboutInHelp = useSettings((s) => s.uiPrototype.menu === "buttons");
   if (!content) return null;
 
   return (
@@ -36,6 +39,12 @@ export default function RightSidebar({ content, onClose }: RightSidebarProps) {
       <div className="right-sidebar-content">
         {content === "settings" && <SettingsPanel />}
         {content === "help" && <HelpPanel />}
+        {content === "help" && aboutInHelp && (
+          <section className="proto-about-in-help" aria-label="About">
+            <h2 className="right-sidebar-title">About</h2>
+            <AboutContent />
+          </section>
+        )}
         {content === "about" && <AboutContent />}
       </div>
     </div>

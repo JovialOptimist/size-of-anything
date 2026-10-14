@@ -27,6 +27,20 @@ export interface PinSettings {
   fontSize: number;
 }
 
+// UI prototype variants (ui-overhaul branch): each pair competes for the same job
+export type CreationUi = "tabs" | "unified";
+export type SelectionUi = "card" | "toolbar";
+export type MenuUi = "ellipsis" | "buttons";
+export type SettingsLayout = "classic" | "grouped";
+
+export interface UiPrototypeSettings {
+  creation: CreationUi;
+  selection: SelectionUi;
+  menu: MenuUi;
+  settingsLayout: SettingsLayout;
+  compareTray: boolean;
+}
+
 // Outline quality setting (for shape simplification)
 export type OutlineQuality = "perfect" | "great" | "good" | "low";
 
@@ -63,6 +77,10 @@ export interface SettingsState {
   // Units display settings
   useMetricUnits: boolean;
   setUseMetricUnits: (useMetricUnits: boolean) => void;
+
+  // UI prototype variants
+  uiPrototype: UiPrototypeSettings;
+  setUiPrototype: (changes: Partial<UiPrototypeSettings>) => void;
 }
 
 // Check for system preference
@@ -141,6 +159,19 @@ export const useSettings = create<SettingsState>()(
       // Units display settings
       useMetricUnits: true, // Default to metric units
       setUseMetricUnits: (useMetricUnits) => set({ useMetricUnits }),
+
+      // UI prototype variants: default to the new designs
+      uiPrototype: {
+        creation: "unified",
+        selection: "toolbar",
+        menu: "buttons",
+        settingsLayout: "grouped",
+        compareTray: true,
+      },
+      setUiPrototype: (changes) =>
+        set((state) => ({
+          uiPrototype: { ...state.uiPrototype, ...changes },
+        })),
     }),
     {
       name: "size-of-anything-settings",
@@ -153,7 +184,17 @@ export const useSettings = create<SettingsState>()(
         outlineQuality: state.outlineQuality,
         highContrastMode: state.highContrastMode,
         useMetricUnits: state.useMetricUnits,
+        uiPrototype: state.uiPrototype,
       }),
+      // Fill in variant keys added after a user's settings were first saved
+      merge: (persisted, current) => {
+        const saved = (persisted ?? {}) as Partial<SettingsState>;
+        return {
+          ...current,
+          ...saved,
+          uiPrototype: { ...current.uiPrototype, ...saved.uiPrototype },
+        };
+      },
     }
   )
 );

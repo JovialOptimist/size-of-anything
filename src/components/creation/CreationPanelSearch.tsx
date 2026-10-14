@@ -8,11 +8,8 @@ import { useMapStore } from "../../state/mapStore";
 import { useSettings } from "../../state/settingsStore";
 import type { MapLayerType } from "../../state/settingsStore";
 import type { GeoJSONFeature } from "../../state/mapStoreTypes";
-import { OSM_Type } from "../../state/mapStoreTypes";
-import { fetchCandidates } from "../panels/TextSearchPanel";
+import { searchPlaces } from "../utils/placeSearch";
 import { fetchFeaturesAtPoint } from "../../utils/magicWandSearch";
-import { countCoordinates, fixMultiPolygon } from "../utils/geometryUtils";
-import { describeOsmObject } from "../utils/describeOsmObject";
 import { calculateAreaInKm2 } from "../utils/geometryUtils";
 import { ListResultIcon, SearchIcon, InfoBubbleIcon } from "../ui/Icons";
 import "./CreationPanelSearch.css";
@@ -187,26 +184,7 @@ export default function CreationPanelSearch({ query, searchTrigger, onPlaced }: 
     setError(null);
     setIsLoading(true);
     try {
-      const raw = await fetchCandidates(query);
-      const geojsons: GeoJSONFeature[] = raw.map((place: any) => {
-        const feature: GeoJSONFeature = {
-          type: "Feature",
-          geometry: {
-            type: place.osm_type === OSM_Type.WAY ? "Polygon" : "MultiPolygon",
-            coordinates: place.geojson.coordinates,
-            coordinateCount: countCoordinates(place.geojson.coordinates),
-          },
-          properties: {
-            name: place.display_name,
-            osmType: place.type,
-            osmId: place.osm_id,
-            osmClass: place.class,
-            location: place.location,
-            whatIsIt: describeOsmObject(place),
-          },
-        };
-        return fixMultiPolygon(feature);
-      });
+      const geojsons = await searchPlaces(query);
       if (geojsons.length === 0) {
         setError("No results. Try a different query.");
         return;

@@ -7,13 +7,14 @@ import { InformationBubble } from "../ui/informationBubble";
 import ThemeSettings from "../settings/sections/ThemeSettings";
 import PinSettings from "../settings/sections/PinSettings";
 import MapSettings from "../settings/sections/MapSettings";
+import InterfaceSettings from "../settings/sections/InterfaceSettings";
 
 /**
  * Panel for application settings
  * Uses modular section components for better organization and maintainability
  */
 const SettingsPanel: React.FC = () => {
-  const { theme } = useSettings();
+  const { theme, uiPrototype } = useSettings();
 
   // Apply theme when it changes
   useEffect(() => {
@@ -21,13 +22,16 @@ const SettingsPanel: React.FC = () => {
   }, [theme]);
 
   return (
-    <div className="panel settings-panel">
+    <div
+      className={`panel settings-panel ${uiPrototype.settingsLayout === "grouped" ? "settings-grouped" : ""}`}
+    >
       <div className="panel-header">
         <h2>Settings</h2>
         <InformationBubble message="Configure the app's appearance and behavior. Changes are applied immediately and automatically saved." />
       </div>
 
       {/* Modular settings sections */}
+      <InterfaceSettings />
       <ThemeSettings />
       <PinSettings />
       <MapSettings />

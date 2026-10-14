@@ -1,24 +1,13 @@
 import React, { useState } from "react";
 import { useMapStore } from "../../state/mapStore";
 import type { GeoJSONFeature } from "../../state/mapStoreTypes";
-import { countCoordinates } from "../utils/geometryUtils";
+import {
+  LENGTH_CONVERSIONS,
+  AREA_CONVERSIONS,
+  createCircleFeature,
+  createSquareFeature,
+} from "../utils/customShapes";
 import { CircleShapeIcon, SquareShapeIcon } from "../ui/Icons";
-
-const LENGTH_CONVERSIONS: Record<string, number> = {
-  m: 1,
-  km: 1000,
-  mi: 1609.344,
-  ft: 0.3048,
-};
-
-const AREA_CONVERSIONS: Record<string, number> = {
-  m2: 1,
-  km2: 1_000_000,
-  acres: 4046.85642,
-  hectares: 10_000,
-  miles2: 2_589_988.110336,
-  ft2: 0.09290304, // 1 ft² in m²
-};
 
 const UNIT_OPTIONS: { value: string; label: string; kind: "length" | "area" }[] = [
   { value: "m", label: "m", kind: "length" },
@@ -95,105 +84,6 @@ const CustomAreaPanel: React.FC = () => {
           : createCircleFeature(currentMapCenter, lengthInMeters, name);
     }
     addGeoJSONFromSearch(feature);
-  };
-
-  /**
-   * Creates a square GeoJSON feature centered at the given coordinates
-   * @param center The center coordinates [lat, lng]
-   * @param sideLength The side length in meters
-   * @param name The name for the feature
-   */
-  const createSquareFeature = (
-    center: [number, number],
-    sideLength: number,
-    name: string
-  ): GeoJSONFeature => {
-    const [centerLat, centerLng] = center;
-
-    // Calculate lat/lng offsets (approximate)
-    // 111,320 meters = 1 degree latitude
-    // 111,320 * cos(latitude) meters = 1 degree longitude
-    const latOffset = sideLength / (2 * 111320);
-    const lngOffset =
-      sideLength / (2 * 111320 * Math.cos((centerLat * Math.PI) / 180));
-
-    // Calculate the four corners of the square
-    const coordinates = [
-      [centerLng - lngOffset, centerLat - latOffset], // SW
-      [centerLng + lngOffset, centerLat - latOffset], // SE
-      [centerLng + lngOffset, centerLat + latOffset], // NE
-      [centerLng - lngOffset, centerLat + latOffset], // NW
-      [centerLng - lngOffset, centerLat - latOffset], // Close the polygon
-    ];
-
-    // Create the GeoJSON feature
-    return {
-      type: "Feature",
-      geometry: {
-        type: "Polygon",
-        coordinates: [coordinates],
-        coordinateCount: countCoordinates(coordinates),
-      },
-      properties: {
-        name,
-        whatIsIt: name,
-        osmType: "custom-square",
-        osmId: null,
-        customId: `custom-square-${Math.random().toString(36).slice(2)}`,
-        osmClass: "custom-shape",
-      },
-    };
-  };
-
-  /**
-   * Creates a circle GeoJSON feature centered at the given coordinates
-   * @param center The center coordinates [lat, lng]
-   * @param radius The radius in meters
-   * @param name The name for the feature
-   */
-  const createCircleFeature = (
-    center: [number, number],
-    radius: number,
-    name: string
-  ): GeoJSONFeature => {
-    const [centerLat, centerLng] = center;
-    const coordinates = [];
-
-    // Create a circle approximation with 64 points for smoothness
-    const numPoints = 256;
-    for (let i = 0; i <= numPoints; i++) {
-      // Calculate point at current angle (in radians)
-      const angle = (i * 2 * Math.PI) / numPoints;
-
-      // Calculate offsets, accounting for Earth's curvature
-      // 111,320 meters = 1 degree latitude
-      const latOffset = (radius * Math.sin(angle)) / 111320;
-      // Longitude degrees get smaller as you move away from the equator
-      const lngOffset =
-        (radius * Math.cos(angle)) /
-        (111320 * Math.cos((centerLat * Math.PI) / 180));
-
-      // Add the point to our coordinates array
-      coordinates.push([centerLng + lngOffset, centerLat + latOffset]);
-    }
-
-    // Create the GeoJSON feature (note: first and last points must be identical to close the polygon)
-    return {
-      type: "Feature",
-      geometry: {
-        type: "Polygon",
-        coordinates: [coordinates],
-        coordinateCount: countCoordinates(coordinates),
-      },
-      properties: {
-        name,
-        whatIsIt: name,
-        osmType: "custom-circle",
-        osmId: null,
-        customId: `custom-circle-${Math.random().toString(36).slice(2)}`,
-        osmClass: "custom-shape",
-      },
-    };
   };
 
   return (
