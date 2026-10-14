@@ -17,10 +17,18 @@ import LayerToggleButton from "./components/map/LayerToggleButton";
 import CreationPanel from "./components/creation/CreationPanel";
 import EllipsisMenu, { type RightSidebarContent } from "./components/EllipsisMenu";
 import RightSidebar from "./components/RightSidebar";
+import UnifiedSearch from "./components/proto/UnifiedSearch";
+import SelectionToolbar from "./components/proto/SelectionToolbar";
+import ComparisonTray from "./components/proto/ComparisonTray";
+import MobileSheet from "./components/proto/MobileSheet";
+import TopBarButtons from "./components/proto/TopBarButtons";
+import useIsMobile from "./components/proto/useIsMobile";
+import "./styles/proto.css";
 
 function App() {
   useUrlSync();
-  const { theme } = useSettings();
+  const { theme, uiPrototype } = useSettings();
+  const isMobile = useIsMobile();
   const [rightSidebar, setRightSidebar] = useState<RightSidebarContent>(null);
 
   useEffect(() => {
@@ -52,9 +60,17 @@ function App() {
       {/* Main map area - full viewport */}
       <div className="map-view-container">
         <MapView />
-        <EllipsisMenu onSelect={setRightSidebar} />
-        <CreationPanel />
-        <ActiveElementDisplay />
+        {/* UI-overhaul prototype: each pair below is switchable in Settings > Interface */}
+        {uiPrototype.menu === "buttons" ? (
+          <TopBarButtons current={rightSidebar} onSelect={setRightSidebar} />
+        ) : (
+          <EllipsisMenu onSelect={setRightSidebar} />
+        )}
+        {uiPrototype.creation === "unified" ? <UnifiedSearch /> : <CreationPanel />}
+        {uiPrototype.selection === "card" && <ActiveElementDisplay />}
+        {uiPrototype.selection === "toolbar" && !isMobile && <SelectionToolbar variant="floating" />}
+        {uiPrototype.selection === "toolbar" && isMobile && <MobileSheet />}
+        {uiPrototype.compareTray && !isMobile && <ComparisonTray />}
         <ShareButton />
         <FeedbackButton />
         <LayerToggleButton />

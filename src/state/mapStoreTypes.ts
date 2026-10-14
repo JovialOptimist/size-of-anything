@@ -58,6 +58,7 @@ export interface MapState {
   addArea: (area: MapArea) => void;
   updateArea: (id: string, area: Partial<MapArea>) => void;
   removeArea: (id: string) => void;
+  duplicateArea: (id: string) => void;
   setActiveArea: (id: string | null) => void;
   setCurrentMapCenter: (center: [number, number]) => void;
   setMagicWandMode: (enabled: boolean) => void;

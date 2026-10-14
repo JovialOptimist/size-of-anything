@@ -4,6 +4,7 @@
  * Handles rendering the map, area polygons, and associated interactive elements.
  * Enables functionality for dragging, selecting, and manipulating map areas.
  */
+import { setMainMap } from "../../state/mapRegistry";
 import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -143,6 +144,7 @@ export default function MapView() {
         setCurrentMapCenter(center);
 
         mapInstanceRef.current = map;
+        setMainMap(map);
         setMapReady(true);
 
         L.control.zoom({ position: "bottomright" }).addTo(map);
@@ -199,6 +201,7 @@ export default function MapView() {
         mapInstanceRef.current.off();
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
+        setMainMap(null);
       }
     };
     // we reference stable setters — include them to keep eslint happy
