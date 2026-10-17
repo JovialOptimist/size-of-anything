@@ -21,34 +21,35 @@ This project was written and developed by Jac Chambers (that's me!), a student a
 
 ## Features
 
-- **Search for Areas**: Type the name of any place (buildings, parks, cities, countries) to find and display its shape on the map.
-- **Custom Areas**: Create your own areas with specific dimensions (by sidelength/radius, or by area).
-- **History Tab**: Quickly access previously placed areas for reuse.
-- **Drag and Drop**: Easily move areas around the map to make size comparisons.
-- **Treasures**: Special shapes like whales and airplanes that don't exist as geographical features but are useful for size comparison.
+- **One search for everything**: places from OpenStreetMap (with suggestions as you type), reference objects, and your recent searches, all in one box.
+- **True-size dragging**: grab a shape's pin and drop it anywhere. Shapes keep their real area at every latitude, and rotate with a handle.
+- **Comparisons that make sense**: every shape's page says how many times bigger it is than the others, and how many soccer pitches, pools or Central Parks fit inside.
+- **Pick on map**: put the crosshair on anything and press "What's here?" to get it and everything it sits inside, from building to country.
+- **Create**: make an exact-size square, rectangle, circle or polygon (by dimensions or by area), or draw one with a lasso or by clicking corners, then resize it to an exact area.
+- **Objects**: about 40 real things at true scale (sports fields, ships, planes, landmarks, units), suggested for whatever you're looking at.
+- **Layers**: street map (light and dark), satellite with labels, and a globe view that shows sizes without Mercator stretching.
+- **Share links** that contain the whole comparison, **undo** for everything, and your last session restored when you come back.
 
 ## Technologies Used
 
-- **Frontend**: React with TypeScript
-- **Map Rendering**: Leaflet.js
-- **State Management**: Zustand
-- **Geospatial Processing**: Turf.js, Proj4js
-- **Build Tools**: Vite, TypeScript
+- **Frontend**: React 19 with TypeScript, built with Vite
+- **Map rendering**: MapLibre GL JS with OpenFreeMap vector styles; Esri imagery for satellite
+- **Search**: Photon (type-ahead) and Nominatim (search, outlines, reverse lookups); Overpass for nearby features
+- **State**: Zustand, with IndexedDB for the session and cached outlines
+- **Geometry**: a small spherical engine in `src/geo/geometry.ts` (rigid rotations keep true area), plus Turf.js helpers
+- **Icons and fonts**: Lucide, Inter and Bricolage Grotesque
 - **Deployment**: Netlify
 
+## Configuration
+
+Developer settings live in `src/config.ts`: the UI accent color preset (`blue`, `purple`, `teal`, `rose`, `ink`), basemap style URLs, and an optional ArcGIS key for compliant satellite tiles.
+
 ## Known Issues
-These are some of the known issues in the current codebase, as well as a list of future design improvements that are planned.
 
-### Cross-platform
-- Duplicate is really buggy when you remove shapes from the map, because duplicated shapes will share IDs.
-- Dropdown for settings/about/help should probably have a more intuitive icon (hamburger, gear, etc.)
-- Custom panel, special panel, and history panel all need UI improvements
-
-### Mobile-specific
-- Portals will appear in weird spots near the search bar, then just around to the opposite side of the screen.
-- Magic wand UI flow is bad - should automatically close the creation panel
-- Dropdown for settings has poor spacing
-- Active Element Display takes up way too much of the screen
+- Satellite tiles use Esri's keyless legacy endpoint unless `ARCGIS_KEY` is set in `src/config.ts`.
+- Public Overpass servers are often slow; "What's here?" relies mainly on Nominatim reverse lookups and only adds Overpass results when they arrive in time.
+- Pins for shapes on the far side of the globe are still drawn.
+- Long-press to pick up a shape on touch screens needs testing on real devices.
 
 ---
 

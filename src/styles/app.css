@@ -64,7 +64,7 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select:
 
 /* ============ Layout ============ */
 .app { position: fixed; inset: 0; }
-.map, .map.maplibregl-map { position: absolute; inset: 0; }
+.map, .map.maplibregl-map { position: absolute; inset: 0; background: radial-gradient(circle at 50% 45%, #1b2a4a, #070b16 70%); }
 .maplibregl-ctrl-attrib { font-size: 11px; }
 .maplibregl-ctrl-bottom-left, .maplibregl-ctrl-bottom-right { z-index: 1; }
 

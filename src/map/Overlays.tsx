@@ -58,7 +58,8 @@ export default function Overlays() {
   const canvas = m.getCanvas();
   const W = canvas.clientWidth, H = canvas.clientHeight;
   const pad = getPad();
-  const view = { left: pad.left + 8, top: pad.top + 8, right: W - pad.right - 8, bottom: H - pad.bottom - 8 };
+  // Keep portals clear of the panel, the top buttons and the right-hand controls.
+  const view = { left: pad.left + 8, top: pad.top + 64, right: W - pad.right - 72, bottom: H - pad.bottom - 8 };
 
   const items = shapes
     .filter((s) => s.visible)

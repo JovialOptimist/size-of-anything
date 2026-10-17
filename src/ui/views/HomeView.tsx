@@ -4,6 +4,7 @@ import { useShapes } from "../../state/shapes";
 import { MenuButton, ShapeRow } from "./common";
 import { useSwatch } from "../hooks";
 import { TRY, runTry } from "../try";
+import { revealShape } from "../actions";
 import { useIsDesktop } from "../hooks";
 
 export default function HomeView() {
@@ -26,6 +27,19 @@ export default function HomeView() {
         )}
       </div>
       <div className="panel__scroll">
+        {!desktop && shapes.length > 0 && (
+          <div className="chips chips--scroll" style={{ margin: "2px 0 12px" }} aria-label="Shapes on the map">
+            {[...shapes].reverse().map((s) => (
+              <button key={s.id} type="button" className="chip" style={{ ["--c" as string]: swatch(s.slot) }} onClick={() => {
+                useShapes.getState().select(s.id);
+                ui.go({ name: "detail", id: s.id });
+                revealShape(s.id);
+              }}>
+                <span className="sw" /> {s.name}
+              </button>
+            ))}
+          </div>
+        )}
         <div className="tools">
           <button type="button" className="tool" style={{ ["--c" as string]: swatch(2) }} onClick={() => ui.go({ name: "pick" })}>
             <Crosshair size={22} /> Pick on map

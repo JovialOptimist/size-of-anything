@@ -205,7 +205,7 @@ export const OBJECTS: RefObject[] = [
   { id: "tiny-house", name: "Tiny house", category: "homes", icon: "house", dims: "≈ 24 × 8.5 ft", fact: "Small enough to tow.", synonyms: "tiny house home", span: 7.3, build: () => rect(2.6, 7.3) },
 
   { id: "hectare", name: "Hectare", category: "units", icon: "units", dims: "100 × 100 m", fact: "10,000 square metres.", synonyms: "hectare ha unit", span: 100, build: () => rect(100, 100) },
-  { id: "acre", name: "Acre", category: "units", icon: "units", dims: "4,047 m² (63.6 m square)", fact: "Originally what an ox could plough in a day.", synonyms: "acre unit", span: 63.61, build: () => rect(63.61, 63.61) },
+  { id: "acre", name: "Acre", category: "units", icon: "units", dims: "4,047 m² (63.6 m square)", fact: "Originally what an ox could plough in a day.", synonyms: "acre unit", span: 63.61, build: () => rect(63.6149, 63.6149) },
   { id: "square-km", name: "Square kilometre", category: "units", icon: "units", dims: "1 × 1 km", fact: "100 hectares.", synonyms: "km2 square kilometer unit", span: 1000, build: () => rect(1000, 1000) },
   { id: "square-mile", name: "Square mile", category: "units", icon: "units", dims: "1 × 1 mi", fact: "640 acres.", synonyms: "square mile unit", span: 1609.34, build: () => rect(1609.34, 1609.34) },
 

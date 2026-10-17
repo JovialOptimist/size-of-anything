@@ -61,7 +61,11 @@ function Lasso() {
           return;
         }
         if (e.button !== 0) return;
-        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+        try {
+          (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+        } catch {
+          /* capture is best-effort */
+        }
         const r = rectOf(e);
         drawing.current = true;
         useDrawing.getState().set({ stroke: [[e.clientX - r.left, e.clientY - r.top]] });

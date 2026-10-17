@@ -6,6 +6,7 @@ import { useSettings } from "../../state/settings";
 import { useSwatch } from "../hooks";
 import { formatArea } from "../../geo/format";
 import { ShapeIcon } from "../icons";
+import { revealShape } from "../actions";
 
 export function ViewHeader({ title, onBack, right }: { title: ReactNode; onBack?: () => void; right?: ReactNode }) {
   return (
@@ -47,6 +48,7 @@ export function ShapeRow({ s, onClick }: { s: Shape; onClick?: () => void }) {
       onClick={onClick ?? (() => {
         useShapes.getState().select(s.id);
         useUI.getState().go({ name: "detail", id: s.id });
+        revealShape(s.id);
       })}
       style={{ ["--c" as string]: swatch(s.slot) }}
     >

@@ -26,7 +26,7 @@ export function formatArea(m2: number, units: UnitSystem): string {
   const acres = m2 / 4046.8564;
   const mi2 = m2 / 2_589_988.11;
   if (ft2 < 43_560) return `${sig(ft2)} sq ft`;
-  if (mi2 < 1) return `${sig(acres)} acres`;
+  if (mi2 < 1) return `${sig(acres)} ${acres < 1.005 ? "acre" : "acres"}`;
   return `${sig(mi2)} sq mi`;
 }
 
@@ -66,7 +66,7 @@ export function familiarComparisons(m2: number, max = 3) {
     .filter((f) => f.count >= 1.5 && f.count <= 5000)
     .sort((a, b) => Math.abs(Math.log10(a.count) - 1.3) - Math.abs(Math.log10(b.count) - 1.3))
     .slice(0, max)
-    .map((f) => ({ label: f.count >= 2 ? f.many : f.one, count: f.count, text: `${approx(f.count)} ${f.count >= 2 ? f.many : f.one}` }));
+    .map((f) => ({ label: f.many, count: f.count, text: `${approx(f.count)} ${f.many}` }));
 }
 
 export function approx(n: number): string {

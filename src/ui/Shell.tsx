@@ -7,6 +7,7 @@ import { PanelLeftOpen } from "lucide-react";
 import { useUI, currentRoute, type Route } from "../state/ui";
 import { useIsDesktop } from "./hooks";
 import { getMap } from "../map/mapCore";
+import { useShapes } from "../state/shapes";
 import HomeView from "./views/HomeView";
 import SearchView from "./views/SearchView";
 import DetailView from "./views/DetailView";
@@ -80,7 +81,9 @@ function Sheet({ routeName, children }: { routeName: Route["name"]; children: Re
     useUI.getState().set({ sheetSnap: SNAP_FOR[routeName] });
   }, [routeName]);
 
-  const heights = { peek: 196, half: Math.round(vh * 0.5), full: vh - 64 };
+  const hasShapes = useShapes((st) => st.shapes.length > 0);
+  const peek = routeName === "home" && hasShapes ? 250 : 196;
+  const heights = { peek, half: Math.round(vh * 0.5), full: vh - 64 };
   const h = drag ?? heights[snap];
 
   const onPointerDown = (e: React.PointerEvent) => {

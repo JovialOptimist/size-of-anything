@@ -8,7 +8,12 @@ import type { Outline } from "../geo/services";
 import type { LngLat } from "../geo/geometry";
 import { geometryCenter } from "../geo/geometry";
 
-function zoomToIfNeeded(id: string) {
+/** Bring a shape into view if it is off screen, too small to see, or bigger than the view. */
+export function revealShape(id: string) {
+  zoomToIfNeeded(id, true);
+}
+
+function zoomToIfNeeded(id: string, checkOffscreen = false) {
   const s = useShapes.getState().shapes.find((x) => x.id === id);
   const m = getMap();
   if (!s || !m) return;
@@ -24,7 +29,8 @@ function zoomToIfNeeded(id: string) {
   const c = m.getCanvas();
   const pad = getPad();
   const avail = Math.min(c.clientWidth - pad.left - pad.right, c.clientHeight - pad.top - pad.bottom);
-  if (size < 40 || size > avail * 0.95) fitGeometry(g);
+  const offscreen = checkOffscreen && (maxX < pad.left || minX > c.clientWidth - pad.right || maxY < pad.top || minY > c.clientHeight - pad.bottom);
+  if (offscreen || size < 40 || size > avail * 0.95) fitGeometry(g);
 }
 
 function added(id: string, name: string) {
