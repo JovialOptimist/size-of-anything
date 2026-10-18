@@ -1,6 +1,6 @@
 /** Map controls, app menu drawer, share dialog, toasts, live region and keyboard shortcuts. */
 import { useEffect, useState } from "react";
-import { Share2, CircleHelp, LocateFixed, Plus, Minus, Settings, Info, Shapes, PenLine, Crosshair, Search, Link, Check, X, Ruler } from "lucide-react";
+import { Undo2, Redo2, Share2, CircleHelp, LocateFixed, Plus, Minus, Settings, Info, Shapes, PenLine, Crosshair, Search, Link, Check, X, Ruler } from "lucide-react";
 import { useUI } from "../state/ui";
 import { useSettings, useIsDark } from "../state/settings";
 import { useShapes } from "../state/shapes";
@@ -8,6 +8,7 @@ import { useToasts, holdToast, releaseToast, toast } from "../state/toasts";
 import { getMap } from "../map/mapCore";
 import { shareTitle, shareUrl } from "../share/url";
 import { useIsDesktop } from "./hooks";
+import { undo, redo } from "./actions";
 
 export function MapControls() {
   const desktop = useIsDesktop();
@@ -16,11 +17,17 @@ export function MapControls() {
   const isDark = useIsDark();
   const mode = useUI((s) => s.mode);
   const sheetFull = useUI((s) => s.sheetSnap === "full");
+  const canUndo = useShapes((s) => s.past.length > 0);
+  const canRedo = useShapes((s) => s.future.length > 0);
   const thumb = basemap === "satellite" ? "thumb-sat" : isDark ? "thumb-dark" : "thumb-map";
   return (
     <>
       {mode === "browse" && (desktop || !sheetFull) && (
         <div className="ctl-top">
+          <div className="history" role="group" aria-label="History">
+            <button type="button" aria-label="Undo" title="Undo (Ctrl+Z)" disabled={!canUndo} onClick={undo}><Undo2 size={18} /></button>
+            <button type="button" aria-label="Redo" title="Redo (Ctrl+Shift+Z)" disabled={!canRedo} onClick={redo}><Redo2 size={18} /></button>
+          </div>
           <button type="button" className="pill" onClick={() => useUI.getState().set({ shareOpen: true })}><Share2 size={18} /> Share</button>
           <button type="button" className="round" aria-label="Help" onClick={() => useUI.getState().go({ name: "help" })}><CircleHelp size={20} /></button>
         </div>

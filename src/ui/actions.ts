@@ -1,7 +1,6 @@
 /** User-level actions shared by panels, overlays and keyboard shortcuts. */
 import { useShapes, placedGeometry, type NewShape } from "../state/shapes";
 import { useUI, announce } from "../state/ui";
-import { toast } from "../state/toasts";
 import { fitGeometry, getMap, getPad, visibleCenter } from "../map/mapCore";
 import { objectById } from "../objects/registry";
 import type { Outline } from "../geo/services";
@@ -36,7 +35,6 @@ function zoomToIfNeeded(id: string, checkOffscreen = false) {
 function added(id: string, name: string) {
   useUI.getState().go({ name: "detail", id });
   zoomToIfNeeded(id);
-  toast({ text: `${name} added`, action: { label: "Undo", run: () => useShapes.getState().undo() } });
   announce(`${name} added to the map`);
 }
 
@@ -53,7 +51,7 @@ export function addPlace(o: Outline, requested: "center" | "origin") {
   if (where === "origin") {
     useUI.getState().go({ name: "detail", id: shape.id });
     fitGeometry(placedGeometry(shape));
-    toast({ text: `${o.name} added where it really is`, action: { label: "Undo", run: () => useShapes.getState().undo() } });
+    announce(`${o.name} added where it really is`);
   } else added(shape.id, o.name);
   return shape;
 }
@@ -78,7 +76,6 @@ export function deleteShape(id: string) {
   if (!s) return;
   const ui = useUI.getState();
   if (ui.stack.some((r) => r.name === "detail" && r.id === id)) ui.home();
-  toast({ text: `${s.name} deleted`, action: { label: "Undo", run: () => useShapes.getState().undo() } });
   announce(`${s.name} deleted. Press Control Z to undo.`);
 }
 
@@ -91,7 +88,7 @@ export function duplicateShape(id: string) {
   const copy = useShapes.getState().duplicate(id, [ll.lng, ll.lat]);
   if (copy) {
     useUI.getState().go({ name: "detail", id: copy.id });
-    toast({ text: `Copied ${s.name}`, action: { label: "Undo", run: () => useShapes.getState().undo() } });
+    announce(`Cloned ${s.name}`);
   }
 }
 
@@ -108,4 +105,10 @@ export function undo() {
   const before = useShapes.getState().past.length;
   useShapes.getState().undo();
   if (useShapes.getState().past.length !== before) announce("Undone");
+}
+
+export function redo() {
+  const before = useShapes.getState().future.length;
+  useShapes.getState().redo();
+  if (useShapes.getState().future.length !== before) announce("Redone");
 }

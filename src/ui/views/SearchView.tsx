@@ -34,8 +34,10 @@ export default function SearchView() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [active, setActive] = useState(0);
-  const [preview, setPreview] = useState<Outline | null>(null);
-  const [previewing, setPreviewing] = useState<string | null>(null);
+  // A place opens in place, under its row, with the ways to put it on the map.
+  const [openKey, setOpenKey] = useState<string | null>(null);
+  const [outlines, setOutlines] = useState<Record<string, Outline>>({});
+  const [loadingKey, setLoadingKey] = useState<string | null>(null);
   const recent = useUI((s) => s.recent);
   const rememberRecent = useSettings((s) => s.rememberRecent);
   const units = useSettings((s) => s.units);
@@ -49,6 +51,7 @@ export default function SearchView() {
   useEffect(() => {
     setFull(null);
     setActive(0);
+    setOpenKey(null);
     const t = q.trim();
     if (t.length < 3) {
       setSuggestions([]);
@@ -105,23 +108,35 @@ export default function SearchView() {
     }
   }
 
-  async function choose(item: Item) {
-    if (item.kind === "osm") return runFullSearch();
-    if (item.kind === "object") {
-      addObject(item.obj.id);
-      return;
-    }
+  /** Open a place's row (loading its outline), or close it if it's open. */
+  async function toggle(place: PlaceResult) {
+    if (openKey === place.key) return setOpenKey(null);
+    setOpenKey(place.key);
+    setError(null);
+    if (outlines[place.key]) return;
     abort.current?.abort();
     abort.current = new AbortController();
-    setPreviewing(item.place.key);
-    setError(null);
+    setLoadingKey(place.key);
     try {
-      setPreview(await fetchOutline(item.place, abort.current.signal));
+      const o = await fetchOutline(place, abort.current.signal);
+      setOutlines((m) => ({ ...m, [place.key]: o }));
     } catch (e) {
-      if ((e as Error).name !== "AbortError") setError(e instanceof ServiceError ? e.message : "Couldn't load that outline. Try again.");
+      if ((e as Error).name !== "AbortError") {
+        setError(e instanceof ServiceError ? e.message : "Couldn't load that outline. Try again.");
+        setOpenKey(null);
+      }
     } finally {
-      setPreviewing(null);
+      setLoadingKey((k) => (k === place.key ? null : k));
     }
+  }
+
+  function choose(item: Item) {
+    if (item.kind === "osm") return runFullSearch();
+    if (item.kind === "object") return addObject(item.obj.id);
+    // Enter on an open place adds it; otherwise it opens.
+    const o = outlines[item.place.key];
+    if (openKey === item.place.key && o) addPlace(o, "center");
+    else if (openKey !== item.place.key) toggle(item.place);
   }
 
   const onKeyDown = (e: React.KeyboardEvent) => {
@@ -137,43 +152,12 @@ export default function SearchView() {
       if (it) choose(it);
       else runFullSearch();
     } else if (e.key === "Escape") {
-      if (preview) setPreview(null);
+      if (openKey) setOpenKey(null);
       else useUI.getState().back();
     }
   };
 
-  if (preview) {
-    const area = geometryArea(preview.geometry);
-    return (
-      <>
-        <header className="ph">
-          <button type="button" className="iconbtn" onClick={() => setPreview(null)} aria-label="Back to results"><ArrowLeft size={20} /></button>
-          <h2 className="ph__title">{preview.name}</h2>
-        </header>
-        <div className="panel__scroll">
-          <div className="preview">
-            <OutlinePreview geometry={preview.geometry} />
-            <div>
-              <div className="muted">{[preview.type, preview.locality].filter(Boolean).join(" · ")}</div>
-              <div className="bigarea" style={{ fontSize: 30 }}>{formatArea(area, units)}<small>{formatAreaSecondary(area, units)}</small></div>
-            </div>
-            <div className="btnrow">
-              <button type="button" className="btn btn--primary" onClick={() => { addPlace(preview, "center"); }}>
-                <Plus size={18} /> Add to map
-              </button>
-              <button type="button" className="btn" onClick={() => { addPlace(preview, "origin"); }}>
-                <MapPinned size={18} /> Show where it is
-              </button>
-            </div>
-            <p className="muted" style={{ margin: 0, fontSize: 12.5 }}>"Add to map" drops it in the middle of what you're looking at, ready to drag.</p>
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  return (
-    <>
+  return (    <>
       <div className="omni" role="search">
         <button type="button" className="iconbtn" onClick={() => useUI.getState().back()} aria-label="Close search"><ArrowLeft size={20} /></button>
         <input
@@ -222,12 +206,27 @@ export default function SearchView() {
               );
             }
             const p = it.place;
+            const isOpen = openKey === p.key;
+            const o = outlines[p.key];
             return (
-              <button key={p.key + (it.recent ? "r" : "")} id={`opt-${i}`} role="option" aria-selected={i === active} type="button" className="row" onClick={() => choose(it)} onMouseEnter={() => setActive(i)}>
-                <span className="row__ico"><ShapeIcon icon={p.icon} size={17} /></span>
-                <span className="row__main"><b>{highlight(p.name, q.trim())}</b><small>{[it.recent ? "Recent" : p.type, p.locality].filter(Boolean).join(" · ")}</small></span>
-                <span className="row__end">{previewing === p.key ? <Loader2 size={16} className="spin" /> : p.area ? formatArea(p.area, units) : ""}</span>
-              </button>
+              <div key={p.key + (it.recent ? "r" : "")} className={`result${isOpen ? " is-open" : ""}`}>
+                <button id={`opt-${i}`} role="option" aria-selected={i === active} aria-expanded={isOpen} type="button" className="row" onClick={() => toggle(p)} onMouseEnter={() => setActive(i)}>
+                  <span className="row__ico"><ShapeIcon icon={p.icon} size={17} /></span>
+                  <span className="row__main"><b>{highlight(p.name, q.trim())}</b><small>{[it.recent ? "Recent" : p.type, p.locality].filter(Boolean).join(" · ")}</small></span>
+                  <span className="row__end">{loadingKey === p.key ? <Loader2 size={16} className="spin" /> : o ? formatArea(geometryArea(o.geometry), units) : p.area ? formatArea(p.area, units) : ""}</span>
+                </button>
+                {isOpen && o && (
+                  <div className="result__body">
+                    <OutlinePreview geometry={o.geometry} height={120} />
+                    <div className="result__area">{formatArea(geometryArea(o.geometry), units)}<small>{formatAreaSecondary(geometryArea(o.geometry), units)}</small></div>
+                    <div className="btnrow">
+                      <button type="button" className="btn btn--primary btn--sm" onClick={() => addPlace(o, "center")}><Plus size={16} /> Add to map</button>
+                      <button type="button" className="btn btn--sm" onClick={() => addPlace(o, "origin")}><MapPinned size={16} /> Show where it is</button>
+                    </div>
+                    <p className="muted result__hint">“Add to map” drops it in the middle of your view, ready to drag.</p>
+                  </div>
+                )}
+              </div>
             );
           })}
           {loading && <><div className="skeleton" /><div className="skeleton" /><div className="skeleton" /></>}

@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { ChevronRight, Heart, Code, Mail } from "lucide-react";
 import { useSettings, type Settings } from "../../state/settings";
-import { useUI } from "../../state/ui";
+import { useUI, announce } from "../../state/ui";
 import { useShapes } from "../../state/shapes";
 import { toast } from "../../state/toasts";
 import { mercatorInflation } from "../../geo/geometry";
@@ -76,7 +76,7 @@ export function SettingsView() {
           }}><span>Clear recent searches</span><ChevronRight size={18} /></button>
           <button type="button" className="srow" disabled={!shapeCount} onClick={() => {
             useShapes.getState().clear();
-            toast({ text: `Removed ${shapeCount} shape${shapeCount === 1 ? "" : "s"}`, action: { label: "Undo", run: () => useShapes.getState().undo() } });
+            announce(`Removed ${shapeCount} shape${shapeCount === 1 ? "" : "s"}`);
           }}><span>Remove all shapes<small>{shapeCount} on the map</small></span><ChevronRight size={18} /></button>
           <button type="button" className="srow" onClick={() => { s.reset(); toast({ text: "Settings reset" }); }}><span>Reset settings</span><ChevronRight size={18} /></button>
         </div>

@@ -5,7 +5,7 @@
  * heights and a full-screen search view.
  */
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { PanelLeftOpen, Crosshair, PenLine, Shapes, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { PanelLeftOpen, Crosshair, PenLine, Shapes, X } from "lucide-react";
 import { useUI, currentRoute, type Route } from "../state/ui";
 import { useIsDesktop } from "./hooks";
 import { useMediaQuery, useSettings } from "../state/settings";
@@ -49,7 +49,7 @@ export default function Shell() {
   const docked = useSettings((s) => s.panelStyle === "docked");
   return desktop && docked ? (
     <>
-      <Dock route={route} collapsed={collapsed} />
+      <Dock route={route} />
       <PaddingSync desktop docked collapsed={false} sheetHeight={0} />
     </>
   ) : desktop ? (
@@ -78,17 +78,16 @@ const TOOL_FOR: Partial<Record<Route["name"], string>> = { pick: "pick", create:
 /**
  * Like Google Maps: at rest, a floating card with the search box and the three
  * tools. Opening anything docks it to the left edge, full height, showing just
- * that page (search has its own box); the side tab tucks it away (back to the
- * card) and brings it back.
+ * that page (search has its own box); closing the page brings the card back.
  */
-function Dock({ route, collapsed }: { route: Route; collapsed: boolean }) {
+function Dock({ route }: { route: Route }) {
   const swatch = useSwatch();
   const q = useSearch((s) => s.q);
   const head = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const [headH, setHeadH] = useState(140);
   const open = route.name !== "home";
-  const expanded = open && !collapsed;
+  const expanded = open;
   // Scrolling stays off until the panel has finished growing, so no scrollbar flashes up mid-animation.
   const [settled, setSettled] = useState(false);
   const ui = useUI.getState();
@@ -108,11 +107,6 @@ function Dock({ route, collapsed }: { route: Route; collapsed: boolean }) {
     return () => ro.disconnect();
   }, []);
 
-  // Opening something new always shows the drawer.
-  useEffect(() => {
-    useUI.getState().set({ panelCollapsed: false });
-  }, [route]);
-
   // Leaving search clears the box.
   useEffect(() => {
     if (route.name !== "search") useSearch.setState({ q: "" });
@@ -123,7 +117,6 @@ function Dock({ route, collapsed }: { route: Route; collapsed: boolean }) {
       e.preventDefault();
       useSearch.setState({ pending: e.key === "Enter" && q.trim() !== "" });
       ui.go({ name: "search" });
-      ui.set({ panelCollapsed: false });
     } else if (e.key === "Escape") {
       if (q) useSearch.setState({ q: "" });
       else input.current?.blur();
@@ -136,7 +129,6 @@ function Dock({ route, collapsed }: { route: Route; collapsed: boolean }) {
       <button type="button" className="tool" aria-pressed={on} style={{ ["--c" as string]: swatch(slot) }} onClick={() => {
         if (on && expanded) return ui.home();
         ui.go({ name });
-        ui.set({ panelCollapsed: false });
       }}>
         {icon} {label}
       </button>
@@ -166,10 +158,14 @@ function Dock({ route, collapsed }: { route: Route; collapsed: boolean }) {
             value={q}
             onChange={(e) => useSearch.setState({ q: e.target.value })}
             onKeyDown={onKeyDown}
+            onFocus={() => {
+              // Focusing the box opens the search drawer straight away.
+              ui.go({ name: "search" });
+            }}
             enterKeyHint="search"
           />
           {route.name === "search" || q ? (
-            <button type="button" className="iconbtn" aria-label="Close search" onClick={() => { useSearch.setState({ q: "" }); if (route.name === "search") ui.home(); input.current?.focus(); }}><X size={18} /></button>
+            <button type="button" className="iconbtn" aria-label="Close search" onClick={() => { useSearch.setState({ q: "" }); if (route.name === "search") ui.home(); }}><X size={18} /></button>
           ) : null}
         </div>
         <div className="tools">
@@ -182,11 +178,6 @@ function Dock({ route, collapsed }: { route: Route; collapsed: boolean }) {
         {open && <RouteView route={route} />}
       </div>
     </aside>
-    {open && (
-      <button type="button" className={`dock-tab${expanded ? "" : " is-out"}`} aria-label={expanded ? "Collapse side panel" : "Expand side panel"} onClick={() => ui.set({ panelCollapsed: expanded })}>
-        {expanded ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
-      </button>
-    )}
     </div>
   );
 }

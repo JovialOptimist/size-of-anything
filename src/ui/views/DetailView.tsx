@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { RotateCcw, Copy, Trash2, ExternalLink, Scaling, X, ChevronLeft, ChevronRight, Globe, FlipHorizontal2, FlipVertical2 } from "lucide-react";
 import { useShapes, shapeArea } from "../../state/shapes";
 import { useSettings } from "../../state/settings";
-import { useUI } from "../../state/ui";
+import { useUI, announce } from "../../state/ui";
 import { toast } from "../../state/toasts";
 import { formatArea, formatAreaSecondary, formatRatio, approx, FAMILIAR } from "../../geo/format";
 import { localFromMeters, place } from "../../geo/geometry";
@@ -133,7 +133,7 @@ function ExactArea({ id, onDone }: { id: string; onDone: () => void }) {
     const scale = Math.sqrt((n * u.m2) / s.area);
     if (scale > 3000 || scale < 1 / 3000) return toast({ text: "That's a bit too extreme. Try a size closer to the original.", tone: "error" });
     setScale(s.id, scale);
-    toast({ text: `${s.name} is now exactly ${val} ${u.label}`, action: { label: "Undo", run: () => useShapes.getState().undo() } });
+    announce(`${s.name} is now exactly ${val} ${u.label}`);
     onDone();
   };
   return (
