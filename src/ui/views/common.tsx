@@ -8,7 +8,17 @@ import { formatArea } from "../../geo/format";
 import { ShapeIcon } from "../icons";
 import { revealShape } from "../actions";
 
-export function ViewHeader({ title, onBack, right }: { title: ReactNode; onBack?: () => void; right?: ReactNode }) {
+/** A page title with a back arrow, or (`close`) a title with an X on the right that goes home, like a shape's page. */
+export function ViewHeader({ title, onBack, right, close = false }: { title: ReactNode; onBack?: () => void; right?: ReactNode; close?: boolean }) {
+  if (close) {
+    return (
+      <header className="ph ph--close">
+        <h2 className="ph__title">{title}</h2>
+        {right}
+        <CloseButton onClick={onBack ?? (() => useUI.getState().home())} />
+      </header>
+    );
+  }
   return (
     <header className="ph">
       <button type="button" className="iconbtn" onClick={onBack ?? (() => useUI.getState().back())} aria-label="Back">

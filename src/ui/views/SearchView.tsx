@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Search, Loader2, X, Plus, MapPinned } from "lucide-react";
 import { useUI, announce } from "../../state/ui";
+import { useSearch } from "../../state/search";
 import { useSettings } from "../../state/settings";
 import { fetchOutline, searchPlaces, suggestPlaces, ServiceError, type Outline, type PlaceResult } from "../../geo/services";
 import { OBJECTS, type RefObject } from "../../objects/registry";
@@ -25,7 +26,9 @@ function highlight(text: string, q: string) {
 }
 
 export default function SearchView() {
-  const [q, setQ] = useState("");
+  const q = useSearch((s) => s.q);
+  const pending = useSearch((s) => s.pending);
+  const setQ = (v: string) => useSearch.setState({ q: v });
   const [suggestions, setSuggestions] = useState<PlaceResult[]>([]);
   const [full, setFull] = useState<PlaceResult[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -65,6 +68,13 @@ export default function SearchView() {
       ctl.abort();
     };
   }, [q]);
+
+  // Enter in the floating card's box asks for a full search as the drawer opens.
+  useEffect(() => {
+    if (!pending) return;
+    useSearch.setState({ pending: false });
+    runFullSearch();
+  }, [pending]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const items: Item[] = useMemo(() => {
     const t = q.trim().toLowerCase();

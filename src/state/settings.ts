@@ -13,6 +13,7 @@ export interface Settings {
   labels: "off" | "auto" | "always";
   fill: "light" | "medium" | "strong";
   shapeTools: "panel" | "toolbar";
+  panelStyle: "docked" | "floating";
   basemap: Basemap;
   globe: boolean;
   rememberRecent: boolean;
@@ -28,6 +29,7 @@ const defaults = () => ({
   labels: "auto" as const,
   fill: "light" as const,
   shapeTools: "panel" as const,
+  panelStyle: "docked" as const,
   basemap: "map" as Basemap,
   globe: false,
   rememberRecent: true,

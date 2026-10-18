@@ -47,7 +47,7 @@ export default function ObjectsView() {
 
   return (
     <>
-      <ViewHeader title="Objects" />
+      <ViewHeader title="Objects" close />
       <div className="panel__scroll">
         <p style={{ marginTop: 0 }}>Real things at their real size. Drop one next to anything on the map.</p>
         <div className="input" style={{ marginBottom: 12 }}>

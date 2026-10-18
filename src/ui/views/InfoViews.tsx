@@ -60,6 +60,9 @@ export function SettingsView() {
           <Row title="Shape tools" sub={s.shapeTools === "panel" ? "Selecting a shape opens its page" : "A toolbar floats above the selected shape"}>
             <Seg label="Shape tools" value={s.shapeTools} onChange={set("shapeTools")} options={[["panel", "Panel"], ["toolbar", "Toolbar"]]} />
           </Row>
+          <Row title="Side panel" sub={s.panelStyle === "docked" ? "Fixed to the left edge; opens a drawer when needed" : "Floats over the map"}>
+            <Seg label="Side panel" value={s.panelStyle} onChange={set("panelStyle")} options={[["docked", "Docked"], ["floating", "Floating"]]} />
+          </Row>
         </div>
 
         <div className="sgroup-title">Data &amp; privacy</div>

@@ -105,7 +105,7 @@ export default function PickView() {
 
   return (
     <>
-      <ViewHeader title="Pick on map" />
+      <ViewHeader title="Pick on map" close />
       <div className="panel__scroll">
         <p style={{ marginTop: 0 }}>Move the map so the crosshair sits on what you want{window.matchMedia("(pointer: fine)").matches ? ", or just click it" : ""}.</p>
         <button type="button" className="btn btn--primary" onClick={() => lookup()} disabled={state === "loading"} style={{ width: "100%" }}>

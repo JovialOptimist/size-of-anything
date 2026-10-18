@@ -134,7 +134,7 @@ export default function CreateView() {
 
   return (
     <>
-      <ViewHeader title="Create a shape" />
+      <ViewHeader title="Create a shape" close />
       <div className="panel__scroll stack">
         <div className="field">
           <label htmlFor="cname">Name</label>

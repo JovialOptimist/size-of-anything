@@ -88,7 +88,7 @@ export default function DetailView({ id }: { id: string }) {
         <div className="sec"><span>Shape</span></div>
         <div className="actions" style={{ gridTemplateColumns: `repeat(${s.rotation !== 0 ? 3 : 2}, 1fr)` }}>
           {s.rotation !== 0 && <button type="button" className="action" onClick={() => setRotation(s.id, 0)}><RotateCcw size={19} />Reset rotation</button>}
-          <button type="button" className="action" onClick={() => duplicateShape(s.id)}><Copy size={19} />Copy</button>
+          <button type="button" className="action" onClick={() => duplicateShape(s.id)}><Copy size={19} />Clone</button>
           <button type="button" className="action danger" onClick={() => deleteShape(s.id)}><Trash2 size={19} />Delete</button>
         </div>
 
