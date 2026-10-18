@@ -7,11 +7,10 @@ export type Route =
   | { name: "detail"; id: string }
   | { name: "create" }
   | { name: "objects" }
-  | { name: "settings" }
-  | { name: "help" }
-  | { name: "about" }
   | { name: "pick" }
   | { name: "draw" };
+
+export type HelpPage = "help" | "about" | "feedback";
 
 export type Mode = "browse" | "pick" | "draw-lasso" | "draw-points" | "move-to";
 
@@ -22,9 +21,12 @@ export interface RecentItem extends PlaceResult {
 interface UIState {
   stack: Route[];
   mode: Mode;
-  menuOpen: boolean;
   shareOpen: boolean;
   layersOpen: boolean;
+  /** The Settings dialog. */
+  settingsOpen: boolean;
+  /** The Help dialog, and which page of it. */
+  helpPage: HelpPage | null;
   sheetSnap: "peek" | "half" | "full";
   announce: string;
   recent: RecentItem[];
@@ -47,13 +49,14 @@ const loadRecent = (): RecentItem[] => {
 export const useUI = create<UIState>((set, get) => ({
   stack: [{ name: "home" }],
   mode: "browse",
-  menuOpen: false,
   shareOpen: false,
   layersOpen: false,
+  settingsOpen: false,
+  helpPage: null,
   sheetSnap: "peek",
   announce: "",
   recent: loadRecent(),
-  go: (r) => set((s) => ({ stack: s.stack[s.stack.length - 1].name === r.name && r.name !== "detail" ? s.stack : [...s.stack.filter((x) => x.name !== r.name || r.name === "home"), r], menuOpen: false })),
+  go: (r) => set((s) => ({ stack: s.stack[s.stack.length - 1].name === r.name && r.name !== "detail" ? s.stack : [...s.stack.filter((x) => x.name !== r.name || r.name === "home"), r] })),
   back: () => set((s) => ({ stack: s.stack.length > 1 ? s.stack.slice(0, -1) : s.stack })),
   home: () => set({ stack: [{ name: "home" }] }),
   setMode: (m) => set({ mode: m }),

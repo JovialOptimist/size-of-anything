@@ -1,6 +1,6 @@
-/** Map controls, app menu drawer, share dialog, toasts, live region and keyboard shortcuts. */
+/** Map controls, share dialog, toasts, live region and keyboard shortcuts. */
 import { useEffect, useState } from "react";
-import { Undo2, Redo2, Share2, CircleHelp, LocateFixed, Plus, Minus, Settings, Info, Link, Check, X, Ruler } from "lucide-react";
+import { Undo2, Redo2, Share2, CircleHelp, LocateFixed, Plus, Minus, Link, Check, X, Settings, ArrowLeft } from "lucide-react";
 import { useUI } from "../state/ui";
 import { useSettings, useIsDark } from "../state/settings";
 import { useShapes } from "../state/shapes";
@@ -9,6 +9,7 @@ import { getMap } from "../map/mapCore";
 import { shareTitle, shareUrl } from "../share/url";
 import { useIsDesktop } from "./hooks";
 import { undo, redo } from "./actions";
+import { Seg, SettingsBody, HelpBody, AboutBody, FeedbackBody } from "./views/InfoViews";
 
 export function MapControls() {
   const desktop = useIsDesktop();
@@ -29,12 +30,13 @@ export function MapControls() {
             <button type="button" aria-label="Redo" title="Redo (Ctrl+Shift+Z)" disabled={!canRedo} onClick={redo}><Redo2 size={18} /></button>
           </div>
           <button type="button" className="pill" onClick={() => useUI.getState().set({ shareOpen: true })}><Share2 size={18} /> Share</button>
-          <button type="button" className="round" aria-label="Help" onClick={() => useUI.getState().go({ name: "help" })}><CircleHelp size={20} /></button>
+          <button type="button" className="round" aria-label="Settings" title="Settings" onClick={() => useUI.getState().set({ settingsOpen: true, layersOpen: false })}><Settings size={20} /></button>
+          <button type="button" className="round" aria-label="Help" title="Help" onClick={() => useUI.getState().set({ helpPage: "help", settingsOpen: false, layersOpen: false })}><CircleHelp size={20} /></button>
         </div>
       )}
       <div className="ctl-right" hidden={!desktop && sheetFull} style={{ bottom: desktop ? 32 : "calc(var(--sheet-h, 196px) + 12px)" }}>
         <div style={{ position: "relative" }}>
-          <button type="button" className="layers-btn" aria-expanded={layersOpen} aria-label="Map layers" onClick={() => useUI.getState().set({ layersOpen: !layersOpen })}>
+          <button type="button" className="layers-btn" aria-expanded={layersOpen} aria-label="Map layers" onClick={() => useUI.getState().set({ layersOpen: !layersOpen, settingsOpen: false })}>
             <span className={`layers-btn__thumb ${thumb}`} />
             Layers
           </button>
@@ -82,6 +84,10 @@ function LayersPopover() {
           <span className="layers-btn__thumb thumb-globe" />Globe
         </button>
       </div>
+      <div className="layers-units">
+        <span>Units</span>
+        <Seg label="Units" value={s.units} onChange={(v) => s.set("units", v)} options={[["metric", "Metric"], ["us", "US"]]} />
+      </div>
       <p className="muted" style={{ margin: 0, fontSize: 12.5 }}>
         {s.globe ? "Globe is on: zoom out to see the whole Earth without Mercator stretching." : "Tip: turn on the globe and zoom out to see true sizes without any stretching."}
       </p>
@@ -89,23 +95,46 @@ function LayersPopover() {
   );
 }
 
-export function AppMenu() {
-  const open = useUI((s) => s.menuOpen);
+/** Settings: a dialog, like Help and Share. */
+export function SettingsDialog() {
+  const open = useUI((s) => s.settingsOpen);
   if (!open) return null;
-  const go = (r: Parameters<ReturnType<typeof useUI.getState>["go"]>[0]) => useUI.getState().go(r);
+  const close = () => useUI.getState().set({ settingsOpen: false });
   return (
     <>
-      <div className="scrim" onClick={() => useUI.getState().set({ menuOpen: false })} />
-      <nav className="drawer" aria-label="Menu" onKeyDown={(e) => e.key === "Escape" && useUI.getState().set({ menuOpen: false })}>
-        <div className="brand">
-          <span className="brand__mark"><Ruler size={22} /></span>
-          <span className="brand__name">The Size<br />of Anything</span>
+      <div className="scrim" onClick={close} />
+      <div className="dialog dialog--wide dialog--settings" role="dialog" aria-modal="true" aria-labelledby="settings-h" onKeyDown={(e) => e.key === "Escape" && close()}>
+        <div className="inline dialog__head">
+          <h2 id="settings-h">Settings</h2>
+          <button type="button" className="iconbtn" aria-label="Close" autoFocus onClick={close}><X size={20} /></button>
         </div>
-        <button type="button" className="menuitem" autoFocus onClick={() => useUI.getState().set({ menuOpen: false, shareOpen: true })}><Share2 size={20} /> Share</button>
-        <button type="button" className="menuitem" onClick={() => go({ name: "settings" })}><Settings size={20} /> Settings</button>
-        <button type="button" className="menuitem" onClick={() => go({ name: "help" })}><CircleHelp size={20} /> Help &amp; feedback</button>
-        <button type="button" className="menuitem" onClick={() => go({ name: "about" })}><Info size={20} /> About</button>
-      </nav>
+        <div className="dialog__body"><SettingsBody /></div>
+      </div>
+    </>
+  );
+}
+
+const HELP_TITLES = { help: "Help", about: "About", feedback: "Send feedback" } as const;
+
+/** Help, About and Feedback: reading material, in a dialog like Share. */
+export function HelpDialog() {
+  const page = useUI((s) => s.helpPage);
+  if (!page) return null;
+  const close = () => useUI.getState().set({ helpPage: null });
+  const go = (p: typeof page) => useUI.getState().set({ helpPage: p });
+  return (
+    <>
+      <div className="scrim" onClick={close} />
+      <div className="dialog dialog--wide" role="dialog" aria-modal="true" aria-labelledby="help-h" onKeyDown={(e) => e.key === "Escape" && close()}>
+        <div className="inline dialog__head">
+          {page !== "help" && <button type="button" className="iconbtn" aria-label="Back to Help" onClick={() => go("help")}><ArrowLeft size={20} /></button>}
+          <h2 id="help-h">{HELP_TITLES[page]}</h2>
+          <button type="button" className="iconbtn" aria-label="Close" autoFocus onClick={close}><X size={20} /></button>
+        </div>
+        <div className="dialog__body">
+          {page === "help" ? <HelpBody go={go} /> : page === "about" ? <AboutBody /> : <FeedbackBody />}
+        </div>
+      </div>
     </>
   );
 }

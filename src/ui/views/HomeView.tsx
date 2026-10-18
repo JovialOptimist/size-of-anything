@@ -1,7 +1,7 @@
 import { Crosshair, PenLine, Shapes, Search } from "lucide-react";
 import { useUI } from "../../state/ui";
 import { useShapes } from "../../state/shapes";
-import { MenuButton, ShapeRow } from "./common";
+import { ShapeRow } from "./common";
 import { useSwatch } from "../hooks";
 import { TRY, runTry } from "../try";
 import { revealShape } from "../actions";
@@ -13,7 +13,6 @@ export default function HomeView() {
   return (
     <>
       <div className="omni">
-        <MenuButton />
         <button type="button" className="omni__fake" onClick={() => ui.go({ name: "search" })}>
           Search places &amp; things…
         </button>

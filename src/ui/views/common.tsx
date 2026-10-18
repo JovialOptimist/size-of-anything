@@ -1,4 +1,4 @@
-import { ArrowLeft, Menu, X } from "lucide-react";
+import { ArrowLeft, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { useUI } from "../../state/ui";
 import { useShapes, shapeArea, type Shape } from "../../state/shapes";
@@ -34,14 +34,6 @@ export function CloseButton({ onClick, label = "Close" }: { onClick: () => void;
   return (
     <button type="button" className="iconbtn" onClick={onClick} aria-label={label}>
       <X size={20} />
-    </button>
-  );
-}
-
-export function MenuButton() {
-  return (
-    <button type="button" className="iconbtn" aria-label="Open menu" onClick={() => useUI.getState().set({ menuOpen: true })}>
-      <Menu size={20} />
     </button>
   );
 }

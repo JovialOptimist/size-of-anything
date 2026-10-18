@@ -23,9 +23,10 @@ export function useKeyboard() {
         ui.go({ name: "search" });
         return;
       }
-      if (e.key === "?") return ui.go({ name: "help" });
+      if (e.key === "?") return ui.set({ helpPage: "help", settingsOpen: false });
       if (e.key === "Escape") {
         if (ui.layersOpen) return ui.set({ layersOpen: false });
+        if (ui.settingsOpen) return ui.set({ settingsOpen: false });
         if (selectedId) {
           useShapes.getState().select(null);
           if (currentRoute(ui).name === "detail") ui.home();

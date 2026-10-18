@@ -4,12 +4,11 @@
  * else). On phones: a bottom sheet with three heights and a full-screen search view.
  */
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { Crosshair, PenLine, Shapes, X } from "lucide-react";
+import { Search, Crosshair, PenLine, Shapes, X } from "lucide-react";
 import { useUI, currentRoute, type Route } from "../state/ui";
 import { useIsDesktop } from "./hooks";
 import { useMediaQuery } from "../state/settings";
 import { useSearch } from "../state/search";
-import { MenuButton } from "./views/common";
 import { useSwatch } from "./hooks";
 import { getMap } from "../map/mapCore";
 import { useShapes } from "../state/shapes";
@@ -18,7 +17,6 @@ import SearchView from "./views/SearchView";
 import DetailView from "./views/DetailView";
 import CreateView from "./views/CreateView";
 import ObjectsView from "./views/ObjectsView";
-import { SettingsView, HelpView, AboutView } from "./views/InfoViews";
 import PickView from "./views/PickView";
 import DrawView from "./views/DrawView";
 
@@ -29,16 +27,13 @@ function RouteView({ route }: { route: Route }) {
     case "detail": return <DetailView id={route.id} />;
     case "create": return <CreateView />;
     case "objects": return <ObjectsView />;
-    case "settings": return <SettingsView />;
-    case "help": return <HelpView />;
-    case "about": return <AboutView />;
     case "pick": return <PickView />;
     case "draw": return <DrawView />;
   }
 }
 
 const SNAP_FOR: Record<Route["name"], "peek" | "half" | "full"> = {
-  home: "peek", search: "full", detail: "half", create: "half", objects: "full", settings: "full", help: "full", about: "full", pick: "half", draw: "peek",
+  home: "peek", search: "full", detail: "half", create: "half", objects: "full", pick: "half", draw: "peek",
 };
 
 export default function Shell() {
@@ -70,6 +65,8 @@ const TOOL_FOR: Partial<Record<Route["name"], string>> = { pick: "pick", create:
 function Dock({ route }: { route: Route }) {
   const swatch = useSwatch();
   const q = useSearch((s) => s.q);
+  // The tagline greets an empty map (once the saved session has loaded, so it doesn't flash).
+  const empty = useShapes((s) => s.hydrated && s.shapes.length === 0);
   const head = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const [headH, setHeadH] = useState(140);
@@ -132,7 +129,7 @@ function Dock({ route }: { route: Route }) {
     >
       <div className="dock__head" ref={head}>
         <div className="omni" role="search">
-          <MenuButton />
+          <Search size={18} className="muted omni__lead" aria-hidden="true" />
           <input
             ref={input}
             id="dock-search"
@@ -160,6 +157,12 @@ function Dock({ route }: { route: Route }) {
           {tool("create", "Create", <PenLine size={22} />, 1)}
           {tool("objects", "Objects", <Shapes size={22} />, 4)}
         </div>
+        {empty && (
+          <p className="dock__tagline">
+            A website to teach the scale of every place, object, or thing in our world.{" "}
+            <button type="button" className="linkbtn" onClick={() => ui.set({ helpPage: "about" })}>About</button>
+          </p>
+        )}
       </div>
       <div className="dock__drawer" inert={!expanded}>
         {open && <RouteView route={route} />}

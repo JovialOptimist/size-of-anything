@@ -232,6 +232,9 @@ body.is-picking .maplibregl-canvas { cursor: crosshair; }
 .input:focus-within { border-color: var(--accent); }
 .input input { flex: 1 1 0; width: 0; min-width: 0; border: 0; background: transparent; outline: none; padding: 10px 0; }
 .input select { border: 0; background: var(--surface-2); border-radius: 99px; padding: 6px 10px; font-size: 13px; font-weight: 600; }
+.select { width: 100%; min-height: 46px; border: 2px solid var(--border); border-radius: var(--r-ctl); background: var(--surface); color: var(--text); padding: 0 12px; font: inherit; }
+.select:focus { outline: none; border-color: var(--accent); }
+textarea.input::placeholder, .input input::placeholder { color: var(--text-muted); }
 .input.is-invalid { border-color: var(--danger); }
 .err { color: var(--danger); font-size: 12.5px; font-weight: 600; }
 .seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; background: var(--surface-2); border-radius: 99px; padding: 4px; gap: 2px; }
@@ -263,6 +266,8 @@ button.srow:hover { background: var(--surface-2); }
 .prose p, .prose li { color: var(--text); }
 .prose ul, .prose ol { padding-left: 20px; }
 .prose a { color: var(--accent-strong); }
+.prose a.btn { color: var(--text); text-decoration: none; }
+.prose a.btn--primary, .prose a.btn--primary:hover { color: var(--on-accent); }
 .steps { display: grid; gap: 10px; margin: 8px 0; }
 .step { display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: start; background: var(--surface-2); border-radius: var(--r-card); padding: 12px; }
 .step__n { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: grid; place-items: center; font-family: var(--display); font-weight: 800; }
@@ -285,6 +290,49 @@ button.srow:hover { background: var(--surface-2); }
 .thumb-sat { background: radial-gradient(circle at 30% 30%, #6b7a4a, transparent 40%), radial-gradient(circle at 70% 60%, #3e4d33, transparent 45%), linear-gradient(135deg, #556144, #7d7b6a 60%, #3c4a52); }
 .thumb-globe { background: radial-gradient(circle at 35% 35%, #8ec5ff, #2a5fa8 60%, #0b1f3d); border-radius: 50%; width: 38px; }
 .layers-pop { position: absolute; right: 64px; bottom: 0; background: var(--surface); box-shadow: var(--shadow-3); border-radius: 18px; padding: 14px; width: 270px; display: grid; gap: 12px; z-index: 30; }
+.ctl-top { flex-wrap: nowrap; }
+.dialog.dialog--wide { width: min(880px, calc(100% - 24px)); max-height: min(760px, calc(100% - 40px)); display: flex; flex-direction: column; padding: 16px 20px 20px; overflow: hidden; }
+.dialog--wide .dialog__body { flex: 0 1 auto; min-height: 0; }
+.dialog__head { gap: 6px; }
+.dialog__head h2 { flex: 1; }
+.dialog.dialog--settings { width: min(760px, calc(100% - 24px)); }
+.settings-cols, .help-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; align-items: start; }
+.settings-cols .srow { padding: 9px 12px; min-height: 50px; }
+.settings-cols .srow .seg { min-width: 0; }
+@media (max-width: 720px) { .settings-cols, .help-cols { grid-template-columns: 1fr; } }
+.help { display: grid; gap: 18px; font-size: 14.5px; }
+.help p { margin: 0 0 8px; }
+.help h3 { font-family: var(--display); font-weight: 800; font-size: 17px; margin: 0 0 8px; }
+.help-intro { display: flex; gap: 12px; align-items: center; margin: 0; flex-wrap: wrap; }
+.help-intro__text { flex: 1; min-width: 220px; }
+.help-intro .btnrow { margin: 0; }
+.help-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.help-steps .step p { margin: 2px 0 0; color: var(--text-muted); font-size: 13.5px; }
+@media (max-width: 720px) { .help-steps { grid-template-columns: 1fr; } }
+.help-keys dl { display: grid; grid-template-columns: auto 1fr; gap: 8px 12px; margin: 0; padding-bottom: 4px; align-items: center; }
+.help-keys .kbd { display: inline-block; line-height: 1.5; }
+.help-keys dt { white-space: nowrap; }
+.help-keys__next { margin-top: 18px !important; }
+@media (pointer: coarse) { .help-keys dl, .help-keys > h3:first-child { display: none; } }
+
+/* The click-through Mercator explainer */
+.merc-explainer { display: grid; gap: 10px; }
+.merc { width: 100%; height: auto; max-height: 160px; display: block; background: var(--surface-2); border-radius: var(--r-card); }
+.merc__fill { fill: #d7263d; }
+.merc__edge { fill: none; stroke: #8f1424; stroke-width: 2.5; }
+.merc__line { fill: none; stroke: #9e1a2b; stroke-width: 1.2; opacity: 0.7; }
+.merc__stem { fill: none; stroke: #7a4a22; stroke-width: 3; stroke-linecap: round; }
+.merc__leaf { fill: #3fa34d; }
+.merc__slice { fill: #d7263d; stroke: #8f1424; stroke-width: 1.5; stroke-linejoin: round; }
+.merc__land { fill: #57b15f; stroke: #1f6b2b; stroke-width: 1.3; stroke-linejoin: round; }
+.merc__label { font: 700 10.5px var(--font); fill: #fff; text-anchor: middle; paint-order: stroke; stroke: #5c0d17; stroke-width: 3px; stroke-linejoin: round; }
+.merc-explainer__text { min-height: 6.6em; margin: 0 !important; }
+.merc-explainer__nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.merc-explainer__dots { display: flex; gap: 6px; }
+.merc-explainer__dots button { width: 9px; height: 9px; padding: 0; border: 0; border-radius: 50%; background: var(--surface-3); }
+.merc-explainer__dots button[aria-current="step"] { background: var(--accent); width: 22px; border-radius: 99px; }
+.help-keys dd { margin: 0; color: var(--text-muted); }
+.dialog__body { overflow-y: auto; overscroll-behavior: contain; margin: 0 -20px; padding: 0 20px; }
 .layers-pop h3 { margin: 0; font-family: var(--display); font-size: 17px; }
 .layer-opts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .layer-opt { border: 0; background: transparent; display: grid; justify-items: center; gap: 4px; font-size: 12px; font-weight: 650; padding: 4px; border-radius: 12px; }
@@ -340,13 +388,15 @@ button.srow:hover { background: var(--surface-2); }
 .toast--error { border-color: var(--danger); box-shadow: inset 4px 0 0 var(--danger), var(--shadow-3); }
 .scrim { position: absolute; inset: 0; z-index: 50; background: var(--scrim); animation: fade 150ms; }
 @keyframes fade { from { opacity: 0; } }
-.drawer { position: absolute; z-index: 51; top: 0; bottom: 0; left: 0; width: min(320px, 86vw); background: var(--surface); box-shadow: var(--shadow-3); padding: calc(18px + var(--safe-t)) 12px 18px; display: flex; flex-direction: column; gap: 4px; animation: slide 200ms cubic-bezier(.2,.8,.2,1); }
-@keyframes slide { from { transform: translateX(-100%); } }
-.brand { display: flex; align-items: center; gap: 10px; padding: 4px 8px 14px; }
-.brand__mark { width: 40px; height: 40px; border-radius: 12px; background: var(--accent); color: var(--on-accent); display: grid; place-items: center; }
-.brand__name { font-family: var(--display); font-weight: 800; font-size: 18px; line-height: 1.1; }
-.menuitem { display: flex; align-items: center; gap: 14px; border: 0; background: transparent; border-radius: 12px; padding: 12px; text-align: left; font-weight: 600; font-size: 15px; min-height: 48px; }
-.menuitem:hover { background: var(--surface-2); }
+.brand__mark { width: 40px; height: 40px; border-radius: 12px; background: var(--accent); color: var(--on-accent); display: grid; place-items: center; flex: none; }
+.linkbtn { border: 0; background: none; padding: 0; color: var(--accent-strong); font: inherit; font-weight: 600; cursor: pointer; }
+.linkbtn:hover { text-decoration: underline; }
+.help-intro b { font-family: var(--display); font-weight: 800; font-size: 17px; }
+.help-intro p { margin: 2px 0 0; color: var(--text-muted); }
+.dock__tagline { margin: -4px 16px 12px; font-size: 13px; line-height: 1.4; color: var(--text-muted); }
+.omni__lead { margin-left: 10px; flex: none; }
+.layers-units { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-weight: 600; font-size: 14px; }
+.layers-units .seg { min-width: 150px; }
 .dialog { position: absolute; z-index: 51; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(440px, calc(100% - 24px)); max-height: calc(100% - 40px); overflow: auto; background: var(--surface); border-radius: var(--r-panel); box-shadow: var(--shadow-3); padding: 20px; display: grid; gap: 14px; }
 .dialog h2 { margin: 0; font-family: var(--display); font-size: 22px; }
 .share-card { border-radius: 16px; overflow: hidden; background: var(--surface-2); }
