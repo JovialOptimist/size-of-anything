@@ -4,9 +4,10 @@
  * portals for off-screen shapes. Positions update every frame the map moves.
  */
 import { useEffect, useReducer, type WheelEvent as ReactWheelEvent } from "react";
+import { flushSync } from "react-dom";
 import { RotateCw, RotateCcw, Copy, Trash2, PanelLeftOpen } from "lucide-react";
 import { getMap, getPad } from "./mapCore";
-import { startMove, startRotate, useLive, rotateBy } from "./interaction";
+import { startMove, startRotate, useLive, rotateBy, getDragLocal } from "./interaction";
 import { pinAt, pinPoint, shapeBBox } from "./pins";
 import { shapeColor } from "./palette";
 import { useShapes, type Shape } from "../state/shapes";
@@ -14,9 +15,13 @@ import { useIsDark, useSettings } from "../state/settings";
 import { useUI } from "../state/ui";
 import { ShapeIcon } from "../ui/icons";
 import { duplicateShape, deleteShape } from "../ui/actions";
-import type { LngLat } from "../geo/geometry";
+import { place, type LngLat } from "../geo/geometry";
 
-/** Re-render once per animation frame while the map moves. */
+/**
+ * Re-render in the same frame the map moves. MapLibre fires "move" inside its own
+ * animation frame; flushing React right after that handler (in a microtask, before
+ * the browser paints) keeps the HTML pins locked to the WebGL map instead of a frame behind.
+ */
 function useMapTick() {
   const [, bump] = useReducer((x: number) => x + 1, 0);
   useEffect(() => {
@@ -26,9 +31,9 @@ function useMapTick() {
     const on = () => {
       if (pending) return;
       pending = true;
-      requestAnimationFrame(() => {
+      queueMicrotask(() => {
         pending = false;
-        bump();
+        flushSync(bump);
       });
     };
     const attach = () => {
@@ -123,8 +128,29 @@ export default function Overlays() {
 
   const sel = items.find((i) => i.s.id === selectedId && inView(i.p));
 
+  // While a shape is being moved or rotated, draw it here, in step with its pin.
+  const dragLocal = live.id ? getDragLocal() : null;
+  const dragShape = live.id ? shapes.find((x) => x.id === live.id) : undefined;
+  let dragPath = "";
+  if (dragLocal && dragShape) {
+    const g = place(dragLocal, live.anchor, live.rotation, live.scale);
+    const polys = g.type === "Polygon" ? [g.coordinates] : g.coordinates;
+    dragPath = polys
+      .flatMap((poly) => poly)
+      .map((ring) => "M" + ring.map((pt) => {
+        const q = m.project(pt as [number, number]);
+        return `${q.x.toFixed(1)},${q.y.toFixed(1)}`;
+      }).join("L") + "Z")
+      .join("");
+  }
+
   return (
     <div className="overlays" onWheel={forwardWheel} aria-hidden={mode !== "browse" ? true : undefined}>
+      {dragPath && dragShape && (
+        <svg className="drag-shape" width={W} height={H} aria-hidden="true" style={{ ["--c" as string]: shapeColor(dragShape.slot, darkMap) }}>
+          <path d={dragPath} className={basemap === "satellite" ? "is-sat" : undefined} />
+        </svg>
+      )}
       {items.map(({ s, p }) => {
         const selected = s.id === selectedId;
         const color = shapeColor(s.slot, darkMap);

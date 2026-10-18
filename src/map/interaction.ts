@@ -1,18 +1,21 @@
 /**
- * Moving and rotating shapes. During a gesture the shape is drawn from a
- * separate small source and only committed to the store (one undo step) on release.
+ * Moving and rotating shapes. During a gesture the shape is hidden from the
+ * WebGL layer and drawn by the HTML/SVG overlay instead, in the same frame as its
+ * pin, so the two never drift apart. The change is committed to the store (one
+ * undo step) on release, and the overlay hands back to WebGL once that has drawn.
  */
 import { create } from "zustand";
-import { getMap, setDragShape, syncShapes } from "./mapCore";
+import { flushSync } from "react-dom";
+import { getMap, syncShapes } from "./mapCore";
 import { localOf, useShapes, type Shape } from "../state/shapes";
-import { place, type LngLat } from "../geo/geometry";
+import type { LngLat, LocalShape } from "../geo/geometry";
 import { pinAt, pinPoint } from "./pins";
 import { announce } from "../state/ui";
 import { useSettings } from "../state/settings";
 
 interface Live {
   id: string | null;
-  kind: "move" | "rotate" | null;
+  kind: "move" | "rotate" | "settling" | null;
   anchor: LngLat;
   rotation: number;
   scale: number;
@@ -24,24 +27,38 @@ export const setDarkMapForDrag = (v: boolean) => {
   darkMapRef = v;
 };
 
-let frame = 0;
-function render(s: Shape) {
-  cancelAnimationFrame(frame);
-  frame = requestAnimationFrame(() => {
-    const live = useLive.getState();
-    if (!live.id) return;
-    setDragShape(s, place(localOf(s), live.anchor, live.rotation, live.scale), darkMapRef);
-  });
+/** A lighter copy of the dragged shape's outline (at most ~4,000 points) for drawing every frame. */
+let dragLocal: LocalShape | null = null;
+export const getDragLocal = () => dragLocal;
+
+function decimate(local: LocalShape, max = 4000): LocalShape {
+  const total = local.reduce((n, p) => n + p.reduce((m, r) => m + r.length / 3, 0), 0);
+  const step = Math.max(1, Math.ceil(total / max));
+  if (step === 1) return local;
+  return local.map((poly) =>
+    poly.map((ring) => {
+      const n = ring.length / 3;
+      const out: number[] = [];
+      for (let i = 0; i < n; i += step) out.push(ring[i * 3], ring[i * 3 + 1], ring[i * 3 + 2]);
+      out.push(ring[0], ring[1], ring[2]);
+      return Float64Array.from(out);
+    }).filter((r) => r.length >= 12)
+  ).filter((p) => p.length > 0);
+}
+
+/** Update the live gesture and re-render the overlay synchronously, in this frame. */
+function setLive(patch: Partial<Live>) {
+  flushSync(() => useLive.setState(patch));
 }
 
 function begin(s: Shape, kind: "move" | "rotate") {
   const m = getMap()!;
   m.dragPan.disable();
   m.touchZoomRotate.disableRotation();
-  useLive.setState({ id: s.id, kind, anchor: s.anchor, rotation: s.rotation, scale: s.scale });
+  dragLocal = decimate(localOf(s));
+  setLive({ id: s.id, kind, anchor: s.anchor, rotation: s.rotation, scale: s.scale });
   const { shapes, selectedId } = useShapes.getState();
   syncShapes(shapes, selectedId, darkMapRef, s.id);
-  render(s);
   document.body.classList.add("is-dragging");
 }
 
@@ -49,12 +66,18 @@ function end(s: Shape, moved: boolean) {
   const m = getMap();
   m?.dragPan.enable();
   const live = useLive.getState();
-  cancelAnimationFrame(frame);
   if (moved) useShapes.getState().update(s.id, { anchor: live.anchor, rotation: live.rotation });
-  useLive.setState({ id: null, kind: null });
-  setDragShape(null, null, darkMapRef);
+  // Keep drawing the overlay copy until the WebGL layer has the new position, so nothing blinks.
+  useLive.setState({ kind: "settling" });
   const { shapes, selectedId } = useShapes.getState();
   syncShapes(shapes, selectedId, darkMapRef);
+  const done = () => {
+    if (useLive.getState().kind !== "settling") return;
+    useLive.setState({ id: null, kind: null });
+    dragLocal = null;
+  };
+  m?.once("idle", done);
+  setTimeout(done, 400);
   document.body.classList.remove("is-dragging");
   if (moved && live.kind === "move" && !useSettings.getState().seenDragHint) useSettings.getState().set("seenDragHint", true);
   if (moved && live.kind === "move") {
@@ -97,8 +120,7 @@ export function startMove(shapeId: string, clientX: number, clientY: number, onC
       begin(s, "move");
     }
     const ll = m.unproject([e.clientX - rect.left + offX, e.clientY - rect.top + offY]);
-    useLive.setState({ anchor: [wrapLng(ll.lng), Math.max(-84, Math.min(84, ll.lat))] });
-    render(s);
+    setLive({ anchor: [wrapLng(ll.lng), Math.max(-84, Math.min(84, ll.lat))] });
   };
   const up = () => {
     window.removeEventListener("pointermove", move);
@@ -126,8 +148,7 @@ export function startRotate(shapeId: string, clientX: number, clientY: number) {
     let r = s.rotation + angle(e.clientX, e.clientY) - a0;
     if (e.shiftKey) r = Math.round(r / 15) * 15;
     const rotation = ((r % 360) + 360) % 360;
-    useLive.setState({ rotation, anchor: anchorKeepingPin(s, rotation) });
-    render(s);
+    setLive({ rotation, anchor: anchorKeepingPin(s, rotation) });
   };
   const up = () => {
     window.removeEventListener("pointermove", move);
