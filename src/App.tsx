@@ -17,6 +17,7 @@ import LayerToggleButton from "./components/map/LayerToggleButton";
 import CreationPanel from "./components/creation/CreationPanel";
 import EllipsisMenu, { type RightSidebarContent } from "./components/EllipsisMenu";
 import RightSidebar from "./components/RightSidebar";
+import VersionPrompt from "./components/ui/VersionPrompt";
 
 function App() {
   useUrlSync();
@@ -61,6 +62,7 @@ function App() {
       </div>
 
       <RightSidebar content={rightSidebar} onClose={() => setRightSidebar(null)} />
+      <VersionPrompt />
     </div>
   );
 }

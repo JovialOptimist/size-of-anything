@@ -1,9 +1,10 @@
 /**
- * Top-right ellipsis menu: opens dropdown with Settings, Help, About.
- * Choosing an option opens the Right Sidebar with that content.
+ * Top-right ellipsis menu: opens dropdown with Try the new version, Settings, Help, About.
+ * Choosing Settings, Help or About opens the Right Sidebar with that content.
  */
 import { useState, useRef, useEffect } from "react";
 import "./EllipsisMenu.css";
+import { openVersionPrompt } from "./ui/VersionPrompt";
 
 export type RightSidebarContent = "settings" | "help" | "about" | null;
 
@@ -43,6 +44,9 @@ export default function EllipsisMenu({ onSelect }: EllipsisMenuProps) {
       </button>
       {open && (
         <div className="ellipsis-menu-dropdown" role="menu">
+          <button type="button" role="menuitem" className="ellipsis-menu-new" onClick={() => { setOpen(false); openVersionPrompt(); }}>
+            Try the new version
+          </button>
           <button type="button" role="menuitem" onClick={() => handleChoose("settings")}>
             Settings
           </button>

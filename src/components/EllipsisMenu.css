@@ -65,3 +65,12 @@
 .ellipsis-menu-dropdown button:hover {
   background: var(--candidate-hover-option, rgba(0, 0, 0, 0.06));
 }
+
+.ellipsis-menu-dropdown .ellipsis-menu-new {
+  font-weight: 600;
+  color: #6d4ae0;
+}
+
+.dark-mode .ellipsis-menu-dropdown .ellipsis-menu-new {
+  color: #b39cff;
+}
