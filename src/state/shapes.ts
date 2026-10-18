@@ -1,6 +1,7 @@
 /**
  * Shapes on the map. A shape keeps its original outline once and is placed by
- * anchor + rotation + scale, so moving it only changes three numbers.
+ * anchor + rotation + scale (and an optional mirror), so moving it only changes
+ * three numbers.
  * Changes are undoable and the session is restored on reload.
  */
 import { create } from "zustand";
@@ -39,6 +40,8 @@ export interface Shape {
   anchor: LngLat;
   rotation: number;
   scale: number;
+  /** Mirrored left-to-right in its own frame (both flips are this plus a rotation). */
+  mirrored?: boolean;
   area: number; // m² at scale 1
 }
 
@@ -52,11 +55,35 @@ export type NewShape = Omit<Shape, "id" | "slot" | "anchor" | "rotation" | "scal
 // ---------- local geometry cache ----------
 const localCache = new Map<string, LocalShape>();
 
+/** Identifies a shape's local outline (shared by copies of the same thing). */
+export function localKey(s: Shape) {
+  const base = s.source.kind === "osm" ? `osm:${s.source.key}:${s.origin.join(",")}` : s.source.kind === "object" ? `obj:${s.source.id}` : `id:${s.id}`;
+  return s.mirrored ? `${base}:m` : base;
+}
+
+/** Mirror east-west, reversing each ring so its winding stays the same. */
+function mirror(local: LocalShape): LocalShape {
+  return local.map((poly) =>
+    poly.map((ring) => {
+      const out = new Float64Array(ring.length);
+      const n = ring.length / 3;
+      for (let i = 0; i < n; i++) {
+        const j = (n - 1 - i) * 3;
+        out[i * 3] = -ring[j];
+        out[i * 3 + 1] = ring[j + 1];
+        out[i * 3 + 2] = ring[j + 2];
+      }
+      return out;
+    })
+  );
+}
+
 export function localOf(s: Shape): LocalShape {
-  const key = s.source.kind === "osm" ? `osm:${s.source.key}:${s.origin.join(",")}` : s.source.kind === "object" ? `obj:${s.source.id}` : `id:${s.id}`;
+  const key = localKey(s);
   let l = localCache.get(key);
   if (!l) {
-    if (s.source.kind === "osm") l = toLocal(s.geometry!, s.origin);
+    if (s.mirrored) l = mirror(localOf({ ...s, mirrored: false }));
+    else if (s.source.kind === "osm") l = toLocal(s.geometry!, s.origin);
     else if (s.source.kind === "object") l = localFromMeters(objectById(s.source.id)!.build());
     else l = localFromMeters(s.source.meters);
     localCache.set(key, l);

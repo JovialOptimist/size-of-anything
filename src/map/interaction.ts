@@ -185,6 +185,26 @@ export function setRotation(shapeId: string, deg: number) {
   useShapes.getState().update(s.id, { rotation, anchor: anchorKeepingPin(s, rotation) });
 }
 
+/**
+ * Flip on screen, around the pin. Mirroring the outline in its own frame and
+ * negating the rotation is a left-right flip as you see it; adding 180° makes
+ * it top-bottom.
+ */
+export function flip(shapeId: string, axis: "horizontal" | "vertical") {
+  const s = useShapes.getState().shapes.find((x) => x.id === shapeId);
+  if (!s) return;
+  const r = axis === "horizontal" ? -s.rotation : 180 - s.rotation;
+  const next: Shape = { ...s, mirrored: !s.mirrored, rotation: ((r % 360) + 360) % 360 };
+  const target = pinPoint(s);
+  let anchor = s.anchor;
+  for (let i = 0; i < 4; i++) {
+    const p = pinAt(next, anchor, next.rotation, next.scale);
+    anchor = [anchor[0] + target[0] - p[0], anchor[1] + target[1] - p[1]];
+  }
+  useShapes.getState().update(s.id, { mirrored: next.mirrored, rotation: next.rotation, anchor });
+  announce(`${s.name} flipped ${axis}ly`);
+}
+
 /** Rescale around the pin. */
 export function setScale(shapeId: string, scale: number) {
   const s = useShapes.getState().shapes.find((x) => x.id === shapeId);

@@ -21,12 +21,13 @@ interface Entry {
   t?: string;
   l?: string;
   i?: IconKey;
+  m?: 1;
 }
 
 const round = (n: number, d = 5) => Math.round(n * 10 ** d) / 10 ** d;
 
 function toEntry(s: Shape): Entry {
-  const base = { a: [round(s.anchor[0]), round(s.anchor[1])] as [number, number], r: s.rotation ? round(s.rotation, 1) : undefined, s: s.scale !== 1 ? round(s.scale, 6) : undefined, c: s.slot, n: s.name, t: s.type, l: s.locality, i: s.icon };
+  const base = { a: [round(s.anchor[0]), round(s.anchor[1])] as [number, number], r: s.rotation ? round(s.rotation, 1) : undefined, s: s.scale !== 1 ? round(s.scale, 6) : undefined, c: s.slot, n: s.name, t: s.type, l: s.locality, i: s.icon, m: s.mirrored ? (1 as const) : undefined };
   if (s.source.kind === "osm") return { k: "o", id: s.source.key, ...base };
   if (s.source.kind === "object") return { k: "x", id: s.source.id, ...base, t: undefined, l: undefined, i: undefined };
   const ring = s.source.meters[0][0].map(([x, y]) => [Math.round(y), Math.round(x)] as [number, number]);
@@ -70,7 +71,7 @@ export async function loadFromUrl(): Promise<boolean> {
   for (const e of data.s) {
     try {
       let shape: Shape;
-      const common = { name: e.n, type: e.t ?? "", locality: e.l ?? "", icon: e.i ?? ("pin" as IconKey), anchor: e.a, rotation: e.r ?? 0, scale: e.s ?? 1, slot: e.c };
+      const common = { name: e.n, type: e.t ?? "", locality: e.l ?? "", icon: e.i ?? ("pin" as IconKey), anchor: e.a, rotation: e.r ?? 0, scale: e.s ?? 1, slot: e.c, mirrored: e.m === 1 || undefined };
       if (e.k === "o" && e.id) {
         const place: PlaceResult = { key: e.id, osmType: e.id[0] as "W", osmId: Number(e.id.slice(1)), name: e.n, type: e.t ?? "", icon: e.i ?? "pin", locality: e.l ?? "", source: "nominatim" };
         const o = await fetchOutline(place);

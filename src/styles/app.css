@@ -81,19 +81,20 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select:
   position: absolute; z-index: 21; left: 14px; top: 14px; display: none;
 }
 .panel.is-collapsed ~ .pill.panel-toggle { display: inline-flex; }
-/* Docked desktop panel (like Google Maps): a floating card at rest, docked full height when open. */
-.dock-wrap { position: absolute; z-index: 20; left: 0; top: 0; bottom: 0; pointer-events: none; filter: drop-shadow(0 2px 6px rgb(0 0 0 / 0.22)) drop-shadow(0 8px 20px rgb(0 0 0 / 0.12)); }
+/* Docked desktop panel (like Google Maps): a floating card at rest, docked full height when open.
+   The box itself grows (no clipping), so its shadow always moves with it. The right edge stays put. */
+.dock-wrap { position: absolute; z-index: 20; left: 0; top: 0; bottom: 0; pointer-events: none; }
 .dock {
-  position: absolute; left: 0; top: 0; bottom: 0; width: 392px; pointer-events: auto;
-  background: var(--surface);
+  position: absolute; left: 12px; top: 12px; width: 380px; height: var(--head-h); pointer-events: auto;
+  background: var(--surface); border-radius: var(--r-panel); box-shadow: var(--shadow-3); overflow: hidden;
   display: flex; flex-direction: column;
-  /* At rest, only the head shows (and takes clicks), as a rounded card set in from the top and left.
-     Docked, it grows to the edges; the right edge stays put. */
-  clip-path: inset(12px 0 calc(100% - var(--head-h) - 12px) 12px round var(--r-panel));
-  transition: clip-path 260ms cubic-bezier(.2,.8,.2,1);
+  transition-property: left, top, width, height, border-radius;
+  transition-duration: 260ms; transition-timing-function: cubic-bezier(.2,.8,.2,1);
 }
-.dock.is-open { clip-path: inset(0 round 0 var(--r-panel) var(--r-panel) 0); }
-@media (max-width: 1000px) { .dock { width: 332px; } }
+.dock.is-open { left: 0; top: 0; width: 392px; height: 100%; border-radius: 0 var(--r-panel) var(--r-panel) 0; }
+@media (max-width: 1000px) { .dock { width: 320px; } .dock.is-open { width: 332px; } }
+.dock .panel__scroll { scrollbar-gutter: stable; } /* no reflow when the scrollbar arrives */
+.dock:not(.is-settled) .panel__scroll { overflow-y: hidden; }
 .dock-tab {
   position: absolute; top: 50%; left: 392px; transform: translateY(-50%); pointer-events: auto;
   width: 24px; height: 48px; border: 0; border-radius: 0 10px 10px 0; background: var(--surface); color: var(--text-muted);
@@ -102,7 +103,7 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select:
 .dock-tab:hover { color: var(--text); }
 .dock-tab.is-out { left: 0; }
 @media (max-width: 1000px) { .dock-tab:not(.is-out) { left: 332px; } }
-.dock__head { flex: none; margin: 12px 0 0 12px; }
+.dock__head { flex: none; }
 .dock.is-open .dock__head { display: none; }
 .dock__head .omni { margin: 12px 12px 10px; }
 .dock__head .tools { margin: 0 12px 12px; }
@@ -211,7 +212,10 @@ mark { background: color-mix(in oklch, var(--accent) 22%, transparent); color: i
 .fact svg { flex: none; margin-top: 2px; color: var(--accent-strong); }
 .actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 6px 0; }
 .action { border: 0; background: var(--surface-2); border-radius: var(--r-card); min-height: 64px; display: grid; justify-items: center; align-content: center; gap: 5px; font-size: 12.5px; font-weight: 600; }
-.action:hover { background: var(--surface-3); }
+.action:hover:not(:disabled) { background: var(--surface-3); }
+.action:disabled { opacity: 0.45; cursor: default; }
+.actions--3 { grid-template-columns: repeat(3, 1fr); }
+.action { text-align: center; padding: 8px 4px; }
 .action.danger { color: var(--danger); }
 .swatches { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 6px; max-width: 360px; }
 .swatch { aspect-ratio: 1; border-radius: 50%; border: 0; padding: 0; background: var(--c); box-shadow: inset 0 0 0 2px rgb(255 255 255 / 0.35); width: 100%; min-width: 0; }

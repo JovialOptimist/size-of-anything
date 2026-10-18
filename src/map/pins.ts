@@ -1,16 +1,12 @@
 /** Pin positions and on-screen extents for shapes, cached per shape version. */
 import { bbox, labelPoint, place, toLocal, type LngLat, type AreaGeometry } from "../geo/geometry";
-import { localOf, placedGeometry, type Shape } from "../state/shapes";
+import { localKey, localOf, placedGeometry, type Shape } from "../state/shapes";
 
 const pinLocalCache = new Map<string, Float64Array>();
 
-function shapeKey(s: Shape) {
-  return s.source.kind === "osm" ? `osm:${s.source.key}:${s.origin.join(",")}` : s.source.kind === "object" ? `obj:${s.source.id}` : `id:${s.id}`;
-}
-
 /** The pin's position in the shape's local frame: the visual center of the outline. */
 function pinLocal(s: Shape): Float64Array {
-  const key = shapeKey(s);
+  const key = localKey(s);
   let v = pinLocalCache.get(key);
   if (!v) {
     const at0 = place(localOf(s), [0, 0]);

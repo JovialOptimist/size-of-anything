@@ -89,7 +89,16 @@ function Dock({ route, collapsed }: { route: Route; collapsed: boolean }) {
   const [headH, setHeadH] = useState(140);
   const open = route.name !== "home";
   const expanded = open && !collapsed;
+  // Scrolling stays off until the panel has finished growing, so no scrollbar flashes up mid-animation.
+  const [settled, setSettled] = useState(false);
   const ui = useUI.getState();
+
+  useEffect(() => {
+    setSettled(false);
+    if (!expanded) return;
+    const t = setTimeout(() => setSettled(true), 400); // in case transitionend never comes (reduced motion)
+    return () => clearTimeout(t);
+  }, [expanded]);
 
   useLayoutEffect(() => {
     const el = head.current!;
@@ -137,7 +146,8 @@ function Dock({ route, collapsed }: { route: Route; collapsed: boolean }) {
   return (
     <div className="dock-wrap">
     <aside
-      className={`dock${expanded ? " is-open" : ""}`}
+      className={`dock${expanded ? " is-open" : ""}${expanded && settled ? " is-settled" : ""}`}
+      onTransitionEnd={(e) => e.target === e.currentTarget && e.propertyName === "height" && expanded && setSettled(true)}
       style={{ ["--head-h" as string]: `${headH}px` }}
       aria-label="Size of Anything panel"
     >
