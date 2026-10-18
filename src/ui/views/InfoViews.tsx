@@ -57,11 +57,8 @@ export function SettingsView() {
         <div className="sgroup">
           <Row title="Names"><Seg label="Names" value={s.labels} onChange={set("labels")} options={[["off", "Off"], ["auto", "Auto"], ["always", "Always"]]} /></Row>
           <Row title="Fill"><Seg label="Fill" value={s.fill} onChange={set("fill")} options={[["light", "Light"], ["medium", "Medium"], ["strong", "Strong"]]} /></Row>
-          <Row title="Shape tools" sub={s.shapeTools === "panel" ? "Selecting a shape opens its page" : "A toolbar floats above the selected shape"}>
-            <Seg label="Shape tools" value={s.shapeTools} onChange={set("shapeTools")} options={[["panel", "Panel"], ["toolbar", "Toolbar"]]} />
-          </Row>
-          <Row title="Side panel" sub={s.panelStyle === "docked" ? "Fixed to the left edge; opens a drawer when needed" : "Floats over the map"}>
-            <Seg label="Side panel" value={s.panelStyle} onChange={set("panelStyle")} options={[["docked", "Docked"], ["floating", "Floating"]]} />
+          <Row title="Show shape toolbar" sub="A small toolbar floats above the selected shape, as well as its page">
+            <Switch label="Show shape toolbar" checked={s.showToolbar} onChange={set("showToolbar")} />
           </Row>
         </div>
 

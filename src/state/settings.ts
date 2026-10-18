@@ -12,8 +12,8 @@ export interface Settings {
   showBothUnits: boolean;
   labels: "off" | "auto" | "always";
   fill: "light" | "medium" | "strong";
-  shapeTools: "panel" | "toolbar";
-  panelStyle: "docked" | "floating";
+  /** Also float a small toolbar above the selected shape. */
+  showToolbar: boolean;
   basemap: Basemap;
   globe: boolean;
   rememberRecent: boolean;
@@ -28,8 +28,7 @@ const defaults = () => ({
   showBothUnits: true,
   labels: "auto" as const,
   fill: "light" as const,
-  shapeTools: "panel" as const,
-  panelStyle: "docked" as const,
+  showToolbar: false,
   basemap: "map" as Basemap,
   globe: false,
   rememberRecent: true,
@@ -43,7 +42,14 @@ export const useSettings = create<Settings>()(
       set: (key, value) => set({ [key]: value } as Partial<Settings>),
       reset: () => set({ ...defaults(), seenDragHint: true }),
     }),
-    { name: "soa-settings-v2" }
+    {
+      name: "soa-settings-v2",
+      // Earlier builds stored the toolbar as shapeTools: "panel" | "toolbar".
+      merge: (saved, current) => {
+        const p = (saved ?? {}) as Partial<Settings> & { shapeTools?: string };
+        return { ...current, ...p, showToolbar: p.showToolbar ?? p.shapeTools === "toolbar" };
+      },
+    }
   )
 );
 

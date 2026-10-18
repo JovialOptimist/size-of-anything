@@ -1,15 +1,13 @@
-import { Crosshair, PenLine, Shapes, Search, PanelLeftClose } from "lucide-react";
+import { Crosshair, PenLine, Shapes, Search } from "lucide-react";
 import { useUI } from "../../state/ui";
 import { useShapes } from "../../state/shapes";
 import { MenuButton, ShapeRow } from "./common";
 import { useSwatch } from "../hooks";
 import { TRY, runTry } from "../try";
 import { revealShape } from "../actions";
-import { useIsDesktop } from "../hooks";
 
 export default function HomeView() {
   const shapes = useShapes((s) => s.shapes);
-  const desktop = useIsDesktop();
   const swatch = useSwatch();
   const ui = useUI.getState();
   return (
@@ -19,15 +17,10 @@ export default function HomeView() {
         <button type="button" className="omni__fake" onClick={() => ui.go({ name: "search" })}>
           Search places &amp; things…
         </button>
-        {desktop ? <span className="kbd" aria-hidden="true">/</span> : <Search size={18} className="muted" aria-hidden="true" />}
-        {desktop && (
-          <button type="button" className="iconbtn" aria-label="Hide panel" onClick={() => ui.set({ panelCollapsed: true })}>
-            <PanelLeftClose size={18} />
-          </button>
-        )}
+        <Search size={18} className="muted" aria-hidden="true" />
       </div>
       <div className="panel__scroll">
-        {!desktop && shapes.length > 0 && (
+        {shapes.length > 0 && (
           <div className="chips chips--scroll" style={{ margin: "2px 0 12px" }} aria-label="Shapes on the map">
             {[...shapes].reverse().map((s) => (
               <button key={s.id} type="button" className="chip" style={{ ["--c" as string]: swatch(s.slot) }} onClick={() => {

@@ -61,10 +61,7 @@ function useMapTick() {
       setTimeout(bump, 450);
     };
     const unsubUI = useUI.subscribe((s, prev) => {
-      if (s.stack !== prev.stack || s.panelCollapsed !== prev.panelCollapsed) followPanel();
-    });
-    const unsubSettings = useSettings.subscribe((s, prev) => {
-      if (s.panelStyle !== prev.panelStyle) followPanel();
+      if (s.stack !== prev.stack) followPanel();
     });
     // And once more when it settles, in case frames were throttled along the way.
     const onSettled = (e: TransitionEvent) => {
@@ -75,7 +72,6 @@ function useMapTick() {
       document.removeEventListener("transitionend", onSettled);
       cancelAnimationFrame(frame);
       unsubUI();
-      unsubSettings();
       clearTimeout(retry);
       attached?.off("move", on);
       attached?.off("resize", on);
@@ -106,7 +102,7 @@ export default function Overlays() {
   const live = useLive();
   const mode = useUI((s) => s.mode);
   const basemap = useSettings((s) => s.basemap);
-  const shapeTools = useSettings((s) => s.shapeTools);
+  const showToolbar = useSettings((s) => s.showToolbar);
   const labels = useSettings((s) => s.labels);
   const seenDragHint = useSettings((s) => s.seenDragHint);
   const isDark = useIsDark();
@@ -228,7 +224,7 @@ export default function Overlays() {
             >
               <RotateCw size={14} />
             </button>
-            {shapeTools === "toolbar" && live.id === null && <Toolbar s={sel.s} x={sel.p.x} y={handleY - 22} />}
+            {showToolbar && live.id === null && <Toolbar s={sel.s} x={sel.p.x} y={handleY - 22} />}
             {!seenDragHint && live.id === null && (
               <div className="drag-hint" style={{ left: sel.p.x, top: sel.p.y + 46 }}>
                 Drag the pin to move it anywhere. It stays true to size!
@@ -256,7 +252,7 @@ function Toolbar({ s, x, y }: { s: Shape; x: number; y: number }) {
 
 interface Box { left: number; top: number; right: number; bottom: number }
 
-const UI_SELECTORS = ".dock, .dock-tab, .panel:not(.is-collapsed), .pill.panel-toggle, .ctl-top, .ctl-right";
+const UI_SELECTORS = ".dock, .ctl-top, .ctl-right";
 
 function visibleArea(container: HTMLElement, W: number, H: number, pad: Box): { view: Box; obstacles: Box[] } {
   const c = container.getBoundingClientRect();

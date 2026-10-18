@@ -1,14 +1,13 @@
 /**
  * The one container for task UI. On desktop: a panel docked to the left edge
  * (search and the three tools, with a drawer that opens below for everything
- * else), or a floating panel (a setting). On phones: a bottom sheet with three
- * heights and a full-screen search view.
+ * else). On phones: a bottom sheet with three heights and a full-screen search view.
  */
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { PanelLeftOpen, Crosshair, PenLine, Shapes, X } from "lucide-react";
+import { Crosshair, PenLine, Shapes, X } from "lucide-react";
 import { useUI, currentRoute, type Route } from "../state/ui";
 import { useIsDesktop } from "./hooks";
-import { useMediaQuery, useSettings } from "../state/settings";
+import { useMediaQuery } from "../state/settings";
 import { useSearch } from "../state/search";
 import { MenuButton } from "./views/common";
 import { useSwatch } from "./hooks";
@@ -45,22 +44,10 @@ const SNAP_FOR: Record<Route["name"], "peek" | "half" | "full"> = {
 export default function Shell() {
   const desktop = useIsDesktop();
   const route = useUI((s) => currentRoute(s));
-  const collapsed = useUI((s) => s.panelCollapsed);
-  const docked = useSettings((s) => s.panelStyle === "docked");
-  return desktop && docked ? (
+  return desktop ? (
     <>
       <Dock route={route} />
-      <PaddingSync desktop docked collapsed={false} sheetHeight={0} />
-    </>
-  ) : desktop ? (
-    <>
-      <aside className={`panel${collapsed ? " is-collapsed" : ""}`} aria-label="Size of Anything panel">
-        <RouteView route={route} />
-      </aside>
-      <button type="button" className="pill panel-toggle" onClick={() => useUI.getState().set({ panelCollapsed: false })}>
-        <PanelLeftOpen size={18} /> Show panel
-      </button>
-      <PaddingSync desktop docked={false} collapsed={collapsed} sheetHeight={0} />
+      <PaddingSync desktop sheetHeight={0} />
     </>
   ) : route.name === "search" ? (
     <div className="fullsearch" role="dialog" aria-label="Search">
@@ -239,22 +226,22 @@ function Sheet({ routeName, children }: { routeName: Route["name"]; children: Re
         <button type="button" className="sheet__grab" onPointerDown={onPointerDown} aria-label={`Resize panel (now ${snap === "peek" ? "small" : snap === "half" ? "half height" : "full height"})`} />
         {children}
       </section>
-      <PaddingSync desktop={false} docked={false} collapsed={false} sheetHeight={Math.min(h, heights.half)} />
+      <PaddingSync desktop={false} sheetHeight={Math.min(h, heights.half)} />
     </>
   );
 }
 
 /** Keep the map's padding (and therefore its "visible center") in sync with the panel or sheet. */
-function PaddingSync({ desktop, docked, collapsed, sheetHeight }: { desktop: boolean; docked: boolean; collapsed: boolean; sheetHeight: number }) {
+function PaddingSync({ desktop, sheetHeight }: { desktop: boolean; sheetHeight: number }) {
   const narrow = useMediaQuery("(max-width: 1000px)");
   useLayoutEffect(() => {
     document.documentElement.style.setProperty("--sheet-h", `${desktop ? 0 : sheetHeight}px`);
     const apply = () => {
       const m = getMap();
       if (!m) return setTimeout(apply, 150);
-      m.setPadding(desktop ? { left: collapsed ? 0 : docked ? (narrow ? 332 : 392) : narrow ? 348 : 420, top: 0, right: 0, bottom: 0 } : { left: 0, top: 60, right: 0, bottom: sheetHeight });
+      m.setPadding(desktop ? { left: narrow ? 332 : 392, top: 0, right: 0, bottom: 0 } : { left: 0, top: 60, right: 0, bottom: sheetHeight });
     };
     apply();
-  }, [desktop, docked, collapsed, sheetHeight, narrow]);
+  }, [desktop, sheetHeight, narrow]);
   return null;
 }

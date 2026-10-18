@@ -1,6 +1,6 @@
 /** Map controls, app menu drawer, share dialog, toasts, live region and keyboard shortcuts. */
 import { useEffect, useState } from "react";
-import { Undo2, Redo2, Share2, CircleHelp, LocateFixed, Plus, Minus, Settings, Info, Shapes, PenLine, Crosshair, Search, Link, Check, X, Ruler } from "lucide-react";
+import { Undo2, Redo2, Share2, CircleHelp, LocateFixed, Plus, Minus, Settings, Info, Link, Check, X, Ruler } from "lucide-react";
 import { useUI } from "../state/ui";
 import { useSettings, useIsDark } from "../state/settings";
 import { useShapes } from "../state/shapes";
@@ -101,12 +101,7 @@ export function AppMenu() {
           <span className="brand__mark"><Ruler size={22} /></span>
           <span className="brand__name">The Size<br />of Anything</span>
         </div>
-        <button type="button" className="menuitem" autoFocus onClick={() => go({ name: "search" })}><Search size={20} /> Search</button>
-        <button type="button" className="menuitem" onClick={() => go({ name: "pick" })}><Crosshair size={20} /> Pick on map</button>
-        <button type="button" className="menuitem" onClick={() => go({ name: "create" })}><PenLine size={20} /> Create a shape</button>
-        <button type="button" className="menuitem" onClick={() => go({ name: "objects" })}><Shapes size={20} /> Objects</button>
-        <hr style={{ border: 0, borderTop: "1px solid var(--border)", width: "100%" }} />
-        <button type="button" className="menuitem" onClick={() => useUI.getState().set({ menuOpen: false, shareOpen: true })}><Share2 size={20} /> Share</button>
+        <button type="button" className="menuitem" autoFocus onClick={() => useUI.getState().set({ menuOpen: false, shareOpen: true })}><Share2 size={20} /> Share</button>
         <button type="button" className="menuitem" onClick={() => go({ name: "settings" })}><Settings size={20} /> Settings</button>
         <button type="button" className="menuitem" onClick={() => go({ name: "help" })}><CircleHelp size={20} /> Help &amp; feedback</button>
         <button type="button" className="menuitem" onClick={() => go({ name: "about" })}><Info size={20} /> About</button>

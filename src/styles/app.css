@@ -68,19 +68,7 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select:
 .maplibregl-ctrl-attrib { font-size: 11px; }
 .maplibregl-ctrl-bottom-left, .maplibregl-ctrl-bottom-right { z-index: 1; }
 
-/* Floating desktop panel */
-.panel {
-  position: absolute; z-index: 20; left: 14px; top: 14px; bottom: 14px; width: 392px;
-  background: var(--surface); border-radius: var(--r-panel); box-shadow: var(--shadow-3);
-  display: flex; flex-direction: column; overflow: hidden;
-  transition: transform 220ms cubic-bezier(.2,.8,.2,1);
-}
-.panel.is-collapsed { transform: translateX(calc(-100% - 20px)); }
-@media (max-width: 1000px) { .panel { width: 320px; } .tools { gap: 6px; } .tool { font-size: 12px; } }
-.pill.panel-toggle {
-  position: absolute; z-index: 21; left: 14px; top: 14px; display: none;
-}
-.panel.is-collapsed ~ .pill.panel-toggle { display: inline-flex; }
+@media (max-width: 1000px) { .tools { gap: 6px; } .tool { font-size: 12px; } }
 /* Docked desktop panel (like Google Maps): a floating card at rest, docked full height when open.
    The box itself grows (no clipping), so its shadow always moves with it. The right edge stays put. */
 .dock-wrap { position: absolute; z-index: 20; left: 0; top: 0; bottom: 0; pointer-events: none; }
@@ -199,6 +187,11 @@ mark { background: color-mix(in oklch, var(--accent) 22%, transparent); color: i
 .history button { width: 40px; height: 40px; border: 0; background: none; color: var(--text); display: grid; place-items: center; border-radius: 99px; }
 .history button:hover:not(:disabled) { background: var(--surface-2); }
 .history button:disabled { color: var(--text-muted); opacity: 0.45; cursor: default; }
+
+/* Pick on map (desktop): click anywhere */
+body.is-picking .maplibregl-canvas { cursor: crosshair; }
+.pick-marker { width: 18px; height: 18px; border-radius: 50%; background: var(--accent); border: 3px solid #fff; box-shadow: 0 0 0 6px color-mix(in oklch, var(--accent) 30%, transparent), var(--shadow-2); }
+.pick-hint { display: flex; align-items: center; gap: 8px; color: var(--text-muted); }
 
 .preview { border-radius: var(--r-card); background: var(--surface-2); padding: 12px; display: grid; gap: 10px; margin: 6px 0 4px; }
 .preview > svg { width: 100%; height: 150px; display: block; border-radius: 10px; background: var(--surface); }

@@ -8,11 +8,14 @@ import { formatArea } from "../geo/format";
 import { useSettings } from "../state/settings";
 import { finishDrawing } from "../ui/drawing";
 import { toast } from "../state/toasts";
+import { useIsDesktop } from "../ui/hooks";
 
 export default function ModeLayers() {
   const mode = useUI((s) => s.mode);
+  const desktop = useIsDesktop();
   if (mode === "draw-lasso") return <Lasso />;
-  if (mode === "pick" || mode === "draw-points") return <Crosshair />;
+  // Picking on desktop is a plain click; the crosshair is for phones.
+  if ((mode === "pick" && !desktop) || mode === "draw-points") return <Crosshair />;
   return null;
 }
 

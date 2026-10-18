@@ -25,7 +25,6 @@ interface UIState {
   menuOpen: boolean;
   shareOpen: boolean;
   layersOpen: boolean;
-  panelCollapsed: boolean;
   sheetSnap: "peek" | "half" | "full";
   announce: string;
   recent: RecentItem[];
@@ -51,7 +50,6 @@ export const useUI = create<UIState>((set, get) => ({
   menuOpen: false,
   shareOpen: false,
   layersOpen: false,
-  panelCollapsed: false,
   sheetSnap: "peek",
   announce: "",
   recent: loadRecent(),

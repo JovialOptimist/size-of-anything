@@ -115,9 +115,11 @@ function wireEvents(m: maplibregl.Map) {
     if (id) {
       shapes.select(id);
       ui.go({ name: "detail", id });
-    } else if (shapes.selectedId) {
+    } else if (shapes.selectedId || ui.stack[ui.stack.length - 1].name === "detail") {
+      // Clicking empty map deselects and closes the shape's page, like its X. (Going "back"
+      // could land on another shape's page, or the search the shape came from.)
       shapes.select(null);
-      if (ui.stack[ui.stack.length - 1].name === "detail") ui.back();
+      if (ui.stack[ui.stack.length - 1].name === "detail") ui.home();
     }
   });
 
