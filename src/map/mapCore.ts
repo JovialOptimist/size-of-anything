@@ -8,7 +8,6 @@ import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
 import { BASEMAPS, SATELLITE_TILES } from "../config";
 import { shapeColor } from "./palette";
 import { placedGeometry, type Shape } from "../state/shapes";
-import { pinPoint } from "./pins";
 import type { AreaGeometry, LngLat } from "../geo/geometry";
 
 maplibregl.setWorkerUrl(workerUrl);
@@ -27,8 +26,14 @@ async function fetchStyle(url: string): Promise<StyleSpecification> {
   return structuredClone(styleCache.get(url)!);
 }
 
+/** Flat buildings only: 3D extrusions would hide shape outlines behind them. */
+function flatten(style: StyleSpecification): StyleSpecification {
+  style.layers = style.layers.filter((l) => l.type !== "fill-extrusion");
+  return style;
+}
+
 export async function buildStyle(basemap: "map" | "satellite", dark: boolean): Promise<StyleSpecification> {
-  if (basemap === "map") return fetchStyle(dark ? BASEMAPS.dark : BASEMAPS.light);
+  if (basemap === "map") return flatten(await fetchStyle(dark ? BASEMAPS.dark : BASEMAPS.light));
   // Satellite with labels: imagery under the street map's label and road-name layers.
   const base = await fetchStyle(BASEMAPS.light);
   const labelLayers = base.layers.filter((l) => l.type === "symbol");
@@ -52,7 +57,6 @@ export interface LayerLook {
   darkMap: boolean;
   satellite: boolean;
   fillOpacity: number;
-  labels: "off" | "auto" | "always";
 }
 
 /** First label layer of the basemap, so shapes sit under place names (the "sandwich"). */
@@ -61,8 +65,8 @@ function firstSymbolLayer(m: maplibregl.Map) {
 }
 
 export function ensureLayers(m: maplibregl.Map, look: LayerLook) {
-  for (const id of ["soa-shapes", "soa-drag", "soa-labels", "soa-preview", "soa-draw"]) {
-    if (!m.getSource(id)) m.addSource(id, { type: "geojson", data: EMPTY, tolerance: id === "soa-drag" ? 0.6 : 0.375 });
+  for (const id of ["soa-shapes", "soa-drag", "soa-preview", "soa-draw"]) {
+    if (!m.getSource(id)) m.addSource(id, { type: "geojson", data: EMPTY, tolerance: id === "soa-drag" ? 0.6 : 0.375, promoteId: "id" });
   }
   const before = firstSymbolLayer(m);
   const casing = look.satellite ? "rgba(16,20,24,0.75)" : look.darkMap ? "#0c0c0c" : "#ffffff";
@@ -73,32 +77,13 @@ export function ensureLayers(m: maplibregl.Map, look: LayerLook) {
     const p = src === "soa-drag" ? "soa-drag" : "soa";
     add({ id: `${p}-fill`, type: "fill", source: src, paint: { "fill-color": ["get", "color"], "fill-opacity": ["case", ["get", "selected"], look.fillOpacity + 0.1, look.fillOpacity] } }, before);
     add({ id: `${p}-casing`, type: "line", source: src, paint: { "line-color": casing, "line-width": ["case", ["get", "selected"], 7, look.satellite ? 4.5 : 0], "line-opacity": ["case", ["get", "selected"], 0.9, look.satellite ? 1 : 0] }, layout: { "line-join": "round" } }, before);
-    add({ id: `${p}-line`, type: "line", source: src, paint: { "line-color": ["get", "color"], "line-width": ["case", ["get", "selected"], 3.5, look.satellite ? 2.5 : 2] }, layout: { "line-join": "round" } }, before);
+    add({ id: `${p}-line`, type: "line", source: src, paint: { "line-color": ["get", "color"], "line-width": ["case", ["get", "selected"], 3.5, ["boolean", ["feature-state", "hover"], false], 3.2, look.satellite ? 2.5 : 2] }, layout: { "line-join": "round" } }, before);
   }
   add({ id: "soa-preview-fill", type: "fill", source: "soa-preview", paint: { "fill-color": look.darkMap ? "#e8ebef" : "#1b2026", "fill-opacity": 0.1 } });
   add({ id: "soa-preview-line", type: "line", source: "soa-preview", paint: { "line-color": look.darkMap ? "#e8ebef" : "#1b2026", "line-width": 2.5, "line-dasharray": [2, 1.5] } });
   add({ id: "soa-draw-fill", type: "fill", source: "soa-draw", filter: ["==", ["geometry-type"], "Polygon"], paint: { "fill-color": "#888", "fill-opacity": 0.12 } });
   add({ id: "soa-draw-line", type: "line", source: "soa-draw", paint: { "line-color": look.darkMap ? "#e8ebef" : "#1b2026", "line-width": 2.5 } });
   add({ id: "soa-draw-pts", type: "circle", source: "soa-draw", filter: ["==", ["geometry-type"], "Point"], paint: { "circle-radius": 6, "circle-color": look.darkMap ? "#e8ebef" : "#1b2026", "circle-stroke-color": look.darkMap ? "#1b2026" : "#fff", "circle-stroke-width": 2 } });
-  const font = m.getStyle().glyphs ? ["Noto Sans Bold"] : undefined;
-  if (look.labels !== "off" && font) {
-    add({
-      id: "soa-labels",
-      type: "symbol",
-      source: "soa-labels",
-      layout: {
-        "text-field": ["get", "name"],
-        "text-font": font,
-        "text-size": 13,
-        "text-offset": [0, 1.6],
-        "text-anchor": "top",
-        "text-max-width": 9,
-        "text-allow-overlap": look.labels === "always",
-        "text-optional": true,
-      },
-      paint: { "text-color": look.darkMap ? "#e8ebef" : "#1b2026", "text-halo-color": look.darkMap ? "#0c0c0c" : "#ffffff", "text-halo-width": 1.8 },
-    });
-  }
 }
 
 function feature(s: Shape, geom: AreaGeometry, selected: boolean, darkMap: boolean): GeoJSON.Feature {
@@ -112,10 +97,6 @@ export function syncShapes(shapes: Shape[], selectedId: string | null, darkMap: 
   // Selected shape last so it draws on top.
   visible.sort((a, b) => Number(a.id === selectedId) - Number(b.id === selectedId));
   (m.getSource("soa-shapes") as GeoJSONSource).setData({ type: "FeatureCollection", features: visible.map((s) => feature(s, placedGeometry(s), s.id === selectedId, darkMap)) });
-  (m.getSource("soa-labels") as GeoJSONSource | undefined)?.setData({
-    type: "FeatureCollection",
-    features: visible.map((s) => ({ type: "Feature", geometry: { type: "Point", coordinates: pinPoint(s) }, properties: { name: s.name, id: s.id } })),
-  });
 }
 
 export function setDragShape(s: Shape | null, geom: AreaGeometry | null, darkMap: boolean) {

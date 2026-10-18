@@ -16,12 +16,11 @@ export default function MapView({ onReady }: { onReady?: () => void }) {
   const basemap = useSettings((s) => s.basemap);
   const globe = useSettings((s) => s.globe);
   const fill = useSettings((s) => s.fill);
-  const labels = useSettings((s) => s.labels);
   const shapes = useShapes((s) => s.shapes);
   const selectedId = useShapes((s) => s.selectedId);
   const darkMap = basemap === "satellite" || isDark;
-  const lookRef = useRef<LayerLook>({ darkMap, satellite: basemap === "satellite", fillOpacity: FILL_OPACITY[fill], labels });
-  lookRef.current = { darkMap, satellite: basemap === "satellite", fillOpacity: FILL_OPACITY[fill], labels };
+  const lookRef = useRef<LayerLook>({ darkMap, satellite: basemap === "satellite", fillOpacity: FILL_OPACITY[fill] });
+  lookRef.current = { darkMap, satellite: basemap === "satellite", fillOpacity: FILL_OPACITY[fill] };
   setDarkMapForDrag(darkMap);
 
   // Create the map once.
@@ -84,7 +83,7 @@ export default function MapView({ onReady }: { onReady?: () => void }) {
     if (!m || !m.isStyleLoaded()) return;
     for (const id of ["soa-fill", "soa-casing", "soa-line", "soa-drag-fill", "soa-drag-casing", "soa-drag-line", "soa-labels", "soa-preview-fill", "soa-preview-line", "soa-draw-fill", "soa-draw-line", "soa-draw-pts"]) if (m.getLayer(id)) m.removeLayer(id);
     ensureLayers(m, lookRef.current);
-  }, [fill, labels]);
+  }, [fill]);
 
   useEffect(() => {
     const m = mapRef.current;
@@ -132,12 +131,21 @@ function wireEvents(m: maplibregl.Map) {
     }
   });
 
-  // Hover cursor.
+  // Hover: cursor plus a slightly thicker outline.
+  let hovered: string | null = null;
+  const setHover = (id: string | null) => {
+    if (hovered === id) return;
+    if (hovered && m.getSource("soa-shapes")) m.setFeatureState({ source: "soa-shapes", id: hovered }, { hover: false });
+    hovered = id;
+    if (id && m.getSource("soa-shapes")) m.setFeatureState({ source: "soa-shapes", id }, { hover: true });
+  };
   m.on("mousemove", (e) => {
-    if (useUI.getState().mode !== "browse") return;
+    if (useUI.getState().mode !== "browse") return setHover(null);
     const id = topShapeAt(e.point);
+    setHover(id);
     m.getCanvas().style.cursor = id ? (id === useShapes.getState().selectedId ? "move" : "pointer") : "";
   });
+  m.on("mouseout", () => setHover(null));
 
   // Touch: hold a shape for 400 ms to pick it up. A plain one-finger drag still pans.
   let timer: ReturnType<typeof setTimeout> | undefined;

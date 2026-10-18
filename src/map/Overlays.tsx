@@ -1,8 +1,9 @@
 /**
- * Everything drawn over the map in screen space: pins (move handles), the
- * rotate handle, the optional floating toolbar, and portals for off-screen shapes.
+ * Everything drawn over the map in screen space: a pin with a name tag for every
+ * shape (the move handle), the rotate handle, the optional floating toolbar, and
+ * portals for off-screen shapes. Positions update every frame the map moves.
  */
-import { useEffect, useReducer } from "react";
+import { useEffect, useReducer, type WheelEvent as ReactWheelEvent } from "react";
 import { RotateCw, RotateCcw, Copy, Trash2, PanelLeftOpen } from "lucide-react";
 import { getMap, getPad } from "./mapCore";
 import { startMove, startRotate, useLive, rotateBy } from "./interaction";
@@ -13,32 +14,57 @@ import { useIsDark, useSettings } from "../state/settings";
 import { useUI } from "../state/ui";
 import { ShapeIcon } from "../ui/icons";
 import { duplicateShape, deleteShape } from "../ui/actions";
+import type { LngLat } from "../geo/geometry";
 
+/** Re-render once per animation frame while the map moves. */
 function useMapTick() {
   const [, bump] = useReducer((x: number) => x + 1, 0);
   useEffect(() => {
-    let raf = 0;
-    const m = getMap();
+    let pending = false;
+    let attached: ReturnType<typeof getMap> = null;
+    let retry: ReturnType<typeof setTimeout> | undefined;
     const on = () => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(bump);
+      if (pending) return;
+      pending = true;
+      requestAnimationFrame(() => {
+        pending = false;
+        bump();
+      });
     };
     const attach = () => {
-      const mm = getMap();
-      if (!mm) return setTimeout(attach, 200);
-      mm.on("move", on);
-      mm.on("resize", on);
-      mm.on("idle", on);
+      attached = getMap();
+      if (!attached) {
+        retry = setTimeout(attach, 200);
+        return;
+      }
+      attached.on("move", on);
+      attached.on("resize", on);
+      attached.on("styledata", on);
       bump();
     };
     attach();
     return () => {
-      cancelAnimationFrame(raf);
-      (m || getMap())?.off("move", on);
-      (m || getMap())?.off("resize", on);
-      (m || getMap())?.off("idle", on);
+      clearTimeout(retry);
+      attached?.off("move", on);
+      attached?.off("resize", on);
+      attached?.off("styledata", on);
     };
   }, []);
+}
+
+/** Send wheel events that land on overlay elements to the map, so scrolling over a pin still zooms. */
+function forwardWheel(e: ReactWheelEvent) {
+  const canvas = getMap()?.getCanvas();
+  if (!canvas) return;
+  const n = e.nativeEvent;
+  canvas.dispatchEvent(new WheelEvent("wheel", { deltaX: n.deltaX, deltaY: n.deltaY, deltaMode: n.deltaMode, clientX: n.clientX, clientY: n.clientY, ctrlKey: n.ctrlKey, shiftKey: n.shiftKey, bubbles: true, cancelable: true }));
+}
+
+const RAD = Math.PI / 180;
+/** Great-circle angle between two points, in degrees. */
+function angleBetween(a: LngLat, b: LngLat) {
+  const c = Math.sin(a[1] * RAD) * Math.sin(b[1] * RAD) + Math.cos(a[1] * RAD) * Math.cos(b[1] * RAD) * Math.cos((a[0] - b[0]) * RAD);
+  return Math.acos(Math.max(-1, Math.min(1, c))) / RAD;
 }
 
 export default function Overlays() {
@@ -49,88 +75,108 @@ export default function Overlays() {
   const mode = useUI((s) => s.mode);
   const basemap = useSettings((s) => s.basemap);
   const shapeTools = useSettings((s) => s.shapeTools);
+  const labels = useSettings((s) => s.labels);
   const seenDragHint = useSettings((s) => s.seenDragHint);
   const isDark = useIsDark();
   const darkMap = basemap === "satellite" || isDark;
   const m = getMap();
-  if (!m || !m.isStyleLoaded?.()) return null;
+  if (!m || !m.getStyle?.()) return null;
 
   const canvas = m.getCanvas();
   const W = canvas.clientWidth, H = canvas.clientHeight;
   const pad = getPad();
   // Keep portals clear of the panel, the top buttons and the right-hand controls.
   const view = { left: pad.left + 8, top: pad.top + 64, right: W - pad.right - 72, bottom: H - pad.bottom - 8 };
+  const globe = m.getProjection?.()?.type === "globe";
+  const center = m.getCenter();
 
   const items = shapes
     .filter((s) => s.visible)
     .map((s) => {
       const isLive = live.id === s.id;
       const pin = isLive ? pinAt(s, live.anchor, live.rotation, live.scale) : pinPoint(s);
+      // On the globe, skip shapes on the far side of the Earth.
+      const hidden = globe && angleBetween(pin, [center.lng, center.lat]) > 82;
       const p = m.project(pin);
       const [x0, y0, x1, y1] = shapeBBox(s);
       const a = m.project([x0, y1]), b = m.project([x1, y0]);
       const size = Math.max(Math.abs(b.x - a.x), Math.abs(b.y - a.y));
-      return { s, p, size, top: Math.min(a.y, b.y) + (isLive ? p.y - m.project(pinPoint(s)).y : 0) };
-    });
+      const pinNow = isLive ? p : m.project(pinPoint(s));
+      return { s, p, size, hidden, top: Math.min(a.y, b.y) + (p.y - pinNow.y) };
+    })
+    .filter((i) => !i.hidden);
 
   const inView = (p: { x: number; y: number }) => p.x >= view.left && p.x <= view.right && p.y >= view.top && p.y <= view.bottom;
 
+  // Name tags: the selected shape first, then the rest; in "auto" mode skip tags that would overlap.
+  const placed: { x0: number; y0: number; x1: number; y1: number }[] = [];
+  const order = [...items].sort((a, b) => Number(b.s.id === selectedId) - Number(a.s.id === selectedId));
+  const showTag = new Set<string>();
+  for (const it of order) {
+    if (labels === "off" || !inView(it.p)) continue;
+    const w = Math.min(160, it.s.name.length * 7 + 16);
+    const r = { x0: it.p.x - w / 2, y0: it.p.y + 18, x1: it.p.x + w / 2, y1: it.p.y + 40 };
+    if (labels === "auto" && placed.some((q) => r.x0 < q.x1 && r.x1 > q.x0 && r.y0 < q.y1 && r.y1 > q.y0)) continue;
+    placed.push(r);
+    showTag.add(it.s.id);
+  }
+
+  const sel = items.find((i) => i.s.id === selectedId && inView(i.p));
+
   return (
-    <div className="overlays" aria-hidden={mode !== "browse" ? true : undefined}>
-      {items.map(({ s, p, size }) => {
+    <div className="overlays" onWheel={forwardWheel} aria-hidden={mode !== "browse" ? true : undefined}>
+      {items.map(({ s, p }) => {
         const selected = s.id === selectedId;
         const color = shapeColor(s.slot, darkMap);
         if (!inView(p)) {
           if (mode !== "browse") return null;
           return <Portal key={s.id} s={s} p={p} view={view} color={color} />;
         }
-        if (!selected && size >= 24) return null;
         return (
-          <button
-            key={s.id}
-            type="button"
-            className={`pin${selected ? " pin--selected" : ""}`}
-            style={{ left: p.x, top: p.y, ["--c" as string]: color }}
-            aria-label={selected ? `Move ${s.name}. Drag, or use the arrow keys.` : `Select ${s.name}`}
-            onPointerDown={(e) => {
-              if (e.button !== 0) return;
-              e.preventDefault();
-              startMove(s.id, e.clientX, e.clientY, () => {
-                useShapes.getState().select(s.id);
-                useUI.getState().go({ name: "detail", id: s.id });
-              });
-            }}
-          >
-            <ShapeIcon icon={s.icon} size={selected ? 18 : 14} strokeWidth={2.4} />
-          </button>
+          <div key={s.id} className={`pin-wrap${selected ? " is-selected" : ""}`} style={{ transform: `translate(${p.x}px, ${p.y}px)`, ["--c" as string]: color }}>
+            <button
+              type="button"
+              className="pin"
+              aria-label={selected ? `Move ${s.name}. Drag, or use the arrow keys.` : `Select ${s.name}`}
+              onPointerDown={(e) => {
+                if (e.button !== 0) return;
+                e.preventDefault();
+                startMove(s.id, e.clientX, e.clientY, () => {
+                  useShapes.getState().select(s.id);
+                  useUI.getState().go({ name: "detail", id: s.id });
+                });
+              }}
+            >
+              <ShapeIcon icon={s.icon} size={selected ? 18 : 14} strokeWidth={2.4} />
+            </button>
+            {showTag.has(s.id) && <span className="pin-tag">{s.name}</span>}
+          </div>
         );
       })}
-      {(() => {
-        const it = items.find((i) => i.s.id === selectedId && inView(i.p));
-        if (!it || mode !== "browse") return null;
-        const big = it.size > Math.min(W, H) * 0.7;
-        const hy = big ? it.p.y - 64 : Math.max(view.top + 20, it.top - 30);
-        const handleY = Math.min(hy, it.p.y - 44);
+      {sel && mode === "browse" && (() => {
+        const big = sel.size > Math.min(W, H) * 0.7;
+        const hy = big ? sel.p.y - 70 : Math.max(view.top + 20, sel.top - 30);
+        const handleY = Math.min(hy, sel.p.y - 50);
         return (
           <>
             <svg className="rot-tether" style={{ left: 0, top: 0, width: W, height: H }} aria-hidden="true">
-              <line x1={it.p.x} y1={it.p.y - 18} x2={it.p.x} y2={handleY + 12} />
+              <line x1={sel.p.x} y1={sel.p.y - 22} x2={sel.p.x} y2={handleY + 14} />
             </svg>
             <button
               type="button"
               className="rot-handle"
-              style={{ left: it.p.x, top: handleY }}
-              aria-label={`Rotate ${it.s.name}. Drag around the pin; hold Shift to snap.`}
+              style={{ transform: `translate(${sel.p.x}px, ${handleY}px)` }}
+              aria-label={`Rotate ${sel.s.name}. Drag around the pin; hold Shift to snap.`}
               onPointerDown={(e) => {
                 e.preventDefault();
-                startRotate(it.s.id, e.clientX, e.clientY);
+                startRotate(sel.s.id, e.clientX, e.clientY);
               }}
             >
               <RotateCw size={14} />
             </button>
-            {shapeTools === "toolbar" && live.id === null && <Toolbar s={it.s} x={it.p.x} y={handleY - 22} />}
+            {shapeTools === "toolbar" && live.id === null && <Toolbar s={sel.s} x={sel.p.x} y={handleY - 22} />}
             {!seenDragHint && live.id === null && (
-              <div className="drag-hint" style={{ left: it.p.x, top: it.p.y + 26 }}>
+              <div className="drag-hint" style={{ left: sel.p.x, top: sel.p.y + 46 }}>
                 Drag the pin to move it anywhere. It stays true to size!
               </div>
             )}
@@ -164,12 +210,14 @@ function Portal({ s, p, view, color }: { s: Shape; p: { x: number; y: number }; 
     <button
       type="button"
       className="portal"
-      style={{ left: x, top: y, ["--c" as string]: color }}
+      style={{ transform: `translate(${x}px, ${y}px)`, ["--c" as string]: color }}
       title={`${s.name}: off screen. Click to go there.`}
       aria-label={`Go to ${s.name}`}
       onClick={() => {
         const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         getMap()?.flyTo({ center: pinPoint(s), animate: !reduce });
+        useShapes.getState().select(s.id);
+        useUI.getState().go({ name: "detail", id: s.id });
       }}
     >
       <span className="portal__arrow" style={{ transform: `rotate(${angle}deg)` }} />

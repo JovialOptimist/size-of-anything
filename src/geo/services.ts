@@ -28,7 +28,7 @@ export class ServiceError extends Error {}
 // ---------- Nominatim queue ----------
 let last = 0;
 let chain: Promise<unknown> = Promise.resolve();
-function nominatim<T>(path: string, signal?: AbortSignal): Promise<T> {
+export function nominatim<T>(path: string, signal?: AbortSignal): Promise<T> {
   const run = async () => {
     const wait = Math.max(0, last + 1100 - Date.now());
     if (wait) await new Promise((r) => setTimeout(r, wait));

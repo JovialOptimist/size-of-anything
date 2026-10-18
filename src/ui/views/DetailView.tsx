@@ -1,15 +1,19 @@
-import { useEffect, useState } from "react";
-import { RotateCcw, RotateCw, Copy, Trash2, Crosshair, MapPinned, LocateFixed, ArrowUp, ArrowDown, ArrowLeft as ALeft, ArrowRight, Sparkles, ExternalLink, Scaling, Eye, EyeOff } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { RotateCcw, RotateCw, Copy, Trash2, Crosshair, MapPinned, LocateFixed, ArrowUp, ArrowDown, ArrowLeft as ALeft, ArrowRight, ExternalLink, Scaling, Eye, EyeOff, ChevronLeft, ChevronRight, Globe } from "lucide-react";
 import { useShapes, shapeArea, placedGeometry } from "../../state/shapes";
 import { useSettings } from "../../state/settings";
 import { useUI } from "../../state/ui";
 import { toast } from "../../state/toasts";
-import { formatArea, formatAreaSecondary, formatRatio, familiarComparisons } from "../../geo/format";
+import { formatArea, formatAreaSecondary, formatRatio, approx, FAMILIAR } from "../../geo/format";
 import { suggestPlaces, fetchOutline, type PlaceResult } from "../../geo/services";
-import { geometryCenter } from "../../geo/geometry";
+import { geometryCenter, localFromMeters, place } from "../../geo/geometry";
 import { visibleCenter, fitGeometry } from "../../map/mapCore";
-import { nudge, rotateBy } from "../../map/interaction";
-import { PALETTE } from "../../map/palette";
+import { nudge, rotateBy, setRotation, setScale } from "../../map/interaction";
+import { PALETTE, shapeColor } from "../../map/palette";
+import { fetchPlaceInfo, type PlaceInfo } from "../../geo/placeInfo";
+import { objectById, thumbnailPath } from "../../objects/registry";
+import SatelliteSnapshot from "../SatelliteSnapshot";
+import type { Shape } from "../../state/shapes";
 import { deleteShape, duplicateShape, moveShapeTo } from "../actions";
 import { ShapeIcon } from "../icons";
 import { ViewHeader } from "./common";
@@ -36,7 +40,13 @@ export default function DetailView({ id }: { id: string }) {
   const [moveTo, setMoveTo] = useState(false);
   const [exact, setExact] = useState(false);
 
+  const [rot, setRot] = useState(String(Math.round(s?.rotation ?? 0)));
   useEffect(() => setName(s?.name ?? ""), [s?.name]);
+  useEffect(() => setRot(String(Math.round(s?.rotation ?? 0))), [s?.rotation]);
+  // If the shape goes away (undo, delete elsewhere), leave its page.
+  useEffect(() => {
+    if (!s) useUI.getState().home();
+  }, [s]);
   useEffect(() => {
     if (s) useShapes.getState().select(s.id);
   }, [s?.id]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -51,9 +61,6 @@ export default function DetailView({ id }: { id: string }) {
   }
 
   const area = shapeArea(s);
-  // Only compare with shapes within a sensible range; "2,784,827,903× bigger" helps nobody.
-  const others = shapes.filter((o) => o.id !== s.id && Math.abs(Math.log10(area / shapeArea(o))) < 3.5).slice(-4);
-  const familiar = familiarComparisons(area, 3).filter((f) => !others.some((o) => f.label.toLowerCase().startsWith(o.name.toLowerCase())));
   const commitName = () => {
     const n = name.trim();
     if (n && n !== s.name) useShapes.getState().update(s.id, { name: n });
@@ -96,23 +103,8 @@ export default function DetailView({ id }: { id: string }) {
           <div className="bigarea">{formatArea(area, units)}<small>{showBoth ? formatAreaSecondary(area, units) : ""}{s.scale !== 1 ? ` · scaled to ${Math.round(s.scale * s.scale * 100)}% of its area` : ""}</small></div>
         </div>
 
-        {(others.length > 0 || familiar.length > 0) && (
-          <>
-            <div className="sec"><span>How big is that?</span></div>
-            {others.map((o) => {
-              const r = area / shapeArea(o);
-              return (
-                <div key={o.id} className="fact" style={{ ["--c" as string]: swatch(o.slot) }}>
-                  <span className="sw" />
-                  <span>{r >= 1 ? <>It's <b>{formatRatio(r)}</b> the size of {o.name}.</> : <>{o.name} is <b>{formatRatio(1 / r)}</b> bigger.</>}</span>
-                </div>
-              );
-            })}
-            {familiar.map((f) => (
-              <div key={f.label} className="fact"><Sparkles size={15} /><span>You could fit <b>{f.text}</b> in here.</span></div>
-            ))}
-          </>
-        )}
+        <Picture s={s} />
+        <Compare s={s} shapes={shapes} area={area} />
 
         <div className="sec"><span>Shape</span></div>
         <div className="actions">
@@ -124,13 +116,16 @@ export default function DetailView({ id }: { id: string }) {
         <div className="inline" style={{ margin: "8px 0 4px" }}>
           <label className="lbl" htmlFor="rot">Rotation</label>
           <div className="input" style={{ width: 110, minHeight: 38 }}>
-            <input id="rot" type="number" inputMode="numeric" value={Math.round(s.rotation)} onChange={(e) => {
-              const v = Number(e.target.value);
-              if (Number.isFinite(v)) useShapes.getState().update(s.id, { rotation: ((v % 360) + 360) % 360 });
-            }} />
+            <input id="rot" type="number" inputMode="numeric" value={rot} onChange={(e) => setRot(e.target.value)}
+              onBlur={() => {
+                const v = Number(rot);
+                if (rot.trim() !== "" && Number.isFinite(v) && Math.round(v) !== Math.round(s.rotation)) setRotation(s.id, v);
+                else setRot(String(Math.round(s.rotation)));
+              }}
+              onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()} />
             <span className="muted">°</span>
           </div>
-          {s.rotation !== 0 && <button type="button" className="btn btn--sm" onClick={() => useShapes.getState().update(s.id, { rotation: 0 })}>Reset</button>}
+          {s.rotation !== 0 && <button type="button" className="btn btn--sm" onClick={() => setRotation(s.id, 0)}>Reset</button>}
         </div>
 
         <div className="sec"><span>Color</span></div>
@@ -245,7 +240,7 @@ function ExactArea({ id, onDone }: { id: string; onDone: () => void }) {
     if (!valid) return;
     const scale = Math.sqrt((n * u.m2) / s.area);
     if (scale > 3000 || scale < 1 / 3000) return toast({ text: "That's a bit too extreme. Try a size closer to the original.", tone: "error" });
-    useShapes.getState().update(s.id, { scale });
+    setScale(s.id, scale);
     toast({ text: `${s.name} is now exactly ${val} ${u.label}`, action: { label: "Undo", run: () => useShapes.getState().undo() } });
     onDone();
   };
@@ -264,9 +259,145 @@ function ExactArea({ id, onDone }: { id: string; onDone: () => void }) {
       <p className="muted" style={{ margin: 0, fontSize: 12.5 }}>Keeps the outline and scales it evenly, like resizing a photo.</p>
       <div className="btnrow">
         <button type="button" className="btn btn--primary btn--sm" onClick={apply} disabled={!valid}>Resize</button>
-        {s.scale !== 1 && <button type="button" className="btn btn--sm" onClick={() => { useShapes.getState().update(s.id, { scale: 1 }); onDone(); }}>Back to original size</button>}
+        {s.scale !== 1 && <button type="button" className="btn btn--sm" onClick={() => { setScale(s.id, 1); onDone(); }}>Back to original size</button>}
         <button type="button" className="btn btn--sm" onClick={onDone}>Cancel</button>
       </div>
+    </div>
+  );
+}
+
+// ---------- comparisons ----------
+interface Option { key: string; name: string; m2: number; kind: "shape" | "familiar"; one?: string; many?: string; slot?: number }
+
+const FAMILIAR_OBJECTS = ["olympic-pool", "soccer-pitch", "american-football-field", "tennis-court", "blue-whale", "boeing-737", "titanic", "great-pyramid", "acre", "square-mile"];
+
+function sentence(name: string, area: number, o: Option) {
+  const r = area / o.m2;
+  if (o.kind === "shape") {
+    return r >= 1
+      ? <><b>{name}</b> is <b className="num">{formatRatio(r)}</b> the size of {o.name}.</>
+      : <>{o.name} is <b className="num">{formatRatio(1 / r)}</b> bigger than <b>{name}</b>.</>;
+  }
+  if (r >= 1.5) return <>You could fit <b className="num">{approx(r)} {o.many}</b> in <b>{name}</b>.</>;
+  if (r >= 0.67) return <><b>{name}</b> is about the size of {o.one}.</>;
+  return <>It would take <b className="num">{approx(1 / r)}</b> of <b>{name}</b> to cover {o.one}.</>;
+}
+
+function metersArea(meters: [number, number][][][]) {
+  let a = 0;
+  for (const poly of meters)
+    poly.forEach((ring, ri) => {
+      let r = 0;
+      for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) r += (ring[j][0] + ring[i][0]) * (ring[j][1] - ring[i][1]);
+      a += (ri === 0 ? 1 : -1) * Math.abs(r / 2);
+    });
+  return a;
+}
+
+function Compare({ s, shapes, area }: { s: Shape; shapes: Shape[]; area: number }) {
+  const swatch = useSwatch();
+  const options = useMemo<Option[]>(() => {
+    const own: Option[] = shapes
+      .filter((o) => o.id !== s.id)
+      .map((o) => ({ key: `s:${o.id}`, name: o.name, m2: shapeArea(o), kind: "shape" as const, slot: o.slot }));
+    const objs: Option[] = FAMILIAR_OBJECTS.map((id) => objectById(id)).filter((o) => !!o).map((o) => {
+      const lower = o.name.charAt(0).toLowerCase() + o.name.slice(1);
+      const proper = /^[A-Z]{2}|^RMS|^Boeing/.test(o.name);
+      return { key: `o:${o.id}`, name: o.name, m2: metersArea(o.build()), kind: "familiar" as const, one: proper ? `the ${o.name}` : `a ${lower}`, many: proper ? `copies of the ${o.name}` : `${lower}s` };
+    });
+    const fam: Option[] = FAMILIAR.filter((f) => !["Olympic pool", "soccer pitch", "tennis court"].includes(f.one)).map((f) => ({
+      key: `f:${f.one}`, name: f.one.charAt(0).toUpperCase() + f.one.slice(1), m2: f.m2, kind: "familiar" as const, one: /^[A-Z]/.test(f.one) ? f.one : `a ${f.one}`, many: f.many,
+    }));
+    return [...own, ...objs, ...fam];
+  }, [shapes, s.id]);
+  // Default: the most recent shape of a comparable size, otherwise the familiar thing that gives the friendliest number.
+  const best = useMemo(() => {
+    const near = options.filter((o) => o.kind === "shape" && Math.abs(Math.log10(area / o.m2)) < 3).pop();
+    if (near) return near.key;
+    return [...options].filter((o) => o.kind === "familiar").sort((a, b) => Math.abs(Math.log10(area / a.m2) - 1.3) - Math.abs(Math.log10(area / b.m2) - 1.3))[0]?.key;
+  }, [options, area]);
+  const [chosen, setChosen] = useState<string | null>(null);
+  useEffect(() => setChosen(null), [s.id]);
+  const key = chosen && options.some((o) => o.key === chosen) ? chosen : best;
+  const idx = Math.max(0, options.findIndex((o) => o.key === key));
+  const o = options[idx];
+  if (!o) return null;
+  const step = (d: number) => setChosen(options[(idx + d + options.length) % options.length].key);
+  return (
+    <>
+      <div className="sec"><span>How big is that?</span></div>
+      <div className="compare" style={o.slot !== undefined ? { ["--c" as string]: swatch(o.slot) } : undefined}>
+        <button type="button" className="iconbtn" aria-label="Previous comparison" onClick={() => step(-1)}><ChevronLeft size={20} /></button>
+        <p className="compare__text" aria-live="polite">{sentence(s.name, area, o)}</p>
+        <button type="button" className="iconbtn" aria-label="Next comparison" onClick={() => step(1)}><ChevronRight size={20} /></button>
+      </div>
+      <div className="input compare__pick">
+        <label htmlFor="cmp" className="lbl" style={{ whiteSpace: "nowrap" }}>Compare with</label>
+        <select id="cmp" value={o.key} onChange={(e) => setChosen(e.target.value)}>
+          {options.some((x) => x.kind === "shape") && (
+            <optgroup label="On your map">{options.filter((x) => x.kind === "shape").map((x) => <option key={x.key} value={x.key}>{x.name}</option>)}</optgroup>
+          )}
+          <optgroup label="Familiar things">{options.filter((x) => x.kind === "familiar").map((x) => <option key={x.key} value={x.key}>{x.name}</option>)}</optgroup>
+        </select>
+      </div>
+    </>
+  );
+}
+
+// ---------- picture and place info ----------
+function Picture({ s }: { s: Shape }) {
+  const [info, setInfo] = useState<PlaceInfo | null>(null);
+  const [photoFailed, setPhotoFailed] = useState(false);
+  const osmKey = s.source.kind === "osm" ? s.source.key : null;
+  useEffect(() => {
+    setInfo(null);
+    setPhotoFailed(false);
+    if (!osmKey) return;
+    const ctl = new AbortController();
+    fetchPlaceInfo(osmKey, ctl.signal).then(setInfo).catch(() => {});
+    return () => ctl.abort();
+  }, [osmKey]);
+
+  if (s.source.kind === "object") {
+    const obj = objectById(s.source.id);
+    if (!obj) return null;
+    const t = thumbnailPath(obj.build());
+    return (
+      <div className="picture picture--object">
+        <svg viewBox={t.viewBox} aria-hidden="true"><path d={t.d} /></svg>
+        <p>{obj.fact}</p>
+      </div>
+    );
+  }
+
+  // Where the place really is: the original OSM outline, or a drawn shape where it was first made.
+  const realGeom = s.geometry ?? (s.source.kind !== "osm" ? place(localFromMeters(s.source.meters), s.origin) : null);
+  const color = shapeColor(s.slot, true);
+  return (
+    <div className="picture">
+      {info?.photo && !photoFailed ? (
+        <figure>
+          <img src={info.photo.url} alt={`Photo of ${s.name}`} loading="lazy" onError={() => setPhotoFailed(true)} />
+          <figcaption><a href={info.photo.link} target="_blank" rel="noopener noreferrer">Photo: {info.photo.credit}</a></figcaption>
+        </figure>
+      ) : realGeom ? (
+        <figure>
+          <SatelliteSnapshot geometry={realGeom} color={color} />
+          <figcaption>{s.source.kind === "osm" ? "Satellite view of where it really is" : "Satellite view of where you made it"}</figcaption>
+        </figure>
+      ) : null}
+      {info && (info.description || info.wikipedia || info.facts.length > 0 || info.website) && (
+        <div className="placeinfo">
+          {info.wikipedia ? <p>{info.wikipedia.extract}</p> : info.description ? <p>{info.description}</p> : null}
+          {info.facts.length > 0 && (
+            <dl>{info.facts.map((f) => <div key={f.label}><dt>{f.label}</dt><dd>{f.value}</dd></div>)}</dl>
+          )}
+          <div className="btnrow">
+            {info.wikipedia && <a className="btn btn--sm" href={info.wikipedia.url} target="_blank" rel="noopener noreferrer"><ExternalLink size={14} /> Wikipedia</a>}
+            {info.website && <a className="btn btn--sm" href={info.website} target="_blank" rel="noopener noreferrer"><Globe size={14} /> Website</a>}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -41,7 +41,9 @@ function added(id: string, name: string) {
 }
 
 /** Add a searched place, either at the visible center or where it really is. */
-export function addPlace(o: Outline, where: "center" | "origin") {
+export function addPlace(o: Outline, requested: "center" | "origin") {
+  // From a whole-world view the "middle of the map" is usually open ocean; show it where it really is instead.
+  const where = requested === "center" && (getMap()?.getZoom() ?? 10) < 4 ? "origin" : requested;
   const anchor: LngLat = where === "center" ? visibleCenter() : geometryCenter(o.geometry);
   const shape = useShapes.getState().add({
     name: o.name, type: o.type, locality: o.locality, icon: o.icon,

@@ -6,6 +6,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "re
 import { PanelLeftOpen } from "lucide-react";
 import { useUI, currentRoute, type Route } from "../state/ui";
 import { useIsDesktop } from "./hooks";
+import { useMediaQuery } from "../state/settings";
 import { getMap } from "../map/mapCore";
 import { useShapes } from "../state/shapes";
 import HomeView from "./views/HomeView";
@@ -125,14 +126,15 @@ function Sheet({ routeName, children }: { routeName: Route["name"]; children: Re
 
 /** Keep the map's padding (and therefore its "visible center") in sync with the panel or sheet. */
 function PaddingSync({ desktop, collapsed, sheetHeight }: { desktop: boolean; collapsed: boolean; sheetHeight: number }) {
+  const narrow = useMediaQuery("(max-width: 1000px)");
   useLayoutEffect(() => {
     document.documentElement.style.setProperty("--sheet-h", `${desktop ? 0 : sheetHeight}px`);
     const apply = () => {
       const m = getMap();
       if (!m) return setTimeout(apply, 150);
-      m.setPadding(desktop ? { left: collapsed ? 0 : 420, top: 0, right: 0, bottom: 0 } : { left: 0, top: 60, right: 0, bottom: sheetHeight });
+      m.setPadding(desktop ? { left: collapsed ? 0 : narrow ? 348 : 420, top: 0, right: 0, bottom: 0 } : { left: 0, top: 60, right: 0, bottom: sheetHeight });
     };
     apply();
-  }, [desktop, collapsed, sheetHeight]);
+  }, [desktop, collapsed, sheetHeight, narrow]);
   return null;
 }

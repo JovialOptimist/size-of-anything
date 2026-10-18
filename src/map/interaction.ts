@@ -6,7 +6,7 @@ import { create } from "zustand";
 import { getMap, setDragShape, syncShapes } from "./mapCore";
 import { localOf, useShapes, type Shape } from "../state/shapes";
 import { place, type LngLat } from "../geo/geometry";
-import { pinPoint } from "./pins";
+import { pinAt, pinPoint } from "./pins";
 import { announce } from "../state/ui";
 import { useSettings } from "../state/settings";
 
@@ -63,6 +63,21 @@ function end(s: Shape, moved: boolean) {
   }
 }
 
+/**
+ * The anchor that keeps a shape's pin where it is after a rotation or rescale,
+ * so shapes turn around their visual center (not a center of mass that can be
+ * out at sea, as with France and its overseas territories).
+ */
+export function anchorKeepingPin(s: Shape, rotation: number, scale = s.scale): LngLat {
+  const target = pinAt(s, s.anchor, s.rotation, s.scale);
+  let anchor: LngLat = s.anchor;
+  for (let i = 0; i < 4; i++) {
+    const p = pinAt(s, anchor, rotation, scale);
+    anchor = [anchor[0] + target[0] - p[0], anchor[1] + target[1] - p[1]];
+  }
+  return anchor;
+}
+
 const wrapLng = (lng: number) => ((((lng + 180) % 360) + 360) % 360) - 180;
 
 /** Start moving a shape from a pointer position (client coordinates). */
@@ -110,7 +125,8 @@ export function startRotate(shapeId: string, clientX: number, clientY: number) {
   const move = (e: PointerEvent) => {
     let r = s.rotation + angle(e.clientX, e.clientY) - a0;
     if (e.shiftKey) r = Math.round(r / 15) * 15;
-    useLive.setState({ rotation: ((r % 360) + 360) % 360 });
+    const rotation = ((r % 360) + 360) % 360;
+    useLive.setState({ rotation, anchor: anchorKeepingPin(s, rotation) });
     render(s);
   };
   const up = () => {
@@ -137,6 +153,20 @@ export function nudge(shapeId: string, dx: number, dy: number) {
 
 export function rotateBy(shapeId: string, deg: number) {
   const s = useShapes.getState().shapes.find((x) => x.id === shapeId);
+  if (s) setRotation(shapeId, s.rotation + deg);
+}
+
+/** Set an absolute rotation, turning around the pin. */
+export function setRotation(shapeId: string, deg: number) {
+  const s = useShapes.getState().shapes.find((x) => x.id === shapeId);
   if (!s) return;
-  useShapes.getState().update(s.id, { rotation: (((s.rotation + deg) % 360) + 360) % 360 });
+  const rotation = ((deg % 360) + 360) % 360;
+  useShapes.getState().update(s.id, { rotation, anchor: anchorKeepingPin(s, rotation) });
+}
+
+/** Rescale around the pin. */
+export function setScale(shapeId: string, scale: number) {
+  const s = useShapes.getState().shapes.find((x) => x.id === shapeId);
+  if (!s) return;
+  useShapes.getState().update(s.id, { scale, anchor: anchorKeepingPin(s, s.rotation, scale) });
 }

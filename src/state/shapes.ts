@@ -161,7 +161,11 @@ export const useShapes = create<ShapesState>((set, get) => {
     duplicate: (id, offset) => {
       const s = get().shapes.find((x) => x.id === id);
       if (!s) return;
-      const copy: Shape = { ...s, id: newId(), name: `${s.name} (copy)`, slot: nextSlot(get().shapes), anchor: offset };
+      const base = s.name.replace(/ \(copy(?: \d+)?\)$/, "");
+      const taken = new Set(get().shapes.map((x) => x.name));
+      let name = `${base} (copy)`;
+      for (let n = 2; taken.has(name); n++) name = `${base} (copy ${n})`;
+      const copy: Shape = { ...s, id: newId(), name, slot: nextSlot(get().shapes), anchor: offset };
       commit([...get().shapes, copy]);
       set({ selectedId: copy.id });
       return copy;
