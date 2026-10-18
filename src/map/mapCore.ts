@@ -65,9 +65,19 @@ export interface LayerLook {
   fillOpacity: number;
 }
 
-/** First label layer of the basemap, so shapes sit under place names (the "sandwich"). */
+/**
+ * Where shapes go in the layer stack: above every area and line layer of the
+ * basemap (land, buildings, roads), but under the block of text labels at the
+ * top, so place names stay readable. Some styles put a few symbol layers (like
+ * one-way arrows) early on, so "the first symbol layer" is not the right spot.
+ */
 function firstSymbolLayer(m: maplibregl.Map) {
-  return m.getStyle().layers.find((l) => l.type === "symbol" && !l.id.startsWith("soa-"))?.id;
+  const layers = m.getStyle().layers.filter((l) => !l.id.startsWith("soa-"));
+  let lastShape = -1;
+  layers.forEach((l, i) => {
+    if (l.type !== "symbol") lastShape = i;
+  });
+  return layers[lastShape + 1]?.id;
 }
 
 export function ensureLayers(m: maplibregl.Map, look: LayerLook) {
