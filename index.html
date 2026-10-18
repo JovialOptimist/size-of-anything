@@ -2,18 +2,20 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
+        <meta name="color-scheme" content="light dark" />
+        <meta name="theme-color" content="#ffffff" />
         <link rel="icon" type="image/png" href="/size-of-anything/favicon.png" />
 
         <title>The Size of Anything</title>
         <meta property="og:title" content="The Size of Anything" />
         <meta name="description"
-            content="Drag and drop any country, city, building, park, or other feature in the entire world!" />
-        <meta property="og:image" content="/size-of-anything/preview.png" />
+            content="Pick up any place on Earth and drop it somewhere else at its true size. Compare countries, cities, parks, buildings, and blue whales." />
+        <meta property="og:image" content="https://thesizeofanything.com/preview.png" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://thesizeofanything.com" />
-      <script type="module" crossorigin src="/size-of-anything/assets/index-DsyfvWdI.js"></script>
-      <link rel="stylesheet" crossorigin href="/size-of-anything/assets/index-0ADHzJLK.css">
+      <script type="module" crossorigin src="/size-of-anything/assets/index-DyF5dyVS.js"></script>
+      <link rel="stylesheet" crossorigin href="/size-of-anything/assets/index-C-qMnmdd.css">
     </head>
     <body>
         <div id="root"></div>
@@ -28,5 +30,16 @@
             <input type="email" name="email" />
         </form>
 
+        <script>
+            try {
+                var t = (JSON.parse(localStorage.getItem("soa-settings-v2") || "{}").state || {}).theme || "system";
+                var d = t === "dark" || (t === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
+                document.documentElement.dataset.theme = d ? "dark" : "light";
+            } catch (e) {}
+        </script>
+        <script>
+            // Share links from the old version (#share=…) only work there, so open them there.
+            if (location.hash.indexOf("#share=") === 0) location.replace("https://old.thesizeofanything.com/" + location.hash);
+        </script>
     </body>
 </html>
