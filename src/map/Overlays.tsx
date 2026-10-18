@@ -48,7 +48,34 @@ function useMapTick() {
       bump();
     };
     attach();
+    // Portals keep clear of the panel, so follow it while it opens, closes or switches style.
+    let frame = 0;
+    const followPanel = () => {
+      cancelAnimationFrame(frame);
+      const until = performance.now() + 400;
+      const step = () => {
+        bump();
+        if (performance.now() < until) frame = requestAnimationFrame(step);
+      };
+      frame = requestAnimationFrame(step);
+      setTimeout(bump, 450);
+    };
+    const unsubUI = useUI.subscribe((s, prev) => {
+      if (s.stack !== prev.stack || s.panelCollapsed !== prev.panelCollapsed) followPanel();
+    });
+    const unsubSettings = useSettings.subscribe((s, prev) => {
+      if (s.panelStyle !== prev.panelStyle) followPanel();
+    });
+    // And once more when it settles, in case frames were throttled along the way.
+    const onSettled = (e: TransitionEvent) => {
+      if ((e.target as HTMLElement).matches?.(".dock, .panel")) bump();
+    };
+    document.addEventListener("transitionend", onSettled);
     return () => {
+      document.removeEventListener("transitionend", onSettled);
+      cancelAnimationFrame(frame);
+      unsubUI();
+      unsubSettings();
       clearTimeout(retry);
       attached?.off("move", on);
       attached?.off("resize", on);
@@ -90,8 +117,10 @@ export default function Overlays() {
   const canvas = m.getCanvas();
   const W = canvas.clientWidth, H = canvas.clientHeight;
   const pad = getPad();
-  // Keep portals clear of the panel, the top buttons and the right-hand controls.
-  const view = { left: pad.left + 8, top: pad.top + 64, right: W - pad.right - 72, bottom: H - pad.bottom - 8 };
+  // What's really visible: the screen, minus the phone sheet and whatever panel covers a whole side
+  // right now (not the map padding, which assumes the docked panel is open). Smaller controls
+  // are obstacles that portals slide around.
+  const { view, obstacles } = visibleArea(m.getContainer(), W, H, pad);
   const globe = m.getProjection?.()?.type === "globe";
   const center = m.getCenter();
 
@@ -155,7 +184,7 @@ export default function Overlays() {
         const color = shapeColor(s.slot, darkMap);
         if (!inView(p)) {
           if (mode !== "browse") return null;
-          return <Portal key={s.id} s={s} p={p} view={view} color={color} />;
+          return <Portal key={s.id} s={s} p={p} view={view} obstacles={obstacles} color={color} />;
         }
         return (
           <div key={s.id} className={`pin-wrap${selected ? " is-selected" : ""}`} style={{ transform: `translate(${p.x}px, ${p.y}px)`, ["--c" as string]: color }}>
@@ -225,11 +254,47 @@ function Toolbar({ s, x, y }: { s: Shape; x: number; y: number }) {
   );
 }
 
-function Portal({ s, p, view, color }: { s: Shape; p: { x: number; y: number }; view: { left: number; top: number; right: number; bottom: number }; color: string }) {
-  const cx = (view.left + view.right) / 2, cy = (view.top + view.bottom) / 2;
+interface Box { left: number; top: number; right: number; bottom: number }
+
+const UI_SELECTORS = ".dock, .dock-tab, .panel:not(.is-collapsed), .pill.panel-toggle, .ctl-top, .ctl-right";
+
+function visibleArea(container: HTMLElement, W: number, H: number, pad: Box): { view: Box; obstacles: Box[] } {
+  const c = container.getBoundingClientRect();
+  const view: Box = { left: 0, top: pad.top, right: W, bottom: H - pad.bottom };
+  const obstacles: Box[] = [];
+  for (const el of document.querySelectorAll<HTMLElement>(UI_SELECTORS)) {
+    const r = el.getBoundingClientRect();
+    if (!r.width || !r.height) continue;
+    const b = { left: r.left - c.left, top: r.top - c.top, right: r.right - c.left, bottom: r.bottom - c.top };
+    // A panel down most of one side moves that edge in.
+    if (b.bottom - b.top > H * 0.6 && b.left <= 1) view.left = Math.max(view.left, b.right);
+    else if (b.bottom - b.top > H * 0.6 && b.right >= W - 1) view.right = Math.min(view.right, b.left);
+    else obstacles.push(b);
+  }
+  return { view, obstacles };
+}
+
+function Portal({ s, p, view, obstacles, color }: { s: Shape; p: { x: number; y: number }; view: Box; obstacles: Box[]; color: string }) {
+  // Point toward the shape from the middle of the visible map, stopping just inside its edge.
+  const M = 28;
+  const box = { left: view.left + M, top: view.top + M, right: view.right - M, bottom: view.bottom - M };
+  const cx = (box.left + box.right) / 2, cy = (box.top + box.bottom) / 2;
   const dx = p.x - cx, dy = p.y - cy;
-  const t = Math.min(Math.abs((view.right - cx - 20) / (dx || 1e-9)), Math.abs((view.bottom - cy - 20) / (dy || 1e-9)));
-  const x = cx + dx * t, y = cy + dy * t;
+  const t = Math.min(Math.abs((box.right - cx) / (dx || 1e-9)), Math.abs((box.bottom - cy) / (dy || 1e-9)));
+  let x = cx + dx * t, y = cy + dy * t;
+  // Slide along the edge past any control in the way.
+  const onSide = Math.abs(x - box.left) < 1 || Math.abs(x - box.right) < 1;
+  for (let pass = 0; pass < 3; pass++) {
+    const hit = obstacles.find((o) => x > o.left - 24 && x < o.right + 24 && y > o.top - 24 && y < o.bottom + 24);
+    if (!hit) break;
+    if (onSide) {
+      const up = hit.top - 24, down = hit.bottom + 24;
+      y = (Math.abs(y - up) < Math.abs(y - down) && up > box.top) || down > box.bottom ? up : down;
+    } else {
+      const l = hit.left - 24, r = hit.right + 24;
+      x = (Math.abs(x - l) < Math.abs(x - r) && l > box.left) || r > box.right ? l : r;
+    }
+  }
   const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
   return (
     <button
