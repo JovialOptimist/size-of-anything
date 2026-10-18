@@ -1,22 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
-import { RotateCcw, RotateCw, Copy, Trash2, Crosshair, MapPinned, LocateFixed, ArrowUp, ArrowDown, ArrowLeft as ALeft, ArrowRight, ExternalLink, Scaling, Eye, EyeOff, ChevronLeft, ChevronRight, Globe } from "lucide-react";
-import { useShapes, shapeArea, placedGeometry } from "../../state/shapes";
+import { RotateCcw, Copy, Trash2, ExternalLink, Scaling, X, ChevronLeft, ChevronRight, Globe } from "lucide-react";
+import { useShapes, shapeArea } from "../../state/shapes";
 import { useSettings } from "../../state/settings";
 import { useUI } from "../../state/ui";
 import { toast } from "../../state/toasts";
 import { formatArea, formatAreaSecondary, formatRatio, approx, FAMILIAR } from "../../geo/format";
-import { suggestPlaces, fetchOutline, type PlaceResult } from "../../geo/services";
-import { geometryCenter, localFromMeters, place } from "../../geo/geometry";
-import { visibleCenter, fitGeometry } from "../../map/mapCore";
-import { nudge, rotateBy, setRotation, setScale } from "../../map/interaction";
+import { localFromMeters, place } from "../../geo/geometry";
+import { setRotation, setScale } from "../../map/interaction";
 import { PALETTE, shapeColor } from "../../map/palette";
 import { fetchPlaceInfo, type PlaceInfo } from "../../geo/placeInfo";
 import { objectById, thumbnailPath } from "../../objects/registry";
 import SatelliteSnapshot from "../SatelliteSnapshot";
 import type { Shape } from "../../state/shapes";
-import { deleteShape, duplicateShape, moveShapeTo } from "../actions";
+import { deleteShape, duplicateShape } from "../actions";
 import { ShapeIcon } from "../icons";
-import { ViewHeader } from "./common";
 import { useSwatch } from "../hooks";
 import { useIsDark } from "../../state/settings";
 
@@ -29,6 +26,11 @@ const AREA_UNITS = [
   { id: "mi2", label: "sq mi", m2: 2_589_988.11 },
 ];
 
+const close = () => {
+  useShapes.getState().select(null);
+  useUI.getState().home();
+};
+
 export default function DetailView({ id }: { id: string }) {
   const s = useShapes((st) => st.shapes.find((x) => x.id === id));
   const shapes = useShapes((st) => st.shapes);
@@ -37,12 +39,9 @@ export default function DetailView({ id }: { id: string }) {
   const swatch = useSwatch();
   const isDark = useIsDark();
   const [name, setName] = useState(s?.name ?? "");
-  const [moveTo, setMoveTo] = useState(false);
   const [exact, setExact] = useState(false);
 
-  const [rot, setRot] = useState(String(Math.round(s?.rotation ?? 0)));
   useEffect(() => setName(s?.name ?? ""), [s?.name]);
-  useEffect(() => setRot(String(Math.round(s?.rotation ?? 0))), [s?.rotation]);
   // If the shape goes away (undo, delete elsewhere), leave its page.
   useEffect(() => {
     if (!s) useUI.getState().home();
@@ -51,14 +50,7 @@ export default function DetailView({ id }: { id: string }) {
     if (s) useShapes.getState().select(s.id);
   }, [s?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!s) {
-    return (
-      <>
-        <ViewHeader title="Shape" onBack={() => useUI.getState().home()} />
-        <div className="panel__scroll"><p className="muted">This shape isn't on the map any more.</p></div>
-      </>
-    );
-  }
+  if (!s) return null;
 
   const area = shapeArea(s);
   const commitName = () => {
@@ -69,63 +61,35 @@ export default function DetailView({ id }: { id: string }) {
 
   return (
     <>
-      <ViewHeader
-        title={<span className="sr-only">{s.name}</span>}
-        onBack={() => {
-          useShapes.getState().select(null);
-          useUI.getState().home();
-        }}
-        right={
-          <button type="button" className="iconbtn" aria-label={s.visible ? "Hide shape" : "Show shape"} onClick={() => useShapes.getState().update(s.id, { visible: !s.visible })}>
-            {s.visible ? <Eye size={19} /> : <EyeOff size={19} />}
-          </button>
-        }
-      />
-      <div className="panel__scroll" style={{ ["--c" as string]: swatch(s.slot) }}>
-        <div className="detail-hero">
-          <div className="detail-hero__top">
-            <span className="detail-icon"><ShapeIcon icon={s.icon} size={24} /></span>
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <input
-                className="name-input"
-                value={name}
-                aria-label="Name"
-                onChange={(e) => setName(e.target.value)}
-                onBlur={commitName}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                  if (e.key === "Escape") setName(s.name);
-                }}
-              />
-              <div className="muted" style={{ fontSize: 13 }}>{[s.type, s.locality].filter(Boolean).join(" · ")}</div>
-            </div>
-          </div>
-          <div className="bigarea">{formatArea(area, units)}<small>{showBoth ? formatAreaSecondary(area, units) : ""}{s.scale !== 1 ? ` · scaled to ${Math.round(s.scale * s.scale * 100)}% of its area` : ""}</small></div>
+      <header className="detail-head" style={{ ["--c" as string]: swatch(s.slot) }}>
+        <span className="detail-icon"><ShapeIcon icon={s.icon} size={24} /></span>
+        <div className="detail-head__text">
+          <input
+            className="name-input"
+            value={name}
+            aria-label="Name"
+            onChange={(e) => setName(e.target.value)}
+            onBlur={commitName}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+              if (e.key === "Escape") setName(s.name);
+            }}
+          />
+          <div className="muted detail-head__sub">{[s.type, s.locality].filter(Boolean).join(" · ")}</div>
         </div>
+        <button type="button" className="iconbtn" aria-label="Close" onClick={close}><X size={20} /></button>
+      </header>
+      <div className="panel__scroll" style={{ ["--c" as string]: swatch(s.slot) }}>
+        <div className="bigarea">{formatArea(area, units)}<small>{showBoth ? formatAreaSecondary(area, units) : ""}{s.scale !== 1 ? ` · scaled to ${Math.round(s.scale * s.scale * 100)}% of its area` : ""}</small></div>
 
         <Picture s={s} />
         <Compare s={s} shapes={shapes} area={area} />
 
         <div className="sec"><span>Shape</span></div>
-        <div className="actions">
-          <button type="button" className="action" onClick={() => rotateBy(s.id, -15)}><RotateCcw size={19} />Left 15°</button>
-          <button type="button" className="action" onClick={() => rotateBy(s.id, 15)}><RotateCw size={19} />Right 15°</button>
+        <div className="actions" style={{ gridTemplateColumns: `repeat(${s.rotation !== 0 ? 3 : 2}, 1fr)` }}>
+          {s.rotation !== 0 && <button type="button" className="action" onClick={() => setRotation(s.id, 0)}><RotateCcw size={19} />Reset rotation</button>}
           <button type="button" className="action" onClick={() => duplicateShape(s.id)}><Copy size={19} />Copy</button>
           <button type="button" className="action danger" onClick={() => deleteShape(s.id)}><Trash2 size={19} />Delete</button>
-        </div>
-        <div className="inline" style={{ margin: "8px 0 4px" }}>
-          <label className="lbl" htmlFor="rot">Rotation</label>
-          <div className="input" style={{ width: 110, minHeight: 38 }}>
-            <input id="rot" type="number" inputMode="numeric" value={rot} onChange={(e) => setRot(e.target.value)}
-              onBlur={() => {
-                const v = Number(rot);
-                if (rot.trim() !== "" && Number.isFinite(v) && Math.round(v) !== Math.round(s.rotation)) setRotation(s.id, v);
-                else setRot(String(Math.round(s.rotation)));
-              }}
-              onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()} />
-            <span className="muted">°</span>
-          </div>
-          {s.rotation !== 0 && <button type="button" className="btn btn--sm" onClick={() => setRotation(s.id, 0)}>Reset</button>}
         </div>
 
         <div className="sec"><span>Color</span></div>
@@ -133,33 +97,6 @@ export default function DetailView({ id }: { id: string }) {
           {PALETTE.map((p, i) => (
             <button key={p.name} type="button" className="swatch" aria-label={p.name} aria-pressed={s.slot === i} style={{ ["--c" as string]: isDark ? p.D : p.L }} onClick={() => useShapes.getState().update(s.id, { slot: i })} />
           ))}
-        </div>
-
-        <div className="sec"><span>Move it</span></div>
-        <div className="btnrow">
-          <button type="button" className="btn btn--sm" onClick={() => moveShapeTo(s.id, visibleCenter())}><Crosshair size={16} /> Move here</button>
-          <button type="button" className="btn btn--sm" onClick={() => setMoveTo((v) => !v)} aria-expanded={moveTo}><MapPinned size={16} /> Move to…</button>
-          <button type="button" className="btn btn--sm" onClick={() => {
-            navigator.geolocation?.getCurrentPosition(
-              (pos) => moveShapeTo(s.id, [pos.coords.longitude, pos.coords.latitude]),
-              () => toast({ text: "Couldn't get your location. Check your browser's location permission.", tone: "error" })
-            );
-          }}><LocateFixed size={16} /> My location</button>
-        </div>
-        {moveTo && <MoveTo id={s.id} name={s.name} onDone={() => setMoveTo(false)} />}
-        <div className="inline" style={{ marginTop: 10 }}>
-          <div className="pad" aria-label="Nudge">
-            <span />
-            <button type="button" aria-label="Nudge up" onClick={() => nudge(s.id, 0, -40)}><ArrowUp size={18} /></button>
-            <span />
-            <button type="button" aria-label="Nudge left" onClick={() => nudge(s.id, -40, 0)}><ALeft size={18} /></button>
-            <button type="button" aria-label="Zoom to shape" onClick={() => fitGeometry(placedGeometry(s))}><ShapeIcon icon={s.icon} size={16} /></button>
-            <button type="button" aria-label="Nudge right" onClick={() => nudge(s.id, 40, 0)}><ArrowRight size={18} /></button>
-            <span />
-            <button type="button" aria-label="Nudge down" onClick={() => nudge(s.id, 0, 40)}><ArrowDown size={18} /></button>
-            <span />
-          </div>
-          <p className="muted" style={{ fontSize: 12.5, flex: 1, minWidth: 140 }}>Or drag the pin on the map. Arrow keys nudge, <span className="kbd">[</span> <span className="kbd">]</span> rotate.</p>
         </div>
 
         <div className="sec"><span>Size</span></div>
@@ -181,51 +118,6 @@ export default function DetailView({ id }: { id: string }) {
       </div>
     </>
   );
-}
-
-function MoveTo({ id, name, onDone }: { id: string; name: string; onDone: () => void }) {
-  const [q, setQ] = useState("");
-  const [res, setRes] = useState<PlaceResult[]>([]);
-  const [busy, setBusy] = useState(false);
-  useEffect(() => {
-    if (q.trim().length < 3) return setRes([]);
-    const ctl = new AbortController();
-    const t = setTimeout(() => suggestPlaces(q.trim(), undefined, ctl.signal).then(setRes).catch(() => {}), 300);
-    return () => {
-      clearTimeout(t);
-      ctl.abort();
-    };
-  }, [q]);
-  return (
-    <div className="card" style={{ marginTop: 10 }}>
-      <div className="field">
-        <label htmlFor="moveto">Move {name} to…</label>
-        <div className="input"><input id="moveto" autoFocus placeholder="Tokyo, your hometown, anywhere" value={q} onChange={(e) => setQ(e.target.value)} /></div>
-      </div>
-      {res.slice(0, 5).map((r) => (
-        <button key={r.key} type="button" className="row" disabled={busy} onClick={async () => {
-          setBusy(true);
-          try {
-            const o = await fetchOutline(r).catch(() => null);
-            moveShapeTo(id, o ? geometryCenter(o.geometry) : await pointOf(r));
-            onDone();
-          } finally {
-            setBusy(false);
-          }
-        }}>
-          <span className="row__ico"><ShapeIcon icon={r.icon} size={16} /></span>
-          <span className="row__main"><b>{r.name}</b><small>{[r.type, r.locality].filter(Boolean).join(" · ")}</small></span>
-          <span />
-        </button>
-      ))}
-    </div>
-  );
-}
-
-async function pointOf(r: PlaceResult): Promise<[number, number]> {
-  const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(r.name)}&limit=1`);
-  const j = await res.json();
-  return j.features?.[0]?.geometry?.coordinates ?? visibleCenter();
 }
 
 function ExactArea({ id, onDone }: { id: string; onDone: () => void }) {

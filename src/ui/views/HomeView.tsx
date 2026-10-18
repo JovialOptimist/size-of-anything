@@ -1,4 +1,4 @@
-import { Crosshair, PenLine, Shapes, Search, PanelLeftClose, Eye, EyeOff } from "lucide-react";
+import { Crosshair, PenLine, Shapes, Search, PanelLeftClose } from "lucide-react";
 import { useUI } from "../../state/ui";
 import { useShapes } from "../../state/shapes";
 import { MenuButton, ShapeRow } from "./common";
@@ -67,16 +67,7 @@ export default function HomeView() {
           </div>
         ) : (
           <>
-            <div className="sec">
-              <span>On the map · {shapes.length}</span>
-              <button type="button" onClick={() => {
-                const all = useShapes.getState().shapes;
-                const anyHidden = all.some((s) => !s.visible);
-                all.forEach((s) => useShapes.getState().update(s.id, { visible: anyHidden }, { history: false }));
-              }}>
-                {shapes.some((s) => !s.visible) ? <><Eye size={13} /> Show all</> : <><EyeOff size={13} /> Hide all</>}
-              </button>
-            </div>
+            <div className="sec"><span>On the map · {shapes.length}</span></div>
             {[...shapes].reverse().map((s) => <ShapeRow key={s.id} s={s} />)}
             <div className="sec"><span>Try something else</span></div>
             <div className="chips">

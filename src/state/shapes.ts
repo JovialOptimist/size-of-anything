@@ -40,10 +40,9 @@ export interface Shape {
   rotation: number;
   scale: number;
   area: number; // m² at scale 1
-  visible: boolean;
 }
 
-export type NewShape = Omit<Shape, "id" | "slot" | "anchor" | "rotation" | "scale" | "visible" | "origin" | "area"> & {
+export type NewShape = Omit<Shape, "id" | "slot" | "anchor" | "rotation" | "scale" | "origin" | "area"> & {
   anchor: LngLat;
   rotation?: number;
   scale?: number;
@@ -112,7 +111,6 @@ export function buildShape(input: NewShape, existing: Shape[]): Shape {
     rotation: input.rotation ?? 0,
     scale: input.scale ?? 1,
     area,
-    visible: true,
   };
 }
 

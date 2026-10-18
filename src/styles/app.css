@@ -363,3 +363,10 @@ button.srow:hover { background: var(--surface-2); }
 .placeinfo dd { margin: 0; font-weight: 650; overflow-wrap: anywhere; }
 .spin { animation: spin 0.9s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* Detail page header: icon, name and type on one line with the close button */
+.detail-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 14px 10px 10px 16px; flex: none; }
+.detail-head__text { min-width: 0; }
+.detail-head__sub { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-left: 0; }
+.detail-head .name-input { font-size: 21px; }
+.panel__scroll > .bigarea { margin: 2px 0 12px; }

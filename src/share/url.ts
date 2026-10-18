@@ -38,7 +38,7 @@ const unb64 = (s: string) => decodeURIComponent(escape(atob(s.replace(/-/g, "+")
 
 export function shareUrl(): string {
   const m = getMap();
-  const shapes = useShapes.getState().shapes.filter((s) => s.visible);
+  const shapes = useShapes.getState().shapes;
   const data = { v: m ? [round(m.getCenter().lng, 4), round(m.getCenter().lat, 4), round(m.getZoom(), 2)] : undefined, s: shapes.map(toEntry) };
   const url = new URL(window.location.href);
   url.search = "";
@@ -48,7 +48,7 @@ export function shareUrl(): string {
 }
 
 export function shareTitle(): string {
-  const shapes = useShapes.getState().shapes.filter((s) => s.visible);
+  const shapes = useShapes.getState().shapes;
   if (shapes.length >= 2) return `${shapes[shapes.length - 1].name} vs ${shapes[shapes.length - 2].name}`;
   if (shapes.length === 1) return `${shapes[0].name}, at true size`;
   return "The Size of Anything";

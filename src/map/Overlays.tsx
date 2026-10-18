@@ -96,7 +96,6 @@ export default function Overlays() {
   const center = m.getCenter();
 
   const items = shapes
-    .filter((s) => s.visible)
     .map((s) => {
       const isLive = live.id === s.id;
       const pin = isLive ? pinAt(s, live.anchor, live.rotation, live.scale) : pinPoint(s);

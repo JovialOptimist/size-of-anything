@@ -104,10 +104,7 @@ export function HelpView() {
         <p>Your shapes keep their true size. So when you drag one toward the poles, it grows on screen to match the map's stretching, and when you drag it toward the equator it shrinks. Try the Greenland example, or turn on the globe in Layers to see the Earth without the stretching.</p>
 
         <h3>Moving without dragging</h3>
-        <ul>
-          <li>On a shape's page: <b>Move here</b>, <b>Move to…</b> any place, or <b>My location</b>.</li>
-          <li>The arrow pad nudges a shape, and the rotation field takes exact degrees.</li>
-        </ul>
+        <p>Select a shape, then use the arrow keys to nudge it (hold Shift for bigger steps) and <span className="kbd">[</span> <span className="kbd">]</span> to rotate.</p>
 
         <h3>Keyboard shortcuts</h3>
         <ul>

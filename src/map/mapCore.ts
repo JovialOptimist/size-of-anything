@@ -26,9 +26,15 @@ async function fetchStyle(url: string): Promise<StyleSpecification> {
   return structuredClone(styleCache.get(url)!);
 }
 
-/** Flat buildings only: 3D extrusions would hide shape outlines behind them. */
+/**
+ * Flat buildings only: 3D extrusions would hide shape outlines behind them.
+ * Styles like Liberty stop drawing flat buildings where the 3D layer takes over
+ * (zoom 14), so once that layer is gone the flat one has to keep going.
+ */
 function flatten(style: StyleSpecification): StyleSpecification {
+  const hadExtrusions = style.layers.some((l) => l.type === "fill-extrusion");
   style.layers = style.layers.filter((l) => l.type !== "fill-extrusion");
+  if (hadExtrusions) for (const l of style.layers) if (l.type === "fill" && l.id.includes("building")) delete l.maxzoom;
   return style;
 }
 
@@ -93,7 +99,7 @@ function feature(s: Shape, geom: AreaGeometry, selected: boolean, darkMap: boole
 export function syncShapes(shapes: Shape[], selectedId: string | null, darkMap: boolean, hiddenId?: string) {
   const m = map;
   if (!m || !m.getSource("soa-shapes")) return;
-  const visible = shapes.filter((s) => s.visible && s.id !== hiddenId);
+  const visible = shapes.filter((s) => s.id !== hiddenId);
   // Selected shape last so it draws on top.
   visible.sort((a, b) => Number(a.id === selectedId) - Number(b.id === selectedId));
   (m.getSource("soa-shapes") as GeoJSONSource).setData({ type: "FeatureCollection", features: visible.map((s) => feature(s, placedGeometry(s), s.id === selectedId, darkMap)) });
