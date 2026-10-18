@@ -1,68 +1,59 @@
-// src/App.tsx
 /**
- * Main application component for Size of Anything.
- * Composes the UI layout including map, creation panel, and controls that allow users
- * to compare and visualize the sizes of different areas on a map.
+ * The Size of Anything: pick up any place on Earth and drop it somewhere else at its true size.
  */
-import { useState, useEffect } from "react";
-import MapView from "./components/map/MapView";
-import ActiveElementDisplay from "./components/map/ActiveElementDisplay";
-import useUrlSync from "./state/urlSync";
-import { useSettings, applyTheme } from "./state/settingsStore";
-import ThemeInitializer from "./components/ThemeInitializer";
-import KeyboardHandler from "./components/KeyboardHandler";
-import ShareButton from "./components/map/ShareButton";
-import FeedbackButton from "./components/map/FeedbackButton";
-import LayerToggleButton from "./components/map/LayerToggleButton";
-import CreationPanel from "./components/creation/CreationPanel";
-import EllipsisMenu, { type RightSidebarContent } from "./components/EllipsisMenu";
-import RightSidebar from "./components/RightSidebar";
+import { useEffect, useLayoutEffect, useState } from "react";
+import MapView from "./map/MapView";
+import Overlays from "./map/Overlays";
+import ModeLayers from "./map/ModeLayers";
+import Shell from "./ui/Shell";
+import { HelpDialog, SettingsDialog, VersionDialog, LiveRegion, MapControls, ShareDialog, Toasts } from "./ui/Chrome";
+import { useKeyboard } from "./ui/keyboard";
+import { useIsDark } from "./state/settings";
+import { restoreSession } from "./state/shapes";
+import { loadFromUrl } from "./share/url";
+import { ACCENT, ACCENT_PRESETS } from "./config";
+import { toast } from "./state/toasts";
 
-function App() {
-  useUrlSync();
-  const { theme } = useSettings();
-  const [rightSidebar, setRightSidebar] = useState<RightSidebarContent>(null);
+export default function App() {
+  const isDark = useIsDark();
+  const [ready, setReady] = useState(false);
+  useKeyboard();
+
+  useLayoutEffect(() => {
+    const root = document.documentElement;
+    root.dataset.theme = isDark ? "dark" : "light";
+    root.style.setProperty("--accent-light", ACCENT_PRESETS[ACCENT].light);
+    root.style.setProperty("--accent-dark", ACCENT_PRESETS[ACCENT].dark);
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", isDark ? "#171b20" : "#ffffff");
+  }, [isDark]);
 
   useEffect(() => {
-    console.log("--- SIZE OF ANYTHING APP STARTED ---");
-
-    // Apply theme on initial load
-    applyTheme(theme);
-
-    // Listen for system theme changes if using system setting
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const handleChange = () => {
-      if (theme === "system") {
-        applyTheme("system");
+    if (!ready) return;
+    (async () => {
+      if (await loadFromUrl()) {
+        toast({ text: "Here's the comparison someone shared with you." });
+        return;
       }
-    };
-
-    mediaQuery.addEventListener("change", handleChange);
-    return () => mediaQuery.removeEventListener("change", handleChange);
-  }, [theme]);
+      await restoreSession();
+    })();
+  }, [ready]);
 
   return (
-    <div className="app-container">
-      {/* Initialize theme */}
-      <ThemeInitializer />
-
-      {/* Handle keyboard shortcuts */}
-      <KeyboardHandler />
-
-      {/* Main map area - full viewport */}
-      <div className="map-view-container">
-        <MapView />
-        <EllipsisMenu onSelect={setRightSidebar} />
-        <CreationPanel />
-        <ActiveElementDisplay />
-        <ShareButton />
-        <FeedbackButton />
-        <LayerToggleButton />
-      </div>
-
-      <RightSidebar content={rightSidebar} onClose={() => setRightSidebar(null)} />
+    <div className="app">
+      <h1 className="sr-only">The Size of Anything</h1>
+      <main>
+        <MapView onReady={() => setReady(true)} />
+        {ready && <Overlays />}
+        {ready && <ModeLayers />}
+        <MapControls />
+        <Shell />
+      </main>
+      <ShareDialog />
+      <HelpDialog />
+      <SettingsDialog />
+      <VersionDialog />
+      <Toasts />
+      <LiveRegion />
     </div>
   );
 }
-
-export default App;
