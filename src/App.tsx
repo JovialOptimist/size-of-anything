@@ -6,7 +6,7 @@ import MapView from "./map/MapView";
 import Overlays from "./map/Overlays";
 import ModeLayers from "./map/ModeLayers";
 import Shell from "./ui/Shell";
-import { HelpDialog, SettingsDialog, LiveRegion, MapControls, ShareDialog, Toasts } from "./ui/Chrome";
+import { HelpDialog, SettingsDialog, VersionDialog, LiveRegion, MapControls, ShareDialog, Toasts } from "./ui/Chrome";
 import { useKeyboard } from "./ui/keyboard";
 import { useIsDark } from "./state/settings";
 import { restoreSession } from "./state/shapes";
@@ -51,6 +51,7 @@ export default function App() {
       <ShareDialog />
       <HelpDialog />
       <SettingsDialog />
+      <VersionDialog />
       <Toasts />
       <LiveRegion />
     </div>

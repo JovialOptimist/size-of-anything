@@ -35,6 +35,10 @@
                 document.documentElement.dataset.theme = d ? "dark" : "light";
             } catch (e) {}
         </script>
+        <script>
+            // Share links from the old version (#share=…) only work there, so open them there.
+            if (location.hash.indexOf("#share=") === 0) location.replace("https://old.thesizeofanything.com/" + location.hash);
+        </script>
         <script type="module" src="/src/main.tsx"></script>
     </body>
 </html>

@@ -37,5 +37,8 @@ export const OVERPASS_SERVERS = [
   "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
 ];
 
+/** The previous version of the site, kept for anyone who prefers it. */
+export const OLD_VERSION_URL = "https://old.thesizeofanything.com";
+
 export const SUPPORT_URL = "https://buymeacoffee.com/thesizeofanything";
 export const CONTACT_EMAIL = "contact@jachambers.xyz";

@@ -27,6 +27,8 @@ interface UIState {
   settingsOpen: boolean;
   /** The Help dialog, and which page of it. */
   helpPage: HelpPage | null;
+  /** The "new version / old version" dialog. */
+  versionOpen: boolean;
   sheetSnap: "peek" | "half" | "full";
   announce: string;
   recent: RecentItem[];
@@ -53,6 +55,7 @@ export const useUI = create<UIState>((set, get) => ({
   layersOpen: false,
   settingsOpen: false,
   helpPage: null,
+  versionOpen: false,
   sheetSnap: "peek",
   announce: "",
   recent: loadRecent(),

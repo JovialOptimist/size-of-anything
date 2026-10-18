@@ -154,7 +154,8 @@ mark { background: color-mix(in oklch, var(--accent) 22%, transparent); color: i
 
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 99px; padding: 10px 18px; min-height: 44px; font-weight: 650; background: var(--surface-2); color: var(--text); }
 .btn:hover { background: var(--surface-3); }
-.btn--primary { background: var(--accent); color: var(--on-accent); }
+a.btn { text-decoration: none; color: var(--text); }
+.btn--primary, a.btn--primary { background: var(--accent); color: var(--on-accent); }
 .btn--primary:hover { background: var(--accent-strong); color: var(--on-accent); }
 .btn--danger { color: var(--danger); }
 .btn--sm { min-height: 36px; padding: 6px 14px; font-size: 13px; }

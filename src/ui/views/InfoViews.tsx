@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { ChevronRight, Heart, Code, Ruler, MessageSquare } from "lucide-react";
+import { ChevronRight, Heart, Code, Ruler, MessageSquare, History } from "lucide-react";
 import { useSettings, type Settings } from "../../state/settings";
 import { useUI, announce, type HelpPage } from "../../state/ui";
 import { useShapes } from "../../state/shapes";
@@ -93,6 +93,7 @@ export function HelpBody({ go }: { go: (p: HelpPage) => void }) {
         <div className="btnrow">
           <button type="button" className="btn btn--sm" onClick={() => go("about")}>About <ChevronRight size={15} /></button>
           <button type="button" className="btn btn--sm" onClick={() => go("feedback")}><MessageSquare size={15} /> Send feedback</button>
+          <button type="button" className="btn btn--sm" onClick={() => useUI.getState().set({ helpPage: null, versionOpen: true })}><History size={15} /> Old version</button>
         </div>
       </div>
 

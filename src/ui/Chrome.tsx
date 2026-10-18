@@ -10,6 +10,7 @@ import { shareTitle, shareUrl } from "../share/url";
 import { useIsDesktop } from "./hooks";
 import { undo, redo } from "./actions";
 import { Seg, SettingsBody, HelpBody, AboutBody, FeedbackBody } from "./views/InfoViews";
+import { OLD_VERSION_URL } from "../config";
 
 export function MapControls() {
   const desktop = useIsDesktop();
@@ -134,6 +135,57 @@ export function HelpDialog() {
         <div className="dialog__body">
           {page === "help" ? <HelpBody go={go} /> : page === "about" ? <AboutBody /> : <FeedbackBody />}
         </div>
+      </div>
+    </>
+  );
+}
+
+const VERSION_SEEN_KEY = "soa-version-prompt-seen";
+/** Things the old version saved in this browser: if any are here, this person has used it. */
+const OLD_VERSION_KEYS = ["sizeOfAnything_history", "sizeOfAnything_dismissedMessages", "openedShare", "theme"];
+
+/**
+ * Welcome back: tells people who used the old version that it's still around.
+ * Shows once on its own (only to returning visitors), and from Help any time.
+ */
+export function VersionDialog() {
+  const open = useUI((s) => s.versionOpen);
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(VERSION_SEEN_KEY)) return;
+      if (!OLD_VERSION_KEYS.some((k) => localStorage.getItem(k) !== null)) return;
+    } catch {
+      return;
+    }
+    const t = setTimeout(() => useUI.getState().set({ versionOpen: true }), 1200);
+    return () => clearTimeout(t);
+  }, []);
+  if (!open) return null;
+  const close = () => {
+    try {
+      localStorage.setItem(VERSION_SEEN_KEY, "1");
+    } catch {
+      /* ignore */
+    }
+    useUI.getState().set({ versionOpen: false });
+  };
+  return (
+    <>
+      <div className="scrim" onClick={close} />
+      <div className="dialog" role="dialog" aria-modal="true" aria-labelledby="version-h" onKeyDown={(e) => e.key === "Escape" && close()}>
+        <div className="inline" style={{ justifyContent: "space-between" }}>
+          <h2 id="version-h">Welcome to the new version</h2>
+          <button type="button" className="iconbtn" aria-label="Close" onClick={close}><X size={20} /></button>
+        </div>
+        <p style={{ margin: 0 }}>
+          The Size of Anything has been rebuilt with a cleaner map, faster search, true-size objects and a lot more.
+          Prefer the way it was? The old version is still around.
+        </p>
+        <div className="btnrow">
+          <button type="button" className="btn btn--primary" autoFocus onClick={close}>Explore the new version</button>
+          <a className="btn" href={OLD_VERSION_URL} onClick={close}>Use the old version</a>
+        </div>
+        <p className="muted" style={{ margin: 0, fontSize: 12.5 }}>Shapes you made in the old version stay there. You can come back here any time.</p>
       </div>
     </>
   );
