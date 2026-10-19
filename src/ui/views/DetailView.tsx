@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { RotateCcw, Copy, Trash2, ExternalLink, Scaling, X, ChevronLeft, ChevronRight, Globe, FlipHorizontal2, FlipVertical2 } from "lucide-react";
+import { RotateCcw, Copy, Trash2, ExternalLink, Scaling, X, ChevronLeft, ChevronRight, Globe, TrianglesCenterlineDashedHorizontal, TrianglesCenterlineDashedVertical } from "lucide-react";
 import { useShapes, shapeArea } from "../../state/shapes";
 import { useSettings } from "../../state/settings";
 import { useUI, announce } from "../../state/ui";
@@ -89,9 +89,10 @@ export default function DetailView({ id }: { id: string }) {
         <div className="sec"><span>Shape</span></div>
         <div className="actions actions--3">
           <button type="button" className="action" disabled={Math.round(s.rotation) % 360 === 0} onClick={() => setRotation(s.id, 0)}><RotateCcw size={19} />Reset rotation</button>
-          <button type="button" className="action" onClick={() => flip(s.id, "horizontal")}><FlipHorizontal2 size={19} />Flip horizontal</button>
-          <button type="button" className="action" onClick={() => flip(s.id, "vertical")}><FlipVertical2 size={19} />Flip vertical</button>
-          <button type="button" className="action" aria-expanded={exact} onClick={() => setExact((v) => !v)}><Scaling size={19} />Set exact area…</button>
+          {/* Lucide names these by the dashed mirror line, so a left-right flip is the vertical one. Its old Flip*2 names are reversed aliases. */}
+          <button type="button" className="action" onClick={() => flip(s.id, "horizontal")}><TrianglesCenterlineDashedVertical size={19} />Flip horizontal</button>
+          <button type="button" className="action" onClick={() => flip(s.id, "vertical")}><TrianglesCenterlineDashedHorizontal size={19} />Flip vertical</button>
+          <button type="button" className="action" aria-expanded={exact} onClick={() => setExact((v) => !v)}><Scaling size={19} />Resize</button>
           <button type="button" className="action" onClick={() => duplicateShape(s.id)}><Copy size={19} />Clone</button>
           <button type="button" className="action danger" onClick={() => deleteShape(s.id)}><Trash2 size={19} />Delete</button>
         </div>
