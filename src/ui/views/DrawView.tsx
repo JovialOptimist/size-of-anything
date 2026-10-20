@@ -8,7 +8,8 @@ import { toast } from "../../state/toasts";
 import { getMap, setDrawData, visibleCenter } from "../../map/mapCore";
 import { mapClickHandler } from "../../map/modeHandlers";
 import { closeRing, geometryArea } from "../../geo/geometry";
-import { formatArea, familiarComparisons } from "../../geo/format";
+import { formatArea, familiarComparisons, approx } from "../../geo/format";
+import { Literal } from "../Literal";
 import { ViewHeader } from "./common";
 import { finishDrawing } from "../drawing";
 
@@ -76,8 +77,8 @@ export default function DrawView() {
           <>
             <p style={{ margin: 0 }}>Tap or click each corner. Tap the first corner again (or press Done) to close the shape. Drag the map to pan as usual.</p>
             <div className="card" aria-live="polite">
-              <span className="readout">{points.length} corner{points.length === 1 ? "" : "s"}</span>
-              {area > 0 && <span className="readout"> · {formatArea(area, units)}{fam ? ` · ${fam.text}` : ""}</span>}
+              <span className="readout" key={points.length === 1 ? "one" : "many"}><Literal>{`${points.length} `}</Literal>{points.length === 1 ? "corner" : "corners"}</span>
+              {area > 0 && <span className="readout"><Literal>{` · ${formatArea(area, units)}`}</Literal>{fam && <span key={fam.label}><Literal>{` · ${approx(fam.count)} `}</Literal>{fam.label}</span>}</span>}
             </div>
             <div className="btnrow">
               <button type="button" className="btn btn--sm" onClick={() => useDrawing.getState().set({ points: [...points, visibleCenter()] })}><Plus size={16} /> Add point at crosshair</button>

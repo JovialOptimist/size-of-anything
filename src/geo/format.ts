@@ -70,6 +70,8 @@ export function familiarComparisons(m2: number, max = 3) {
 }
 
 export function approx(n: number): string {
+  // "≈ 501 million" (or "501 milhões") reads better than a nine-digit number.
+  if (n >= 1_000_000) return `≈ ${new Intl.NumberFormat(undefined, { notation: "compact", compactDisplay: "long", maximumFractionDigits: 0 }).format(n)}`;
   if (n >= 1000) return `≈ ${nf(0).format(Math.round(n / 10) * 10)}`;
   if (n >= 20) return `≈ ${nf(0).format(Math.round(n))}`;
   return `≈ ${nf(1).format(n)}`;

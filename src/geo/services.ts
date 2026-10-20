@@ -100,6 +100,44 @@ function dedupe(list: PlaceResult[]) {
   return list.filter((r) => (seen.has(r.key) ? false : (seen.add(r.key), true)));
 }
 
+const PHOTON_LANGS = ["en", "de", "fr"];
+
+// Country names in the reader's language, from the browser.
+let regions: { names: Intl.DisplayNames; all: [code: string, folded: string][] } | undefined;
+const fold = (s: string) => s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().trim();
+function regionNames() {
+  if (!regions) {
+    const names = new Intl.DisplayNames([navigator.language || "en"], { type: "region", fallback: "none" });
+    const all: [string, string][] = [];
+    for (let a = 65; a <= 90; a++)
+      for (let b = 65; b <= 90; b++) {
+        const code = String.fromCharCode(a, b);
+        const name = names.of(code);
+        if (name) all.push([code, fold(name)]);
+      }
+    regions = { names, all };
+  }
+  return regions;
+}
+
+/**
+ * Photon only knows names in English, German and French, so for anyone else "Alemanha" finds
+ * bars called Alemanha rather than Germany. The browser knows every country's name in the reader's
+ * language, so a query that names a country also searches for it by its English name.
+ */
+function countriesNamed(q: string): string[] {
+  const f = fold(q);
+  if (f.length < 3) return [];
+  const english = new Intl.DisplayNames(["en"], { type: "region" });
+  return regionNames().all.filter(([, name]) => name.startsWith(f)).slice(0, 2).map(([code]) => english.of(code)!);
+}
+
+async function photon(params: URLSearchParams, signal?: AbortSignal) {
+  const res = await fetch(`${PHOTON}?${params}`, { signal });
+  if (!res.ok) return [];
+  return ((await res.json()).features || []) as { properties: Record<string, string | number> }[];
+}
+
 /** Type-ahead suggestions from Photon. */
 export async function suggestPlaces(q: string, near?: [number, number], signal?: AbortSignal): Promise<PlaceResult[]> {
   const params = new URLSearchParams({ q, limit: "8" });
@@ -108,17 +146,23 @@ export async function suggestPlaces(q: string, near?: [number, number], signal?:
     params.set("lat", near[1].toFixed(3));
   }
   const lang = (navigator.language || "en").slice(0, 2);
-  if (["en", "de", "fr"].includes(lang)) params.set("lang", lang);
-  const res = await fetch(`${PHOTON}?${params}`, { signal });
-  if (!res.ok) return [];
-  const data = await res.json();
+  const supported = PHOTON_LANGS.includes(lang);
+  if (supported) params.set("lang", lang);
+  const countries = supported ? [] : countriesNamed(q);
+  const [main, ...named] = await Promise.all([
+    photon(params, signal),
+    ...countries.map((c) => photon(new URLSearchParams({ q: c, limit: "1", lang: "en", osm_tag: "place:country" }), signal)),
+  ]);
+  const { names } = regionNames();
+  // Photon gives country names in English or the local language; show the reader's instead.
+  const country = (p: Record<string, string | number>) => (p.countrycode && names.of(String(p.countrycode))) || p.country;
   return dedupe(
-    (data.features || []).map((f: { properties: Record<string, string | number> }) => {
+    [...named.flat(), ...main].map((f) => {
       const p = f.properties;
       const osmType = String(p.osm_type) as "N" | "W" | "R";
-      const name = String(p.name || p.street || "");
+      const name = String((p.osm_value === "country" && country(p)) || p.name || p.street || "");
       const d = describeFeature(String(p.osm_key), String(p.osm_value), String(p.type || ""));
-      const locality = [p.city, p.state, p.country].filter((x) => x && x !== name).slice(0, 2).join(", ");
+      const locality = [p.city, p.state, country(p)].filter((x) => x && x !== name).slice(0, 2).join(", ");
       // Streets, rivers and railways are lines with no area to compare.
       const lineKey = ["highway", "railway", "waterway", "route", "power"].includes(String(p.osm_key)) || p.type === "street";
       return { key: `${osmType}${p.osm_id}`, osmType, osmId: Number(p.osm_id), name, type: d.type, icon: d.icon, locality, source: "photon", lineKey } as PlaceResult & { lineKey: boolean };

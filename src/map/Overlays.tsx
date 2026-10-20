@@ -199,7 +199,7 @@ export default function Overlays() {
             >
               <ShapeIcon icon={s.icon} size={selected ? 18 : 14} strokeWidth={2.4} />
             </button>
-            {showTag.has(s.id) && <span className="pin-tag">{s.name}</span>}
+            {showTag.has(s.id) && <span className="pin-tag" translate="no">{s.name}</span>}
           </div>
         );
       })}
@@ -240,7 +240,7 @@ export default function Overlays() {
 function Toolbar({ s, x, y }: { s: Shape; x: number; y: number }) {
   return (
     <div className="float-toolbar" style={{ left: x, top: y }} role="toolbar" aria-label={`${s.name} actions`}>
-      <span className="float-toolbar__name">{s.name}</span>
+      <span className="float-toolbar__name" translate="no">{s.name}</span>
       <button type="button" aria-label="Rotate left 15°" onClick={() => rotateBy(s.id, -15)}><RotateCcw size={15} /></button>
       <button type="button" aria-label="Rotate right 15°" onClick={() => rotateBy(s.id, 15)}><RotateCw size={15} /></button>
       <button type="button" aria-label="Duplicate" onClick={() => duplicateShape(s.id)}><Copy size={15} /></button>

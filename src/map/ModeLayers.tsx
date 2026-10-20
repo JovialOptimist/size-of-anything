@@ -5,6 +5,7 @@ import { useDrawing } from "../state/drawing";
 import { getMap } from "./mapCore";
 import { simplifyLine, geometryArea, closeRing, type LngLat } from "../geo/geometry";
 import { formatArea } from "../geo/format";
+import { Literal } from "../ui/Literal";
 import { useSettings } from "../state/settings";
 import { finishDrawing } from "../ui/drawing";
 import { toast } from "../state/toasts";
@@ -111,7 +112,7 @@ function Lasso() {
       </svg>
       {area > 0 && stroke.length > 1 && (
         <div className="drag-hint" style={{ left: stroke[stroke.length - 1][0], top: stroke[stroke.length - 1][1] + 24, animation: "none" }}>
-          {formatArea(area, units)}
+          <Literal>{formatArea(area, units)}</Literal>
         </div>
       )}
     </div>

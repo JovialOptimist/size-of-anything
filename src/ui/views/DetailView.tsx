@@ -16,6 +16,7 @@ import { deleteShape, duplicateShape } from "../actions";
 import { ShapeIcon } from "../icons";
 import { useSwatch } from "../hooks";
 import { useIsDark } from "../../state/settings";
+import { Literal } from "../Literal";
 
 const AREA_UNITS = [
   { id: "m2", label: "m²", m2: 1 },
@@ -81,7 +82,13 @@ export default function DetailView({ id }: { id: string }) {
         <button type="button" className="iconbtn" aria-label="Close" onClick={close}><X size={20} /></button>
       </header>
       <div className="panel__scroll" style={{ ["--c" as string]: swatch(s.slot) }}>
-        <div className="bigarea">{formatArea(area, units)}<small>{showBoth ? formatAreaSecondary(area, units) : ""}{s.scale !== 1 ? ` · scaled to ${Math.round(s.scale * s.scale * 100)}% of its area` : ""}</small></div>
+        <div className="bigarea">
+          <Literal>{formatArea(area, units)}</Literal>
+          <small>
+            {showBoth && <Literal>{formatAreaSecondary(area, units)}</Literal>}
+            {s.scale !== 1 && <span> · scaled to {Math.round(s.scale * s.scale * 100)}% of its area</span>}
+          </small>
+        </div>
 
         <Picture s={s} />
         <Compare s={s} shapes={shapes} area={area} />
@@ -164,16 +171,25 @@ interface Option { key: string; name: string; m2: number; kind: "shape" | "famil
 
 const FAMILIAR_OBJECTS = ["olympic-pool", "soccer-pitch", "american-football-field", "tennis-court", "blue-whale", "boeing-737", "titanic", "great-pyramid", "acre", "square-mile"];
 
+/** Which wording `sentence` uses, so the sentence can be keyed by it (see Compare). */
+function sentenceKind(r: number, o: Option) {
+  if (o.kind === "shape") return r >= 1 ? "times" : "bigger";
+  return r >= 1.5 ? "fit" : r >= 0.67 ? "about" : "take";
+}
+
 function sentence(name: string, area: number, o: Option) {
   const r = area / o.m2;
-  if (o.kind === "shape") {
-    return r >= 1
-      ? <><b>{name}</b> is <b className="num">{formatRatio(r)}</b> the size of {o.name}.</>
-      : <>{o.name} is <b className="num">{formatRatio(1 / r)}</b> bigger than <b>{name}</b>.</>;
+  // Names and numbers are Literal: translators mangle locale-formatted numbers and "translate" names.
+  // Translators also drop the spaces around untranslated parts, so the spaces live inside them.
+  const own = (pad: string) => <b translate="no">{pad.replace("_", name)}</b>;
+  const num = (n: string) => <b className="num"><Literal>{` ${n} `}</Literal></b>;
+  switch (sentenceKind(r, o)) {
+    case "times": return <>{own("_ ")}is{num(formatRatio(r))}the size of<Literal>{` ${o.name}`}</Literal>.</>;
+    case "bigger": return <><Literal>{`${o.name} `}</Literal>is{num(formatRatio(1 / r))}bigger than{own(" _")}.</>;
+    case "fit": return <>You could fit<b className="num"><Literal>{` ${approx(r)} `}</Literal>{o.many}</b> in{own(" _")}.</>;
+    case "about": return <>{own("_ ")}is about the size of {o.one}.</>;
+    default: return <>It would take{num(approx(1 / r))}of{own(" _ ")}to cover {o.one}.</>;
   }
-  if (r >= 1.5) return <>You could fit <b className="num">{approx(r)} {o.many}</b> in <b>{name}</b>.</>;
-  if (r >= 0.67) return <><b>{name}</b> is about the size of {o.one}.</>;
-  return <>It would take <b className="num">{approx(1 / r)}</b> of <b>{name}</b> to cover {o.one}.</>;
 }
 
 function metersArea(meters: [number, number][][][]) {
@@ -221,7 +237,9 @@ function Compare({ s, shapes, area }: { s: Shape; shapes: Shape[]; area: number 
       <div className="sec"><span>How big is that?</span></div>
       <div className="compare" style={o.slot !== undefined ? { ["--c" as string]: swatch(o.slot) } : undefined}>
         <button type="button" className="iconbtn" aria-label="Previous comparison" onClick={() => step(-1)}><ChevronLeft size={20} /></button>
-        <p className="compare__text" aria-live="polite">{sentence(s.name, area, o)}</p>
+        {/* A translated page has moved this sentence's text around, so React mustn't patch it in place
+            (that crashes or leaves the old comparison showing). The key makes it replace the whole sentence. */}
+        <p key={`${o.key}:${sentenceKind(area / o.m2, o)}`} className="compare__text" aria-live="polite">{sentence(s.name, area, o)}</p>
         <button type="button" className="iconbtn" aria-label="Next comparison" onClick={() => step(1)}><ChevronRight size={20} /></button>
       </div>
       <div className="input compare__pick">
@@ -281,9 +299,10 @@ function Picture({ s }: { s: Shape }) {
       ) : null}
       {info && (info.description || info.wikipedia || info.facts.length > 0 || info.website) && (
         <div className="placeinfo">
-          {info.wikipedia ? <p>{info.wikipedia.extract}</p> : info.description ? <p>{info.description}</p> : null}
+          {/* lang tells translators what language the summary is really in, since it may not be English. */}
+          {info.wikipedia ? <p lang={info.wikipedia.lang}>{info.wikipedia.extract}</p> : info.description ? <p>{info.description}</p> : null}
           {info.facts.length > 0 && (
-            <dl>{info.facts.map((f) => <div key={f.label}><dt>{f.label}</dt><dd>{f.value}</dd></div>)}</dl>
+            <dl>{info.facts.map((f) => <div key={f.label}><dt>{f.label}</dt><dd translate={f.words ? undefined : "no"}>{f.value}</dd></div>)}</dl>
           )}
           <div className="btnrow">
             {info.wikipedia && <a className="btn btn--sm" href={info.wikipedia.url} target="_blank" rel="noopener noreferrer"><ExternalLink size={14} /> Wikipedia</a>}

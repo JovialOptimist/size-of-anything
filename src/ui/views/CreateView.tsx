@@ -8,6 +8,7 @@ import { PALETTE } from "../../map/palette";
 import { getMap, setPreview, visibleCenter } from "../../map/mapCore";
 import { geometryArea, localFromMeters, place } from "../../geo/geometry";
 import { formatArea, formatAreaSecondary, formatLength } from "../../geo/format";
+import { Literal } from "../Literal";
 import { addGenerated } from "../actions";
 import { ViewHeader } from "./common";
 import type { MetersPolys } from "../../objects/registry";
@@ -46,7 +47,10 @@ function ngon(n: number, R: number): MetersPolys {
 }
 
 /** Turn the form into metres. Returns null with a message when the input isn't usable. */
-function compute(d: ReturnType<typeof useDraft.getState>): { meters: MetersPolys; label: string; derived: string } | { error: string } {
+/** A measurement worked out from the inputs: a translatable label and a locale-formatted value. */
+interface Derived { label: string; value: string }
+
+function compute(d: ReturnType<typeof useDraft.getState>): { meters: MetersPolys; label: string; derived?: Derived } | { error: string } {
   const a = Number(d.a), b = Number(d.b), n = Math.round(Number(d.sides));
   if (!(a > 0)) return { error: "Enter a size greater than 0." };
   const len = LENGTH_UNITS.find((u) => u.id === d.lenUnit)!;
@@ -56,34 +60,34 @@ function compute(d: ReturnType<typeof useDraft.getState>): { meters: MetersPolys
     const A = a * ar.m2;
     if (d.kind === "square") {
       const s = Math.sqrt(A);
-      return { meters: ngon(4, s / Math.SQRT2).map((p) => p.map((r) => r.map(([x, y]) => rot45(x, y)))), label: `${d.a} ${ar.label} square`, derived: `Each side ${short(s)}` };
+      return { meters: ngon(4, s / Math.SQRT2).map((p) => p.map((r) => r.map(([x, y]) => rot45(x, y)))), label: `${d.a} ${ar.label} square`, derived: { label: "Each side", value: short(s) } };
     }
     if (d.kind === "rectangle") {
       if (!(b > 0)) return { error: "Enter an aspect ratio greater than 0." };
       const w = Math.sqrt(A / b), l = w * b;
-      return { meters: rect(w, l), label: `${d.a} ${ar.label} rectangle`, derived: `${short(w)} × ${short(l)}` };
+      return { meters: rect(w, l), label: `${d.a} ${ar.label} rectangle`, derived: { label: "", value: `${short(w)} × ${short(l)}` } };
     }
     if (d.kind === "circle") {
       const r = Math.sqrt(A / Math.PI);
-      return { meters: ngon(128, r), label: `${d.a} ${ar.label} circle`, derived: `Radius ${short(r)}` };
+      return { meters: ngon(128, r), label: `${d.a} ${ar.label} circle`, derived: { label: "Radius", value: short(r) } };
     }
     if (!(n >= 3 && n <= 64)) return { error: "Use between 3 and 64 sides." };
     const R = Math.sqrt((2 * A) / (n * Math.sin((2 * Math.PI) / n)));
-    return { meters: ngon(n, R), label: `${d.a} ${ar.label} ${n}-sided polygon`, derived: `Side ${short(2 * R * Math.sin(Math.PI / n))}` };
+    return { meters: ngon(n, R), label: `${d.a} ${ar.label} ${n}-sided polygon`, derived: { label: "Side", value: short(2 * R * Math.sin(Math.PI / n)) } };
   }
   const A = a * len.m;
-  if (d.kind === "square") return { meters: rect(A, A), label: `${d.a} ${len.label} square`, derived: "" };
+  if (d.kind === "square") return { meters: rect(A, A), label: `${d.a} ${len.label} square` };
   if (d.kind === "rectangle") {
     if (!(b > 0)) return { error: "Enter a length greater than 0." };
-    return { meters: rect(A, b * len.m), label: `${d.a} × ${d.b} ${len.label} rectangle`, derived: "" };
+    return { meters: rect(A, b * len.m), label: `${d.a} × ${d.b} ${len.label} rectangle` };
   }
   if (d.kind === "circle") {
     const r = d.circleMeasure === "radius" ? A : A / 2;
-    return { meters: ngon(128, r), label: `${d.a} ${len.label} ${d.circleMeasure === "radius" ? "radius" : "wide"} circle`, derived: d.circleMeasure === "radius" ? `${short(2 * r)} across` : `Radius ${short(r)}` };
+    return { meters: ngon(128, r), label: `${d.a} ${len.label} ${d.circleMeasure === "radius" ? "radius" : "wide"} circle`, derived: d.circleMeasure === "radius" ? { label: "Diameter", value: short(2 * r) } : { label: "Radius", value: short(r) } };
   }
   if (!(n >= 3 && n <= 64)) return { error: "Use between 3 and 64 sides." };
   const R = A / (2 * Math.sin(Math.PI / n));
-  return { meters: ngon(n, R), label: `${n}-sided polygon, ${d.a} ${len.label} sides`, derived: "" };
+  return { meters: ngon(n, R), label: `${n}-sided polygon, ${d.a} ${len.label} sides` };
 }
 const rect = (w: number, l: number): MetersPolys => [[[[-w / 2, -l / 2], [w / 2, -l / 2], [w / 2, l / 2], [-w / 2, l / 2], [-w / 2, -l / 2]]]];
 const rot45 = (x: number, y: number): [number, number] => [(x - y) / Math.SQRT2, (x + y) / Math.SQRT2];
@@ -124,7 +128,7 @@ export default function CreateView() {
     addGenerated({
       name: d.name.trim() || result.label,
       type: "Custom shape",
-      locality: result.derived,
+      locality: result.derived ? `${result.derived.label} ${result.derived.value}`.trim() : "",
       icon: "drawn",
       source: { kind: "exact", meters: result.meters },
       slot,
@@ -188,7 +192,7 @@ export default function CreateView() {
               <span className="err" role="alert">{result.error}</span>
             ) : (
               <div className="card" aria-live="polite">
-                <div className="bigarea" style={{ fontSize: 28 }}>{formatArea(area, units)}<small>{formatAreaSecondary(area, units)}{result.derived ? ` · ${result.derived}` : ""}</small></div>
+                <div className="bigarea" style={{ fontSize: 28 }}><Literal>{formatArea(area, units)}</Literal><small><Literal>{formatAreaSecondary(area, units)}</Literal>{result.derived && <span key={result.derived.label}><Literal>{" · "}</Literal>{result.derived.label}<Literal>{` ${result.derived.value}`}</Literal></span>}</small></div>
               </div>
             )}
             <p className="muted" style={{ margin: 0, fontSize: 12.5 }}>The dashed outline on the map is a preview. Move the map to put it where you want, then add it.</p>
