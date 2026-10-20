@@ -8,6 +8,8 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 import { getMap } from "../map/mapCore";
 import { mercatorInflation } from "../geo/geometry";
+import { formatRatio } from "../geo/format";
+import { Literal } from "./Literal";
 
 const RAD = Math.PI / 180;
 const W = 320, H = 200, CX = W / 2, CY = H / 2;
@@ -108,8 +110,9 @@ function Drawing({ stage }: { stage: number }) {
         {u > 0.05 && (
           <g opacity={Math.min(1, u * 2)}>
             <text x={sliceX(2)} y={labelY(0)} className="merc__label">real size</text>
-            <text x={sliceX(5)} y={Math.min(H - 6, labelY(northLat))} className="merc__label">
-              {k > 1.15 ? `${k.toFixed(1)}× too big` : "real size"}
+            {/* Keyed by wording so a translated page gets a fresh label; the number changes every frame. */}
+            <text key={k > 1.15 ? "big" : "real"} x={sliceX(5)} y={Math.min(H - 6, labelY(northLat))} className="merc__label">
+              {k > 1.15 ? <><tspan className="notranslate">{`${formatRatio(k)} `}</tspan>too big</> : "real size"}
             </text>
           </g>
         )}
@@ -126,7 +129,7 @@ export default function MercatorExplainer() {
     <>Then, we line up the slices in a row, so that we can see all the skin at the same time. The only problem is, there are gaps at the top and bottom of our apple slices that don't come together all the way.</>,
     <>Using lots of fancy math, we can increase the size of those parts of the apple slices, to fill in the gaps. The main side effect is that now, the top parts of our map are way bigger than they are supposed to be.</>,
     <>
-      So every flat map is a little off. Places near the poles, like Russia and Greenland, are drawn way too big. Where you're looking now, around {Math.round(Math.abs(lat))}° {lat >= 0 ? "N" : "S"}, everything is <b>{k.toFixed(1)}×</b> its real size.
+      So every flat map is a little off. Places near the poles, like Russia and Greenland, are drawn way too big. Where you're looking now, around<Literal>{` ${Math.round(Math.abs(lat))}° ${lat >= 0 ? "N" : "S"}`}</Literal>, everything is<b><Literal>{` ${formatRatio(k)} `}</Literal></b>its real size.
       Shapes here keep their true size, so they shrink as you drag them toward the equator and grow toward the poles. To see the world without the stretch, turn on <b>Globe</b> in Layers.
     </>,
   ];
@@ -156,7 +159,8 @@ export default function MercatorExplainer() {
   return (
     <div className="merc-explainer">
       <Drawing stage={stage} />
-      <p className="merc-explainer__text" aria-live="polite">{steps[step]}</p>
+      {/* Keyed by step: patching the old step's text on a translated page leaves it showing. */}
+      <p key={step} className="merc-explainer__text" aria-live="polite">{steps[step]}</p>
       <div className="merc-explainer__nav">
         <button type="button" className="btn btn--sm" onClick={() => setStep(step - 1)} disabled={step === 0}><ChevronLeft size={15} /> Back</button>
         <div className="merc-explainer__dots" role="group" aria-label="Steps">
@@ -165,9 +169,9 @@ export default function MercatorExplainer() {
           ))}
         </div>
         {last ? (
-          <button type="button" className="btn btn--sm" onClick={() => setStep(0)}><RotateCcw size={14} /> Again</button>
+          <button key="again" type="button" className="btn btn--sm" onClick={() => setStep(0)}><RotateCcw size={14} /> Again</button>
         ) : (
-          <button type="button" className="btn btn--sm btn--primary" onClick={() => setStep(step + 1)}>Next <ChevronRight size={15} /></button>
+          <button key="next" type="button" className="btn btn--sm btn--primary" onClick={() => setStep(step + 1)}>Next <ChevronRight size={15} /></button>
         )}
       </div>
     </div>

@@ -4,7 +4,7 @@ import { useShapes, shapeArea } from "../../state/shapes";
 import { useSettings } from "../../state/settings";
 import { useUI, announce } from "../../state/ui";
 import { toast } from "../../state/toasts";
-import { formatArea, formatAreaSecondary, formatRatio, approx, FAMILIAR } from "../../geo/format";
+import { formatArea, formatAreaSecondary, formatRatio, approx, formatInput, parseNumber, FAMILIAR } from "../../geo/format";
 import { localFromMeters, place } from "../../geo/geometry";
 import { flip, setRotation, setScale } from "../../map/interaction";
 import { PALETTE, shapeColor } from "../../map/palette";
@@ -133,8 +133,8 @@ function ExactArea({ id, onDone }: { id: string; onDone: () => void }) {
   const units = useSettings((st) => st.units);
   const [unit, setUnit] = useState(units === "us" ? "acre" : "ha");
   const u = AREA_UNITS.find((x) => x.id === unit)!;
-  const [val, setVal] = useState(() => String(+(shapeArea(s) / u.m2).toPrecision(3)));
-  const n = Number(val);
+  const [val, setVal] = useState(() => formatInput(shapeArea(s) / u.m2));
+  const n = parseNumber(val);
   const valid = Number.isFinite(n) && n > 0;
   const apply = () => {
     if (!valid) return;
@@ -294,7 +294,7 @@ function Picture({ s }: { s: Shape }) {
       ) : realGeom ? (
         <figure>
           <SatelliteSnapshot geometry={realGeom} color={color} />
-          <figcaption>{s.source.kind === "osm" ? "Satellite view of where it really is" : "Satellite view of where you made it"}</figcaption>
+          <figcaption key={s.source.kind}>{s.source.kind === "osm" ? "Satellite view of where it really is" : "Satellite view of where you made it"}</figcaption>
         </figure>
       ) : null}
       {info && (info.description || info.wikipedia || info.facts.length > 0 || info.website) && (

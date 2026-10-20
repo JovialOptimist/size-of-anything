@@ -7,7 +7,7 @@ import { useUI } from "../../state/ui";
 import { PALETTE } from "../../map/palette";
 import { getMap, setPreview, visibleCenter } from "../../map/mapCore";
 import { geometryArea, localFromMeters, place } from "../../geo/geometry";
-import { formatArea, formatAreaSecondary, formatLength } from "../../geo/format";
+import { formatArea, formatAreaSecondary, formatLength, parseNumber } from "../../geo/format";
 import { Literal } from "../Literal";
 import { addGenerated } from "../actions";
 import { ViewHeader } from "./common";
@@ -51,7 +51,7 @@ function ngon(n: number, R: number): MetersPolys {
 interface Derived { label: string; value: string }
 
 function compute(d: ReturnType<typeof useDraft.getState>): { meters: MetersPolys; label: string; derived?: Derived } | { error: string } {
-  const a = Number(d.a), b = Number(d.b), n = Math.round(Number(d.sides));
+  const a = parseNumber(d.a), b = parseNumber(d.b), n = Math.round(parseNumber(d.sides));
   if (!(a > 0)) return { error: "Enter a size greater than 0." };
   const len = LENGTH_UNITS.find((u) => u.id === d.lenUnit)!;
   const ar = AREA_UNITS.find((u) => u.id === d.areaUnit)!;
@@ -189,7 +189,7 @@ export default function CreateView() {
             )}
             {d.kind === "polygon" && <NumberField id="cs" label="Sides" value={d.sides} onChange={(sides) => d.set({ sides })} />}
             {"error" in result ? (
-              <span className="err" role="alert">{result.error}</span>
+              <span key={result.error} className="err" role="alert">{result.error}</span>
             ) : (
               <div className="card" aria-live="polite">
                 <div className="bigarea" style={{ fontSize: 28 }}><Literal>{formatArea(area, units)}</Literal><small><Literal>{formatAreaSecondary(area, units)}</Literal>{result.derived && <span key={result.derived.label}><Literal>{" · "}</Literal>{result.derived.label}<Literal>{` ${result.derived.value}`}</Literal></span>}</small></div>
@@ -197,7 +197,7 @@ export default function CreateView() {
             )}
             <p className="muted" style={{ margin: 0, fontSize: 12.5 }}>The dashed outline on the map is a preview. Move the map to put it where you want, then add it.</p>
             <button type="button" className="btn btn--primary" onClick={add} disabled={"error" in result}>
-              <Plus size={18} /> Add “{d.name.trim() || ("error" in result ? "shape" : result.label)}”
+              <Plus size={18} /> Add{d.name.trim() ? <Literal>{` “${d.name.trim()}”`}</Literal> : <span key={"error" in result ? "" : result.label}>{` “${"error" in result ? "shape" : result.label}”`}</span>}
             </button>
           </>
         ) : (
@@ -221,7 +221,7 @@ export default function CreateView() {
 }
 
 function NumberField({ id, label, value, onChange, unit, units, onUnit }: { id: string; label: string; value: string; onChange: (v: string) => void; unit?: string; units?: { id: string; label: string }[]; onUnit?: (u: string) => void }) {
-  const bad = !(Number(value) > 0);
+  const bad = !(parseNumber(value) > 0);
   return (
     <div className="field">
       <label htmlFor={id}>{label}</label>

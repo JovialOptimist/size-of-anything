@@ -41,6 +41,34 @@ export function formatLength(m: number, units: UnitSystem): string {
   return ft < 5280 ? `${sig(ft)} ft` : `${sig(ft / 5280)} mi`;
 }
 
+/** The reader's thousands separator: "," in English, "." in pt-BR and German. */
+const groupSeparator = () => nf(0).formatToParts(1234567).find((p) => p.type === "group")?.value ?? ",";
+
+/**
+ * Reads a number as the reader typed it: "12,5" in pt-BR or German, "12.5" in English. A phone's
+ * decimal keypad may offer only one of "," and ".", so a lone separator is a decimal point unless
+ * it's the locale's thousands separator in "1.234" form.
+ */
+export function parseNumber(input: string): number {
+  const t = input.trim().replace(/[\s'’]/g, "");
+  // With both, whichever comes last is the decimal point ("1.234,5" and "1,234.5" alike).
+  if (t.includes(",") && t.includes(".")) {
+    const dec = t.lastIndexOf(",") > t.lastIndexOf(".") ? "," : ".";
+    const [whole, frac, extra] = t.split(dec);
+    return extra === undefined ? Number(`${whole.replace(/[.,]/g, "")}.${frac}`) : NaN;
+  }
+  const group = groupSeparator();
+  const sep = t.includes(",") ? "," : t.includes(".") ? "." : "";
+  if (!sep) return Number(t);
+  if (sep === group && /^\d{1,3}([.,]\d{3})+$/.test(t)) return Number(t.split(sep).join(""));
+  return t.split(sep).length === 2 ? Number(t.replace(sep, ".")) : NaN;
+}
+
+/** A number for an input box: the reader's decimal separator, no thousands separators. */
+export function formatInput(n: number, digits = 3): string {
+  return new Intl.NumberFormat(undefined, { maximumSignificantDigits: digits, useGrouping: false }).format(n);
+}
+
 export function formatRatio(r: number): string {
   if (r >= 10) return `${nf(0).format(Math.round(r))}×`;
   if (r >= 1) return `${nf(1).format(r)}×`;

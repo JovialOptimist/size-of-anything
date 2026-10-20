@@ -130,14 +130,14 @@ export default function PickView() {
       <div className="panel__scroll">
         {desktop ? (
           <p style={{ marginTop: 0 }} className="pick-hint">
-            <MousePointerClick size={18} /> {state === "loading" ? "Looking…" : state === "idle" ? "Click anything on the map to see what's there." : "Click somewhere else to look there instead."}
+            <MousePointerClick size={18} /> <span key={state}>{state === "loading" ? "Looking…" : state === "idle" ? "Click anything on the map to see what's there." : "Click somewhere else to look there instead."}</span>
           </p>
         ) : (
           <>
             <p style={{ marginTop: 0 }}>Move the map so the crosshair sits on what you want, or tap it.</p>
             <button type="button" className="btn btn--primary" onClick={() => lookup()} disabled={state === "loading"} style={{ width: "100%" }}>
               {state === "loading" ? <Loader2 size={18} className="spin" /> : stale && state === "done" ? <RefreshCw size={18} /> : <Crosshair size={18} />}
-              {state === "loading" ? "Looking…" : stale && state === "done" ? "Look here instead" : "What's here?"}
+              <span key={`${state}:${stale}`}>{state === "loading" ? "Looking…" : stale && state === "done" ? "Look here instead" : "What's here?"}</span>
             </button>
           </>
         )}

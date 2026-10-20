@@ -7,7 +7,10 @@ import { toast } from "../../state/toasts";
 import { CONTACT_EMAIL, SUPPORT_URL } from "../../config";
 import MercatorExplainer from "../MercatorExplainer";
 
-export function Seg<T extends string>({ value, options, onChange, label }: { value: T; options: [T, string][]; onChange: (v: T) => void; label: string }) {
+/** The "US" units option. Translators read it as the word "us" ("NÓS", "UNS"), so it stays as is. */
+export const US = <span translate="no">US</span>;
+
+export function Seg<T extends string>({ value, options, onChange, label }: { value: T; options: [T, ReactNode][]; onChange: (v: T) => void; label: string }) {
   return (
     <div className="seg" role="group" aria-label={label}>
       {options.map(([v, l]) => (
@@ -45,7 +48,7 @@ export function SettingsBody() {
 
       <div className="sgroup-title">Units</div>
       <div className="sgroup">
-        <Row title="Measurements"><Seg label="Measurements" value={s.units} onChange={set("units")} options={[["metric", "Metric"], ["us", "US"]]} /></Row>
+        <Row title="Measurements"><Seg label="Measurements" value={s.units} onChange={set("units")} options={[["metric", "Metric"], ["us", US]]} /></Row>
         <Row title="Show both" sub={s.showBothUnits ? "3.41 km² and 1.32 sq mi" : "Just one"}><Switch label="Show both units" checked={s.showBothUnits} onChange={set("showBothUnits")} /></Row>
       </div>
 
@@ -111,14 +114,15 @@ export function HelpBody({ go }: { go: (p: HelpPage) => void }) {
         <section className="help-keys">
           <h3>Shortcuts</h3>
           <dl>
-            <dt><span className="kbd">/</span></dt><dd>Search</dd>
-            <dt><span className="kbd">Ctrl</span> <span className="kbd">Z</span></dt><dd>Undo (add <span className="kbd">Shift</span> to redo)</dd>
-            <dt><span className="kbd">←</span> <span className="kbd">→</span> <span className="kbd">↑</span> <span className="kbd">↓</span></dt><dd>Nudge a shape (<span className="kbd">Shift</span> for bigger steps)</dd>
-            <dt><span className="kbd">[</span> <span className="kbd">]</span></dt><dd>Rotate 15°</dd>
-            <dt><span className="kbd">Ctrl</span> <span className="kbd">D</span></dt><dd>Clone</dd>
-            <dt><span className="kbd">Delete</span></dt><dd>Remove</dd>
-            <dt><span className="kbd">Esc</span></dt><dd>Deselect or close</dd>
-            <dt><span className="kbd">?</span></dt><dd>This help</dd>
+            {/* Key names are what's printed on the keys, so they stay untranslated. */}
+            <dt translate="no"><span className="kbd">/</span></dt><dd>Search</dd>
+            <dt translate="no"><span className="kbd">Ctrl</span> <span className="kbd">Z</span></dt><dd>Undo (add<span translate="no"> <span className="kbd">Shift</span> </span>to redo)</dd>
+            <dt translate="no"><span className="kbd">←</span> <span className="kbd">→</span> <span className="kbd">↑</span> <span className="kbd">↓</span></dt><dd>Nudge a shape (<span translate="no"><span className="kbd">Shift</span> </span>for bigger steps)</dd>
+            <dt translate="no"><span className="kbd">[</span> <span className="kbd">]</span></dt><dd>Rotate 15°</dd>
+            <dt translate="no"><span className="kbd">Ctrl</span> <span className="kbd">D</span></dt><dd>Clone</dd>
+            <dt translate="no"><span className="kbd">Delete</span></dt><dd>Remove</dd>
+            <dt translate="no"><span className="kbd">Esc</span></dt><dd>Deselect or close</dd>
+            <dt translate="no"><span className="kbd">?</span></dt><dd>Show this help</dd>
           </dl>
 
           <h3 className="help-keys__next">Where do the outlines come from?</h3>

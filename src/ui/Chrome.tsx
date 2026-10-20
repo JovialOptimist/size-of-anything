@@ -9,7 +9,7 @@ import { getMap } from "../map/mapCore";
 import { shareTitle, shareUrl } from "../share/url";
 import { useIsDesktop } from "./hooks";
 import { undo, redo } from "./actions";
-import { Seg, SettingsBody, HelpBody, AboutBody, FeedbackBody } from "./views/InfoViews";
+import { Seg, US, SettingsBody, HelpBody, AboutBody, FeedbackBody } from "./views/InfoViews";
 import { OLD_VERSION_URL } from "../config";
 
 export function MapControls() {
@@ -87,9 +87,9 @@ function LayersPopover() {
       </div>
       <div className="layers-units">
         <span>Units</span>
-        <Seg label="Units" value={s.units} onChange={(v) => s.set("units", v)} options={[["metric", "Metric"], ["us", "US"]]} />
+        <Seg label="Units" value={s.units} onChange={(v) => s.set("units", v)} options={[["metric", "Metric"], ["us", US]]} />
       </div>
-      <p className="muted" style={{ margin: 0, fontSize: 12.5 }}>
+      <p key={s.globe ? "on" : "off"} className="muted" style={{ margin: 0, fontSize: 12.5 }}>
         {s.globe ? "Globe is on: zoom out to see the whole Earth without Mercator stretching." : "Tip: turn on the globe and zoom out to see true sizes without any stretching."}
       </p>
     </div>
@@ -225,7 +225,7 @@ export function ShareDialog() {
                 } catch {
                   toast({ text: "Couldn't copy. Select the link and copy it yourself.", tone: "error" });
                 }
-              }}>{copied ? <Check size={18} /> : <Link size={18} />} {copied ? "Copied" : "Copy link"}</button>
+              }}>{copied ? <Check size={18} /> : <Link size={18} />} <span key={copied ? "copied" : "copy"}>{copied ? "Copied" : "Copy link"}</span></button>
             </div>
             {"share" in navigator && (
               <button type="button" className="btn" onClick={() => navigator.share({ title, text: `${title} on The Size of Anything`, url }).catch(() => {})}>
@@ -263,6 +263,8 @@ export function Toasts() {
 
 export function LiveRegion() {
   const text = useUI((s) => s.announce);
-  return <div className="sr-only" aria-live="polite" role="status">{text}</div>;
+  // The region stays put so screen readers keep listening; the text inside is replaced, not patched,
+  // so a translated page announces the new message.
+  return <div className="sr-only" aria-live="polite" role="status"><span key={text}>{text}</span></div>;
 }
 
