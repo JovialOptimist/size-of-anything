@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
-import { RotateCcw, Copy, Trash2, ExternalLink, Scaling, X, ChevronLeft, ChevronRight, Globe, TrianglesCenterlineDashedHorizontal, TrianglesCenterlineDashedVertical } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { RotateCcw, Copy, Trash2, ExternalLink, Scaling, X, ChevronLeft, ChevronRight, ChevronDown, Check, Globe, TrianglesCenterlineDashedHorizontal, TrianglesCenterlineDashedVertical } from "lucide-react";
 import { useShapes, shapeArea, baseArea, canRemoveWater, measuringWater, waterMode } from "../../state/shapes";
 import { WATER_OPTIONS, type WaterMode } from "../../geo/water";
-import { Seg } from "./InfoViews";
 import { useSettings } from "../../state/settings";
 import { useUI, announce } from "../../state/ui";
 import { toast } from "../../state/toasts";
@@ -88,10 +87,10 @@ export default function DetailView({ id }: { id: string }) {
           <Literal>{formatArea(area, units)}</Literal>
           <small>
             {showBoth && <Literal>{formatAreaSecondary(area, units)}</Literal>}
+            <WaterChip s={s} separator={showBoth} />
             {s.scale !== 1 && <span> · scaled to {Math.round(s.scale * s.scale * 100)}% of its area</span>}
           </small>
         </div>
-        <Water s={s} />
 
         <Picture s={s} />
         <Compare s={s} shapes={shapes} area={area} />
@@ -132,27 +131,86 @@ export default function DetailView({ id }: { id: string }) {
 }
 
 /** Water inside a border: keep it, drop the sea, or keep only land. Hidden where there's none. */
-function Water({ s }: { s: Shape }) {
+/**
+ * Water inside a border, as a chip in the area line: it takes no room at the top of the page and
+ * sits next to the number it changes. Its menu lists each choice with the area it gives. Nothing
+ * shows while measuring, or where there's no water to take out.
+ */
+function WaterChip({ s, separator }: { s: Shape; separator: boolean }) {
   const units = useSettings((st) => st.units);
-  if (!canRemoveWater(s)) return null;
-  if (measuringWater(s)) return <p className="muted water__note">Measuring the water inside the border…</p>;
+  const [open, setOpen] = useState(false);
+  const wrap = useRef<HTMLSpanElement>(null);
+  const chip = useRef<HTMLButtonElement>(null);
+  const menu = useRef<HTMLDivElement>(null);
+
+  // Close on a click outside, and put focus on the current choice when it opens.
+  useEffect(() => {
+    if (!open) return;
+    menu.current?.querySelector<HTMLElement>('[aria-checked="true"]')?.focus();
+    const outside = (e: PointerEvent) => !wrap.current?.contains(e.target as Node) && setOpen(false);
+    document.addEventListener("pointerdown", outside);
+    return () => document.removeEventListener("pointerdown", outside);
+  }, [open]);
+
   const w = s.waterless;
-  if (!w?.sea && !w?.all) return null;
+  if (!canRemoveWater(s) || measuringWater(s) || (!w?.sea && !w?.all)) return null;
   // Offer only choices that change something: a lake city has no sea, an island country may have no lakes.
   const lakes = !!w.all && (!w.sea || w.all.area < w.sea.area * 0.999);
-  const options = WATER_OPTIONS.filter(([m]) => m === "keep" || (m === "sea" && w.sea) || (m === "all" && lakes));
+  const k = s.scale * s.scale;
+  const areaOf: Record<WaterMode, number | undefined> = { keep: s.area * k, sea: w.sea ? w.sea.area * k : undefined, all: lakes ? w.all!.area * k : undefined };
+  const options = WATER_OPTIONS.filter(([m]) => areaOf[m] !== undefined);
   const mode = waterMode(s);
   const shown: WaterMode = baseArea(s) === s.area ? "keep" : mode === "all" && lakes ? "all" : "sea";
+  const label = WATER_OPTIONS.find(([m]) => m === shown)![1];
+
+  const pick = (water: WaterMode) => {
+    useShapes.getState().update(s.id, { water });
+    setOpen(false);
+    chip.current?.focus();
+  };
+  const onKey = (e: React.KeyboardEvent) => {
+    const items = [...(menu.current?.querySelectorAll<HTMLElement>('[role="menuitemradio"]') ?? [])];
+    const i = items.indexOf(document.activeElement as HTMLElement);
+    if (e.key === "Escape") {
+      e.stopPropagation();
+      setOpen(false);
+      chip.current?.focus();
+    } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      items[(i + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length]?.focus();
+    } else if (e.key === "Tab") setOpen(false);
+  };
+
   return (
-    <div className="water">
-      <div className="lbl water__label">Water inside the border</div>
-      <Seg label="Water inside the border" value={shown} onChange={(water) => useShapes.getState().update(s.id, { water })} options={options} />
-      {shown !== "keep" && (
-        <p className="muted water__note">
-          As mapped, with water:<Literal>{` ${formatArea(s.area * s.scale * s.scale, units)}`}</Literal>
-        </p>
-      )}
-    </div>
+    <>
+      {/* Outside the wrapper: an inline-block drops a leading space. */}
+      {separator && <Literal>{" · "}</Literal>}
+      <span className="wchip-wrap" ref={wrap} onKeyDown={onKey}>
+        <button
+          ref={chip}
+          type="button"
+          className="wchip"
+          aria-haspopup="menu"
+          aria-expanded={open}
+          aria-label={`Water inside the border: ${label}`}
+          onClick={() => setOpen((v) => !v)}
+        >
+          <span key={shown}>{label}</span>
+          <ChevronDown size={13} aria-hidden="true" />
+        </button>
+        {open && (
+          <div ref={menu} className="wmenu" role="menu" aria-label="Water inside the border">
+            {options.map(([m, l]) => (
+              <button key={m} type="button" role="menuitemradio" aria-checked={m === shown} className="wmenu__item" onClick={() => pick(m)}>
+                <span className="wmenu__check" aria-hidden="true">{m === shown && <Check size={14} />}</span>
+                <span className="wmenu__label">{l}</span>
+                <Literal>{formatArea(areaOf[m]!, units)}</Literal>
+              </button>
+            ))}
+          </div>
+        )}
+      </span>
+    </>
   );
 }
 
