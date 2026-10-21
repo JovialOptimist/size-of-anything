@@ -164,7 +164,7 @@ function fromSvg(svg: string, length: number): () => MetersPolys {
 
 // ---------- catalog ----------
 export const OBJECTS: RefObject[] = [
-  { id: "soccer-pitch", name: "Soccer pitch", category: "sports", icon: "pitch", dims: "105 × 68 m", fact: "The size FIFA recommends for big matches.", synonyms: "football pitch fifa field", span: 105, build: () => rect(68, 105) },
+  { id: "soccer-pitch", name: "Football pitch", category: "sports", icon: "pitch", dims: "105 × 68 m", fact: "The size FIFA recommends for big matches.", synonyms: "soccer pitch fifa field", span: 105, build: () => rect(68, 105) },
   { id: "american-football-field", name: "American football field", category: "sports", icon: "pitch", dims: "120 × 53⅓ yd with end zones", fact: "The classic 'football fields' unit.", synonyms: "nfl gridiron field", span: 109.7, build: () => rect(48.8, 109.7) },
   { id: "rugby-pitch", name: "Rugby pitch", category: "sports", icon: "pitch", dims: "144 × 70 m (maximum)", fact: "100 m of field plus two in-goal areas.", synonyms: "rugby union", span: 144, build: () => rect(70, 144) },
   { id: "nba-court", name: "NBA basketball court", category: "sports", icon: "sports", dims: "94 × 50 ft", fact: "28.65 × 15.24 m of polished hardwood.", synonyms: "basketball court nba", span: 28.65, build: () => rect(15.24, 28.65) },
@@ -184,7 +184,7 @@ export const OBJECTS: RefObject[] = [
   { id: "parthenon", name: "Parthenon", category: "landmarks", icon: "landmark", dims: "69.5 × 30.9 m", fact: "Built in about nine years, 2,400 years ago.", synonyms: "parthenon athens acropolis", span: 69.5, build: () => rect(30.9, 69.5) },
   { id: "taj-mahal", name: "Taj Mahal plinth", category: "landmarks", icon: "landmark", dims: "95.5 m square", fact: "The marble platform the tomb sits on.", synonyms: "taj mahal agra india", span: 95.5, build: () => rect(95.5, 95.5) },
 
-  { id: "titanic", name: "RMS Titanic", category: "ships", icon: "ship", dims: "269.1 × 28.2 m", fact: "Longer than two and a half soccer pitches.", synonyms: "titanic ship liner", span: 269.1, build: () => hull(269.1, 28.2) },
+  { id: "titanic", name: "RMS Titanic", category: "ships", icon: "ship", dims: "269.1 × 28.2 m", fact: "Longer than two and a half football pitches.", synonyms: "titanic ship liner", span: 269.1, build: () => hull(269.1, 28.2) },
   { id: "gerald-ford", name: "USS Gerald R. Ford", category: "ships", icon: "ship", dims: "337 m long", fact: "The largest aircraft carrier ever built (hull shown).", synonyms: "aircraft carrier navy ford", span: 337, build: () => hull(337, 41) },
   { id: "icon-of-the-seas", name: "Icon of the Seas", category: "ships", icon: "ship", dims: "364.75 × 48.5 m", fact: "A cruise ship for nearly 8,000 passengers.", synonyms: "cruise ship royal caribbean", span: 364.75, build: () => hull(364.75, 48.5) },
   { id: "ever-given", name: "Ever Given", category: "ships", icon: "ship", dims: "399.9 × 58.8 m", fact: "The ship that got stuck in the Suez Canal.", synonyms: "container ship suez evergreen", span: 399.9, build: () => hull(399.94, 58.8) },

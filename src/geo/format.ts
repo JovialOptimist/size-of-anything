@@ -75,17 +75,24 @@ export function formatRatio(r: number): string {
   return `${nf(2).format(r)}×`;
 }
 
-/** Familiar things to measure an area in, from small to huge. */
+/**
+ * Familiar things to measure an area in, from small to huge. Visitors come from all over, so these
+ * are things known worldwide rather than, say, US states.
+ */
 export const FAMILIAR = [
   { one: "parking space", many: "parking spaces", m2: 14.9 },
   { one: "tennis court", many: "tennis courts", m2: 260.8 },
   { one: "basketball court", many: "basketball courts", m2: 436.6 },
   { one: "Olympic pool", many: "Olympic pools", m2: 1250 },
-  { one: "soccer pitch", many: "soccer pitches", m2: 7140 },
-  { one: "Central Park", many: "Central Parks", m2: 3_410_000 },
+  { one: "football pitch", many: "football pitches", m2: 7140 },
+  { one: "Vatican City", many: "Vatican Cities", m2: 440_000 },
+  { one: "Monaco", many: "Monacos", m2: 2_080_000 },
   { one: "Manhattan", many: "Manhattans", m2: 59_100_000 },
-  { one: "Rhode Island", many: "Rhode Islands", m2: 3_144_000_000 },
-  { one: "Texas", many: "Texases", m2: 695_662_000_000 },
+  { one: "Singapore", many: "Singapores", m2: 735_700_000 },
+  { one: "Luxembourg", many: "Luxembourgs", m2: 2_586_000_000 },
+  { one: "Belgium", many: "Belgiums", m2: 30_689_000_000 },
+  { one: "Japan", many: "Japans", m2: 377_975_000_000 },
+  { one: "India", many: "Indias", m2: 3_287_263_000_000 },
 ];
 
 /** Up to `max` friendly comparisons where the count lands between 1.5 and ~5000. */

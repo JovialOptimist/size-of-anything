@@ -210,11 +210,14 @@ function Compare({ s, shapes, area }: { s: Shape; shapes: Shape[]; area: number 
       .filter((o) => o.id !== s.id)
       .map((o) => ({ key: `s:${o.id}`, name: o.name, m2: shapeArea(o), kind: "shape" as const, slot: o.slot }));
     const objs: Option[] = FAMILIAR_OBJECTS.map((id) => objectById(id)).filter((o) => !!o).map((o) => {
-      const lower = o.name.charAt(0).toLowerCase() + o.name.slice(1);
-      const proper = /^[A-Z]{2}|^RMS|^Boeing/.test(o.name);
-      return { key: `o:${o.id}`, name: o.name, m2: metersArea(o.build()), kind: "familiar" as const, one: proper ? `the ${o.name}` : `a ${lower}`, many: proper ? `copies of the ${o.name}` : `${lower}s` };
+      // "Olympic" and "American" keep their capitals mid-sentence.
+      const lower = /^(Olympic|American) /.test(o.name) ? o.name : o.name.charAt(0).toLowerCase() + o.name.slice(1);
+      const proper = /^[A-Z]{2}|^RMS|^Boeing|^Great /.test(o.name);
+      const plural = /(ch|sh|s|x)$/.test(lower) ? `${lower}es` : `${lower}s`;
+      const article = /^[aeiou]/i.test(lower) ? "an" : "a";
+      return { key: `o:${o.id}`, name: o.name, m2: metersArea(o.build()), kind: "familiar" as const, one: proper ? `the ${o.name}` : `${article} ${lower}`, many: proper ? `copies of the ${o.name}` : plural };
     });
-    const fam: Option[] = FAMILIAR.filter((f) => !["Olympic pool", "soccer pitch", "tennis court"].includes(f.one)).map((f) => ({
+    const fam: Option[] = FAMILIAR.filter((f) => !["Olympic pool", "football pitch", "tennis court"].includes(f.one)).map((f) => ({
       key: `f:${f.one}`, name: f.one.charAt(0).toUpperCase() + f.one.slice(1), m2: f.m2, kind: "familiar" as const, one: /^[A-Z]/.test(f.one) ? f.one : `a ${f.one}`, many: f.many,
     }));
     return [...own, ...objs, ...fam];

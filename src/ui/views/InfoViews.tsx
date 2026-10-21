@@ -6,6 +6,11 @@ import { useShapes } from "../../state/shapes";
 import { toast } from "../../state/toasts";
 import { CONTACT_EMAIL, SUPPORT_URL } from "../../config";
 import MercatorExplainer from "../MercatorExplainer";
+import { Literal } from "../Literal";
+import { formatArea } from "../../geo/format";
+
+/** Central Park, as an example of showing both units. */
+const EXAMPLE_M2 = 3_410_000;
 
 /** The "US" units option. Translators read it as the word "us" ("NÓS", "UNS"), so it stays as is. */
 export const US = <span translate="no">US</span>;
@@ -24,10 +29,11 @@ export function Switch({ checked, onChange, label }: { checked: boolean; onChang
   return <button type="button" role="switch" aria-checked={checked} aria-label={label} className="switch" onClick={() => onChange(!checked)} />;
 }
 
-export function Row({ title, sub, children }: { title: string; sub?: string; children: ReactNode }) {
+export function Row({ title, sub, children }: { title: string; sub?: ReactNode; children: ReactNode }) {
   return (
     <div className="srow">
-      <span>{title}{sub && <small>{sub}</small>}</span>
+      {/* Keyed so a changed note replaces the old one rather than patching it on a translated page. */}
+      <span>{title}{sub && <small key={typeof sub === "string" ? sub : "node"}>{sub}</small>}</span>
       {children}
     </div>
   );
@@ -49,7 +55,7 @@ export function SettingsBody() {
       <div className="sgroup-title">Units</div>
       <div className="sgroup">
         <Row title="Measurements"><Seg label="Measurements" value={s.units} onChange={set("units")} options={[["metric", "Metric"], ["us", US]]} /></Row>
-        <Row title="Show both" sub={s.showBothUnits ? "3.41 km² and 1.32 sq mi" : "Just one"}><Switch label="Show both units" checked={s.showBothUnits} onChange={set("showBothUnits")} /></Row>
+        <Row title="Show both" sub={s.showBothUnits ? <><Literal>{`${formatArea(EXAMPLE_M2, "metric")} `}</Literal>and<Literal>{` ${formatArea(EXAMPLE_M2, "us")}`}</Literal></> : "Just one"}><Switch label="Show both units" checked={s.showBothUnits} onChange={set("showBothUnits")} /></Row>
       </div>
 
       <div className="sgroup-title">Shapes on the map</div>
