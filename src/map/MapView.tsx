@@ -82,7 +82,7 @@ export default function MapView({ onReady }: { onReady?: () => void }) {
   useEffect(() => {
     const m = mapRef.current;
     if (!m || !m.isStyleLoaded()) return;
-    for (const id of ["soa-border", "soa-fill", "soa-casing", "soa-line", "soa-drag-fill", "soa-drag-casing", "soa-drag-line", "soa-labels", "soa-preview-fill", "soa-preview-line", "soa-draw-fill", "soa-draw-line", "soa-draw-pts"]) if (m.getLayer(id)) m.removeLayer(id);
+    for (const id of ["soa-border", "soa-fill", "soa-casing", "soa-line", "soa-drag-fill", "soa-drag-casing", "soa-drag-line", "soa-labels", "soa-preview-fill", "soa-preview-line", "soa-preview-border", "soa-draw-fill", "soa-draw-line", "soa-draw-pts"]) if (m.getLayer(id)) m.removeLayer(id);
     ensureLayers(m, lookRef.current);
   }, [fill]);
 

@@ -6,14 +6,13 @@ import { useSettings } from "../../state/settings";
 import { fetchOutline, searchPlaces, suggestPlaces, ServiceError, type Outline, type PlaceResult } from "../../geo/services";
 import { OBJECTS, type RefObject } from "../../objects/registry";
 import { formatArea } from "../../geo/format";
-import { OutlineArea } from "./common";
+import { OutlineArea, PlacePreview } from "./common";
 import { Literal } from "../Literal";
 import { visibleCenter, getMap } from "../../map/mapCore";
 import { addObject, addPlace } from "../actions";
 import { ShapeIcon } from "../icons";
 import { TRY, runTry } from "../try";
 import { useSwatch } from "../hooks";
-import OutlinePreview from "../OutlinePreview";
 
 type Item =
   | { kind: "object"; obj: RefObject }
@@ -218,8 +217,7 @@ export default function SearchView() {
                 </button>
                 {isOpen && o && (
                   <div className="result__body">
-                    <OutlinePreview geometry={o.geometry} height={120} />
-                    <div className="result__area"><OutlineArea o={o} /><small><OutlineArea o={o} secondary /></small></div>
+                    <PlacePreview o={o} />
                     <div className="btnrow">
                       <button type="button" className="btn btn--primary btn--sm" onClick={() => addPlace(o, "center")}><Plus size={16} /> Add to map</button>
                       <button type="button" className="btn btn--sm" onClick={() => addPlace(o, "origin")}><MapPinned size={16} /> Show where it is</button>

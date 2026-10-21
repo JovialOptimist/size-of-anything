@@ -209,7 +209,9 @@ body.is-picking .maplibregl-canvas { cursor: crosshair; }
 .bigarea small { display: block; font: 500 13px var(--font); color: var(--text-muted); margin-top: 6px; letter-spacing: 0; }
 .water { margin-top: 12px; }
 .water__label { display: block; margin-bottom: 6px; }
-.water__note { font-size: 12.5px; margin: 6px 0 0; }
+.opreview__fade { animation: fade 0.45s ease-out; }
+@media (prefers-reduced-motion: reduce) { .opreview__fade { animation: none; } }
+.water__note { display: block; font-size: 12.5px; margin: 6px 0 0; }
 .fact { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: var(--r-ctl); background: var(--surface-2); margin-bottom: 6px; font-size: 14px; }
 .fact b { font-weight: 700; }
 .fact .sw { width: 14px; height: 14px; border-radius: 4px; background: var(--c); flex: none; margin-top: 3px; }

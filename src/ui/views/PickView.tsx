@@ -8,8 +8,8 @@ import { whatsHere, fetchOutline, ServiceError, type PlaceResult, type Outline }
 import { Literal } from "../Literal";
 import { addPlace } from "../actions";
 import { ShapeIcon } from "../icons";
-import { OutlineArea, ViewHeader } from "./common";
-import { useIsDesktop } from "../hooks";
+import { OutlineArea, ViewHeader, WaterCaption } from "./common";
+import { useIsDesktop, useWaterOutline } from "../hooks";
 
 /**
  * Desktop: click anything on the map to look there (a marker shows the spot).
@@ -27,6 +27,11 @@ export default function PickView() {
   const desktop = useIsDesktop();
   const ctl = useRef<AbortController | null>(null);
   const marker = useRef<maplibregl.Marker | null>(null);
+  // The chosen place with the water setting applied: drawn as mapped at once, cut once measured.
+  const shown = useWaterOutline(chosen);
+  useEffect(() => {
+    if (shown) setPreview(shown.geometry, shown.original);
+  }, [shown?.geometry, shown?.original]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const lookup = async (at?: [number, number]) => {
     ctl.current?.abort();
@@ -92,7 +97,6 @@ export default function PickView() {
     try {
       const o = await fetchOutline(r);
       setChosen(o);
-      setPreview(o.geometry);
       fitGeometry(o.geometry, { maxZoom: 17 });
     } catch (e) {
       setError(e instanceof ServiceError ? e.message : "Couldn't load that outline.");
@@ -110,6 +114,7 @@ export default function PickView() {
         <button type="button" className="row__main" style={{ border: 0, background: "none", textAlign: "left", padding: 0 }} onClick={() => choose(r)}>
           <b>{r.name}</b>
           <small><span>{r.type}</span>{isChosen && <><Literal>{" · "}</Literal><OutlineArea o={chosen} /></>}</small>
+          {isChosen && <WaterCaption w={shown} />}
         </button>
         {loadingKey === r.key ? <Loader2 size={18} className="spin" /> : isChosen ? (
           <button type="button" className="btn btn--primary btn--sm" onClick={() => { addPlace(chosen, "origin"); }}><Plus size={15} /> Add</button>

@@ -98,8 +98,10 @@ export function ensureLayers(m: maplibregl.Map, look: LayerLook) {
     add({ id: `${p}-casing`, type: "line", source: src, paint: { "line-color": casing, "line-width": ["case", ["get", "selected"], 7, look.satellite ? 4.5 : 0], "line-opacity": ["case", ["get", "selected"], 0.9, look.satellite ? 1 : 0] }, layout: { "line-join": "round" } }, before);
     add({ id: `${p}-line`, type: "line", source: src, paint: { "line-color": ["get", "color"], "line-width": ["case", ["get", "selected"], 3.5, ["boolean", ["feature-state", "hover"], false], 3.2, look.satellite ? 2.5 : 2] }, layout: { "line-join": "round" } }, before);
   }
-  add({ id: "soa-preview-fill", type: "fill", source: "soa-preview", paint: { "fill-color": look.darkMap ? "#e8ebef" : "#1b2026", "fill-opacity": 0.1 } });
-  add({ id: "soa-preview-line", type: "line", source: "soa-preview", paint: { "line-color": look.darkMap ? "#e8ebef" : "#1b2026", "line-width": 2.5, "line-dasharray": [2, 1.5] } });
+  const notBorder: maplibregl.FilterSpecification = ["!", ["boolean", ["get", "border"], false]];
+  add({ id: "soa-preview-fill", type: "fill", source: "soa-preview", filter: notBorder, paint: { "fill-color": look.darkMap ? "#e8ebef" : "#1b2026", "fill-opacity": 0.1 } });
+  add({ id: "soa-preview-line", type: "line", source: "soa-preview", filter: notBorder, paint: { "line-color": look.darkMap ? "#e8ebef" : "#1b2026", "line-width": 2.5, "line-dasharray": [2, 1.5] } });
+  add({ id: "soa-preview-border", type: "line", source: "soa-preview", filter: ["boolean", ["get", "border"], false], paint: { "line-color": look.darkMap ? "#e8ebef" : "#1b2026", "line-width": 1.25, "line-opacity": 0.45, "line-dasharray": [2, 3] } });
   add({ id: "soa-draw-fill", type: "fill", source: "soa-draw", filter: ["==", ["geometry-type"], "Polygon"], paint: { "fill-color": "#888", "fill-opacity": 0.12 } });
   add({ id: "soa-draw-line", type: "line", source: "soa-draw", paint: { "line-color": look.darkMap ? "#e8ebef" : "#1b2026", "line-width": 2.5 } });
   add({ id: "soa-draw-pts", type: "circle", source: "soa-draw", filter: ["==", ["geometry-type"], "Point"], paint: { "circle-radius": 6, "circle-color": look.darkMap ? "#e8ebef" : "#1b2026", "circle-stroke-color": look.darkMap ? "#1b2026" : "#fff", "circle-stroke-width": 2 } });
@@ -130,8 +132,10 @@ export function setDragShape(s: Shape | null, geom: AreaGeometry | null, darkMap
   src?.setData(s && geom ? { type: "FeatureCollection", features: [feature(s, geom, true, darkMap)] } : EMPTY);
 }
 
-export function setPreview(geom: AreaGeometry | null) {
-  (map?.getSource("soa-preview") as GeoJSONSource | undefined)?.setData(geom ? { type: "Feature", geometry: geom as GeoJSON.Geometry, properties: {} } : EMPTY);
+/** Preview an outline; `original` is the border as mapped when water was taken out of `geom`. */
+export function setPreview(geom: AreaGeometry | null, original?: AreaGeometry) {
+  const f = (g: AreaGeometry, border: boolean): GeoJSON.Feature => ({ type: "Feature", geometry: g as GeoJSON.Geometry, properties: { border } });
+  (map?.getSource("soa-preview") as GeoJSONSource | undefined)?.setData(geom ? { type: "FeatureCollection", features: [...(original ? [f(original, true)] : []), f(geom, false)] } : EMPTY);
 }
 
 export function setDrawData(fc: GeoJSON.FeatureCollection | null) {
