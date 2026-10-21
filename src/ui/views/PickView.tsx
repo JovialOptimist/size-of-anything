@@ -5,13 +5,10 @@ import { useUI } from "../../state/ui";
 import { getMap, setPreview, visibleCenter, fitGeometry } from "../../map/mapCore";
 import { mapClickHandler } from "../../map/modeHandlers";
 import { whatsHere, fetchOutline, ServiceError, type PlaceResult, type Outline } from "../../geo/services";
-import { formatArea } from "../../geo/format";
 import { Literal } from "../Literal";
-import { geometryArea } from "../../geo/geometry";
-import { useSettings } from "../../state/settings";
 import { addPlace } from "../actions";
 import { ShapeIcon } from "../icons";
-import { ViewHeader } from "./common";
+import { OutlineArea, ViewHeader } from "./common";
 import { useIsDesktop } from "../hooks";
 
 /**
@@ -27,7 +24,6 @@ export default function PickView() {
   const [chosen, setChosen] = useState<Outline | null>(null);
   const [loadingKey, setLoadingKey] = useState<string | null>(null);
   const [searching, setSearching] = useState(false);
-  const units = useSettings((s) => s.units);
   const desktop = useIsDesktop();
   const ctl = useRef<AbortController | null>(null);
   const marker = useRef<maplibregl.Marker | null>(null);
@@ -113,7 +109,7 @@ export default function PickView() {
         <span className="row__ico"><ShapeIcon icon={r.icon} size={17} /></span>
         <button type="button" className="row__main" style={{ border: 0, background: "none", textAlign: "left", padding: 0 }} onClick={() => choose(r)}>
           <b>{r.name}</b>
-          <small><span>{r.type}</span>{isChosen && <Literal>{` · ${formatArea(geometryArea(chosen.geometry), units)}`}</Literal>}</small>
+          <small><span>{r.type}</span>{isChosen && <><Literal>{" · "}</Literal><OutlineArea o={chosen} /></>}</small>
         </button>
         {loadingKey === r.key ? <Loader2 size={18} className="spin" /> : isChosen ? (
           <button type="button" className="btn btn--primary btn--sm" onClick={() => { addPlace(chosen, "origin"); }}><Plus size={15} /> Add</button>

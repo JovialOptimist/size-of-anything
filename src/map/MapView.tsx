@@ -16,6 +16,7 @@ export default function MapView({ onReady }: { onReady?: () => void }) {
   const basemap = useSettings((s) => s.basemap);
   const globe = useSettings((s) => s.globe);
   const fill = useSettings((s) => s.fill);
+  const showOriginalBorder = useSettings((s) => s.showOriginalBorder);
   const shapes = useShapes((s) => s.shapes);
   const selectedId = useShapes((s) => s.selectedId);
   const darkMap = basemap === "satellite" || isDark;
@@ -81,7 +82,7 @@ export default function MapView({ onReady }: { onReady?: () => void }) {
   useEffect(() => {
     const m = mapRef.current;
     if (!m || !m.isStyleLoaded()) return;
-    for (const id of ["soa-fill", "soa-casing", "soa-line", "soa-drag-fill", "soa-drag-casing", "soa-drag-line", "soa-labels", "soa-preview-fill", "soa-preview-line", "soa-draw-fill", "soa-draw-line", "soa-draw-pts"]) if (m.getLayer(id)) m.removeLayer(id);
+    for (const id of ["soa-border", "soa-fill", "soa-casing", "soa-line", "soa-drag-fill", "soa-drag-casing", "soa-drag-line", "soa-labels", "soa-preview-fill", "soa-preview-line", "soa-draw-fill", "soa-draw-line", "soa-draw-pts"]) if (m.getLayer(id)) m.removeLayer(id);
     ensureLayers(m, lookRef.current);
   }, [fill]);
 
@@ -92,7 +93,7 @@ export default function MapView({ onReady }: { onReady?: () => void }) {
 
   useEffect(() => {
     syncShapes(shapes, selectedId, darkMap);
-  }, [shapes, selectedId, darkMap]);
+  }, [shapes, selectedId, darkMap, showOriginalBorder]);
 
   return <div ref={el} className="map" role="region" aria-label="Map. Arrow keys pan, plus and minus zoom. Shapes are listed in the panel." />;
 }

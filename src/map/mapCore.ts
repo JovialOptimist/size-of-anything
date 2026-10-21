@@ -7,7 +7,8 @@ import type { StyleSpecification, GeoJSONSource } from "maplibre-gl";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
 import { BASEMAPS, SATELLITE_TILES } from "../config";
 import { shapeColor } from "./palette";
-import { placedGeometry, type Shape } from "../state/shapes";
+import { placedGeometry, placedOriginal, type Shape } from "../state/shapes";
+import { useSettings } from "../state/settings";
 import type { AreaGeometry, LngLat } from "../geo/geometry";
 
 maplibregl.setWorkerUrl(workerUrl);
@@ -81,7 +82,7 @@ function firstSymbolLayer(m: maplibregl.Map) {
 }
 
 export function ensureLayers(m: maplibregl.Map, look: LayerLook) {
-  for (const id of ["soa-shapes", "soa-drag", "soa-preview", "soa-draw"]) {
+  for (const id of ["soa-shapes", "soa-borders", "soa-drag", "soa-preview", "soa-draw"]) {
     if (!m.getSource(id)) m.addSource(id, { type: "geojson", data: EMPTY, tolerance: id === "soa-drag" ? 0.6 : 0.375, promoteId: "id" });
   }
   const before = firstSymbolLayer(m);
@@ -89,6 +90,8 @@ export function ensureLayers(m: maplibregl.Map, look: LayerLook) {
   const add = (layer: maplibregl.AddLayerObject, beforeId?: string) => {
     if (!m.getLayer(layer.id)) m.addLayer(layer, beforeId);
   };
+  // The border as mapped, where water was taken out: faint and dashed, under the shapes.
+  add({ id: "soa-border", type: "line", source: "soa-borders", paint: { "line-color": ["get", "color"], "line-width": 1.25, "line-opacity": 0.7, "line-dasharray": [2, 2] } }, before);
   for (const src of ["soa-shapes", "soa-drag"]) {
     const p = src === "soa-drag" ? "soa-drag" : "soa";
     add({ id: `${p}-fill`, type: "fill", source: src, paint: { "fill-color": ["get", "color"], "fill-opacity": ["case", ["get", "selected"], look.fillOpacity + 0.1, look.fillOpacity] } }, before);
@@ -113,6 +116,13 @@ export function syncShapes(shapes: Shape[], selectedId: string | null, darkMap: 
   // Selected shape last so it draws on top.
   visible.sort((a, b) => Number(a.id === selectedId) - Number(b.id === selectedId));
   (m.getSource("soa-shapes") as GeoJSONSource).setData({ type: "FeatureCollection", features: visible.map((s) => feature(s, placedGeometry(s), s.id === selectedId, darkMap)) });
+  const borders = useSettings.getState().showOriginalBorder
+    ? visible.flatMap((s) => {
+        const g = placedOriginal(s);
+        return g ? [feature(s, g, s.id === selectedId, darkMap)] : [];
+      })
+    : [];
+  (m.getSource("soa-borders") as GeoJSONSource).setData({ type: "FeatureCollection", features: borders });
 }
 
 export function setDragShape(s: Shape | null, geom: AreaGeometry | null, darkMap: boolean) {

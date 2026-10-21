@@ -3,6 +3,10 @@
  * anchor + rotation + scale (and an optional mirror), so moving it only changes
  * three numbers.
  * Changes are undoable and the session is restored on reload.
+ *
+ * Borders can have their water taken out (see geo/water.ts). The cut outlines are
+ * measured in the background and kept on the shape next to the original, sharing
+ * its origin, so switching between them doesn't move the shape.
  */
 import { create } from "zustand";
 import {
@@ -17,7 +21,9 @@ import {
   type LocalShape,
 } from "../geo/geometry";
 import type { IconKey } from "../geo/categories";
+import { removesWater, waterlessFor, type WaterCut, type WaterMode, type Waterless } from "../geo/water";
 import { idbGet, idbSet } from "./idb";
+import { useSettings } from "./settings";
 import { objectById, type MetersPolys } from "../objects/registry";
 
 export type ShapeSource =
@@ -42,15 +48,37 @@ export interface Shape {
   scale: number;
   /** Mirrored left-to-right in its own frame (both flips are this plus a rotation). */
   mirrored?: boolean;
-  area: number; // m² at scale 1
+  area: number; // m² at scale 1, as mapped
+  /** Water inside the border for this shape; unset follows the setting. */
+  water?: WaterMode;
+  /** The outline without water, once measured; null if measuring failed. */
+  waterless?: Waterless | null;
 }
 
-export type NewShape = Omit<Shape, "id" | "slot" | "anchor" | "rotation" | "scale" | "origin" | "area"> & {
+export type NewShape = Omit<Shape, "id" | "slot" | "anchor" | "rotation" | "scale" | "origin" | "area" | "waterless"> & {
   anchor: LngLat;
   rotation?: number;
   scale?: number;
   slot?: number;
 };
+
+// ---------- water ----------
+/** Whether this shape is a border that water can be taken out of. */
+export const canRemoveWater = (s: Shape) => s.source.kind === "osm" && removesWater(s.icon);
+
+/** The water setting in effect for a shape. */
+export function waterMode(s: Shape): WaterMode {
+  return canRemoveWater(s) ? (s.water ?? useSettings.getState().water) : "keep";
+}
+
+/** The water-free outline in use, if water is being taken out and there was some. */
+function cutOf(s: Shape): WaterCut | undefined {
+  const mode = waterMode(s);
+  return mode === "keep" ? undefined : (s.waterless?.[mode] ?? undefined);
+}
+
+/** True while a border's water is still being measured. */
+export const measuringWater = (s: Shape) => canRemoveWater(s) && s.waterless === undefined;
 
 // ---------- local geometry cache ----------
 const localCache = new Map<string, LocalShape>();
@@ -58,7 +86,8 @@ const localCache = new Map<string, LocalShape>();
 /** Identifies a shape's local outline (shared by copies of the same thing). */
 export function localKey(s: Shape) {
   const base = s.source.kind === "osm" ? `osm:${s.source.key}:${s.origin.join(",")}` : s.source.kind === "object" ? `obj:${s.source.id}` : `id:${s.id}`;
-  return s.mirrored ? `${base}:m` : base;
+  const outline = cutOf(s) ? `${base}:w-${waterMode(s)}` : base;
+  return s.mirrored ? `${outline}:m` : outline;
 }
 
 /** Mirror east-west, reversing each ring so its winding stays the same. */
@@ -83,7 +112,7 @@ export function localOf(s: Shape): LocalShape {
   let l = localCache.get(key);
   if (!l) {
     if (s.mirrored) l = mirror(localOf({ ...s, mirrored: false }));
-    else if (s.source.kind === "osm") l = toLocal(s.geometry!, s.origin);
+    else if (s.source.kind === "osm") l = toLocal(cutOf(s)?.geometry ?? s.geometry!, s.origin);
     else if (s.source.kind === "object") l = localFromMeters(objectById(s.source.id)!.build());
     else l = localFromMeters(s.source.meters);
     localCache.set(key, l);
@@ -101,8 +130,18 @@ export function placedGeometry(s: Shape): AreaGeometry {
   return g;
 }
 
+/** The outline as mapped, placed like the shape, when water has been taken out of it. */
+export function placedOriginal(s: Shape): AreaGeometry | null {
+  return cutOf(s) ? place(localOf({ ...s, water: "keep" }), s.anchor, s.rotation, s.scale) : null;
+}
+
+/** Area at scale 1, with water taken out if it is. */
+export function baseArea(s: Shape) {
+  return cutOf(s)?.area ?? s.area;
+}
+
 export function shapeArea(s: Shape) {
-  return s.area * s.scale * s.scale;
+  return baseArea(s) * s.scale * s.scale;
 }
 
 let counter = 0;
@@ -238,4 +277,31 @@ useShapes.subscribe((st, prev) => {
   if (!st.hydrated || st.shapes === prev.shapes) return;
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => idbSet(SESSION_KEY, st.shapes), 400);
+});
+
+// ---------- measuring water ----------
+const sameOsm = (s: Shape, key: string) => s.source.kind === "osm" && s.source.key === key;
+
+// Any border whose water isn't measured yet (new, restored, shared or brought back by undo) gets
+// measured, once per place, and every shape of that place gets the result. It's data, not an
+// edit, so it doesn't go into the undo history.
+useShapes.subscribe((st, prev) => {
+  if (st.shapes === prev.shapes) return;
+  for (const s of st.shapes) {
+    if (!measuringWater(s) || s.source.kind !== "osm" || !s.geometry) continue;
+    const key = s.source.key;
+    waterlessFor(key, s.geometry).then((waterless) => {
+      const { shapes } = useShapes.getState();
+      if (!shapes.some((x) => sameOsm(x, key) && x.waterless === undefined)) return;
+      useShapes.setState({ shapes: shapes.map((x) => (sameOsm(x, key) && x.waterless === undefined ? { ...x, waterless } : x)) });
+    });
+  }
+});
+
+// Shapes that follow the water setting change with it; new objects so caches and views refresh.
+useSettings.subscribe((st, prev) => {
+  if (st.water === prev.water) return;
+  const follows = (s: Shape) => canRemoveWater(s) && !s.water;
+  const { shapes } = useShapes.getState();
+  if (shapes.some(follows)) useShapes.setState({ shapes: shapes.map((s) => (follows(s) ? { ...s } : s)) });
 });

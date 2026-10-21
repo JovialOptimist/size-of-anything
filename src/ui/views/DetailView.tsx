@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { RotateCcw, Copy, Trash2, ExternalLink, Scaling, X, ChevronLeft, ChevronRight, Globe, TrianglesCenterlineDashedHorizontal, TrianglesCenterlineDashedVertical } from "lucide-react";
-import { useShapes, shapeArea } from "../../state/shapes";
+import { useShapes, shapeArea, baseArea, canRemoveWater, measuringWater, waterMode } from "../../state/shapes";
+import { WATER_OPTIONS, type WaterMode } from "../../geo/water";
+import { Seg } from "./InfoViews";
 import { useSettings } from "../../state/settings";
 import { useUI, announce } from "../../state/ui";
 import { toast } from "../../state/toasts";
@@ -89,6 +91,7 @@ export default function DetailView({ id }: { id: string }) {
             {s.scale !== 1 && <span> · scaled to {Math.round(s.scale * s.scale * 100)}% of its area</span>}
           </small>
         </div>
+        <Water s={s} />
 
         <Picture s={s} />
         <Compare s={s} shapes={shapes} area={area} />
@@ -128,6 +131,31 @@ export default function DetailView({ id }: { id: string }) {
   );
 }
 
+/** Water inside a border: keep it, drop the sea, or keep only land. Hidden where there's none. */
+function Water({ s }: { s: Shape }) {
+  const units = useSettings((st) => st.units);
+  if (!canRemoveWater(s)) return null;
+  if (measuringWater(s)) return <p className="muted water__note">Measuring the water inside the border…</p>;
+  const w = s.waterless;
+  if (!w?.sea && !w?.all) return null;
+  // Offer only choices that change something: a lake city has no sea, an island country may have no lakes.
+  const lakes = !!w.all && (!w.sea || w.all.area < w.sea.area * 0.999);
+  const options = WATER_OPTIONS.filter(([m]) => m === "keep" || (m === "sea" && w.sea) || (m === "all" && lakes));
+  const mode = waterMode(s);
+  const shown: WaterMode = baseArea(s) === s.area ? "keep" : mode === "all" && lakes ? "all" : "sea";
+  return (
+    <div className="water">
+      <div className="lbl water__label">Water inside the border</div>
+      <Seg label="Water inside the border" value={shown} onChange={(water) => useShapes.getState().update(s.id, { water })} options={options} />
+      {shown !== "keep" && (
+        <p className="muted water__note">
+          As mapped, with water:<Literal>{` ${formatArea(s.area * s.scale * s.scale, units)}`}</Literal>
+        </p>
+      )}
+    </div>
+  );
+}
+
 function ExactArea({ id, onDone }: { id: string; onDone: () => void }) {
   const s = useShapes((st) => st.shapes.find((x) => x.id === id))!;
   const units = useSettings((st) => st.units);
@@ -138,7 +166,7 @@ function ExactArea({ id, onDone }: { id: string; onDone: () => void }) {
   const valid = Number.isFinite(n) && n > 0;
   const apply = () => {
     if (!valid) return;
-    const scale = Math.sqrt((n * u.m2) / s.area);
+    const scale = Math.sqrt((n * u.m2) / baseArea(s));
     if (scale > 3000 || scale < 1 / 3000) return toast({ text: "That's a bit too extreme. Try a size closer to the original.", tone: "error" });
     setScale(s.id, scale);
     announce(`${s.name} is now exactly ${val} ${u.label}`);

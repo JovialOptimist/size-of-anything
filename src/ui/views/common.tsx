@@ -3,11 +3,19 @@ import type { ReactNode } from "react";
 import { useUI } from "../../state/ui";
 import { useShapes, shapeArea, type Shape } from "../../state/shapes";
 import { useSettings } from "../../state/settings";
-import { useSwatch } from "../hooks";
-import { formatArea } from "../../geo/format";
+import { useOutlineArea, useSwatch } from "../hooks";
+import { formatArea, formatAreaSecondary } from "../../geo/format";
+import type { Outline } from "../../geo/services";
 import { Literal } from "../Literal";
 import { ShapeIcon } from "../icons";
 import { revealShape } from "../actions";
+
+/** A place's area before it's on the map, with the water setting applied (`secondary`: in the other units). */
+export function OutlineArea({ o, secondary = false }: { o: Outline; secondary?: boolean }) {
+  const units = useSettings((s) => s.units);
+  const area = useOutlineArea(o) ?? 0;
+  return <Literal>{(secondary ? formatAreaSecondary : formatArea)(area, units)}</Literal>;
+}
 
 /** A page title with a back arrow, or (`close`) a title with an X on the right that goes home, like a shape's page. */
 export function ViewHeader({ title, onBack, right, close = false }: { title: ReactNode; onBack?: () => void; right?: ReactNode; close?: boolean }) {

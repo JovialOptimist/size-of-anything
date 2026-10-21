@@ -5,9 +5,9 @@ import { useSearch } from "../../state/search";
 import { useSettings } from "../../state/settings";
 import { fetchOutline, searchPlaces, suggestPlaces, ServiceError, type Outline, type PlaceResult } from "../../geo/services";
 import { OBJECTS, type RefObject } from "../../objects/registry";
-import { formatArea, formatAreaSecondary } from "../../geo/format";
+import { formatArea } from "../../geo/format";
+import { OutlineArea } from "./common";
 import { Literal } from "../Literal";
-import { geometryArea } from "../../geo/geometry";
 import { visibleCenter, getMap } from "../../map/mapCore";
 import { addObject, addPlace } from "../actions";
 import { ShapeIcon } from "../icons";
@@ -214,12 +214,12 @@ export default function SearchView() {
                 <button id={`opt-${i}`} role="option" aria-selected={i === active} aria-expanded={isOpen} type="button" className="row" onClick={() => toggle(p)} onMouseEnter={() => setActive(i)}>
                   <span className="row__ico"><ShapeIcon icon={p.icon} size={17} /></span>
                   <span className="row__main"><b>{highlight(p.name, q.trim())}</b><small>{[it.recent ? "Recent" : p.type, p.locality].filter(Boolean).join(" · ")}</small></span>
-                  <span className="row__end">{loadingKey === p.key ? <Loader2 size={16} className="spin" /> : o ? <Literal>{formatArea(geometryArea(o.geometry), units)}</Literal> : p.area ? <Literal>{formatArea(p.area, units)}</Literal> : null}</span>
+                  <span className="row__end">{loadingKey === p.key ? <Loader2 size={16} className="spin" /> : o ? <OutlineArea o={o} /> : p.area ? <Literal>{formatArea(p.area, units)}</Literal> : null}</span>
                 </button>
                 {isOpen && o && (
                   <div className="result__body">
                     <OutlinePreview geometry={o.geometry} height={120} />
-                    <div className="result__area"><Literal>{formatArea(geometryArea(o.geometry), units)}</Literal><small><Literal>{formatAreaSecondary(geometryArea(o.geometry), units)}</Literal></small></div>
+                    <div className="result__area"><OutlineArea o={o} /><small><OutlineArea o={o} secondary /></small></div>
                     <div className="btnrow">
                       <button type="button" className="btn btn--primary btn--sm" onClick={() => addPlace(o, "center")}><Plus size={16} /> Add to map</button>
                       <button type="button" className="btn btn--sm" onClick={() => addPlace(o, "origin")}><MapPinned size={16} /> Show where it is</button>
