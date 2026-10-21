@@ -4,6 +4,9 @@ import "@fontsource-variable/inter";
 import "@fontsource-variable/bricolage-grotesque";
 import "./styles/app.css";
 import App from "./App.tsx";
+import { installTranslationGuard } from "./translationGuard";
+
+installTranslationGuard();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

@@ -6,8 +6,16 @@ import { useShapes } from "../../state/shapes";
 import { toast } from "../../state/toasts";
 import { CONTACT_EMAIL, SUPPORT_URL } from "../../config";
 import MercatorExplainer from "../MercatorExplainer";
+import { Literal } from "../Literal";
+import { formatArea } from "../../geo/format";
 
-export function Seg<T extends string>({ value, options, onChange, label }: { value: T; options: [T, string][]; onChange: (v: T) => void; label: string }) {
+/** Central Park, as an example of showing both units. */
+const EXAMPLE_M2 = 3_410_000;
+
+/** The "US" units option. Translators read it as the word "us" ("NÓS", "UNS"), so it stays as is. */
+export const US = <span translate="no">US</span>;
+
+export function Seg<T extends string>({ value, options, onChange, label }: { value: T; options: [T, ReactNode][]; onChange: (v: T) => void; label: string }) {
   return (
     <div className="seg" role="group" aria-label={label}>
       {options.map(([v, l]) => (
@@ -21,10 +29,11 @@ export function Switch({ checked, onChange, label }: { checked: boolean; onChang
   return <button type="button" role="switch" aria-checked={checked} aria-label={label} className="switch" onClick={() => onChange(!checked)} />;
 }
 
-export function Row({ title, sub, children }: { title: string; sub?: string; children: ReactNode }) {
+export function Row({ title, sub, children }: { title: string; sub?: ReactNode; children: ReactNode }) {
   return (
     <div className="srow">
-      <span>{title}{sub && <small>{sub}</small>}</span>
+      {/* Keyed so a changed note replaces the old one rather than patching it on a translated page. */}
+      <span>{title}{sub && <small key={typeof sub === "string" ? sub : "node"}>{sub}</small>}</span>
       {children}
     </div>
   );
@@ -45,8 +54,8 @@ export function SettingsBody() {
 
       <div className="sgroup-title">Units</div>
       <div className="sgroup">
-        <Row title="Measurements"><Seg label="Measurements" value={s.units} onChange={set("units")} options={[["metric", "Metric"], ["us", "US"]]} /></Row>
-        <Row title="Show both" sub={s.showBothUnits ? "3.41 km² and 1.32 sq mi" : "Just one"}><Switch label="Show both units" checked={s.showBothUnits} onChange={set("showBothUnits")} /></Row>
+        <Row title="Measurements"><Seg label="Measurements" value={s.units} onChange={set("units")} options={[["metric", "Metric"], ["us", US]]} /></Row>
+        <Row title="Show both" sub={s.showBothUnits ? <><Literal>{`${formatArea(EXAMPLE_M2, "metric")} `}</Literal>and<Literal>{` ${formatArea(EXAMPLE_M2, "us")}`}</Literal></> : "Just one"}><Switch label="Show both units" checked={s.showBothUnits} onChange={set("showBothUnits")} /></Row>
       </div>
 
       <div className="sgroup-title">Shapes on the map</div>
@@ -111,14 +120,15 @@ export function HelpBody({ go }: { go: (p: HelpPage) => void }) {
         <section className="help-keys">
           <h3>Shortcuts</h3>
           <dl>
-            <dt><span className="kbd">/</span></dt><dd>Search</dd>
-            <dt><span className="kbd">Ctrl</span> <span className="kbd">Z</span></dt><dd>Undo (add <span className="kbd">Shift</span> to redo)</dd>
-            <dt><span className="kbd">←</span> <span className="kbd">→</span> <span className="kbd">↑</span> <span className="kbd">↓</span></dt><dd>Nudge a shape (<span className="kbd">Shift</span> for bigger steps)</dd>
-            <dt><span className="kbd">[</span> <span className="kbd">]</span></dt><dd>Rotate 15°</dd>
-            <dt><span className="kbd">Ctrl</span> <span className="kbd">D</span></dt><dd>Clone</dd>
-            <dt><span className="kbd">Delete</span></dt><dd>Remove</dd>
-            <dt><span className="kbd">Esc</span></dt><dd>Deselect or close</dd>
-            <dt><span className="kbd">?</span></dt><dd>This help</dd>
+            {/* Key names are what's printed on the keys, so they stay untranslated. */}
+            <dt translate="no"><span className="kbd">/</span></dt><dd>Search</dd>
+            <dt translate="no"><span className="kbd">Ctrl</span> <span className="kbd">Z</span></dt><dd>Undo (add<span translate="no"> <span className="kbd">Shift</span> </span>to redo)</dd>
+            <dt translate="no"><span className="kbd">←</span> <span className="kbd">→</span> <span className="kbd">↑</span> <span className="kbd">↓</span></dt><dd>Nudge a shape (<span translate="no"><span className="kbd">Shift</span> </span>for bigger steps)</dd>
+            <dt translate="no"><span className="kbd">[</span> <span className="kbd">]</span></dt><dd>Rotate 15°</dd>
+            <dt translate="no"><span className="kbd">Ctrl</span> <span className="kbd">D</span></dt><dd>Clone</dd>
+            <dt translate="no"><span className="kbd">Delete</span></dt><dd>Remove</dd>
+            <dt translate="no"><span className="kbd">Esc</span></dt><dd>Deselect or close</dd>
+            <dt translate="no"><span className="kbd">?</span></dt><dd>Show this help</dd>
           </dl>
 
           <h3 className="help-keys__next">Where do the outlines come from?</h3>

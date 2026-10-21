@@ -5,6 +5,7 @@ import { useShapes, shapeArea, type Shape } from "../../state/shapes";
 import { useSettings } from "../../state/settings";
 import { useSwatch } from "../hooks";
 import { formatArea } from "../../geo/format";
+import { Literal } from "../Literal";
 import { ShapeIcon } from "../icons";
 import { revealShape } from "../actions";
 
@@ -55,8 +56,8 @@ export function ShapeRow({ s, onClick }: { s: Shape; onClick?: () => void }) {
       style={{ ["--c" as string]: swatch(s.slot) }}
     >
       <span className="row__ico row__ico--c"><ShapeIcon icon={s.icon} size={17} /></span>
-      <span className="row__main"><b>{s.name}</b><small>{[s.type, s.locality].filter(Boolean).join(" · ")}</small></span>
-      <span className="row__end">{formatArea(shapeArea(s), units)}</span>
+      <span className="row__main"><b translate="no">{s.name}</b><small>{[s.type, s.locality].filter(Boolean).join(" · ")}</small></span>
+      <span className="row__end"><Literal>{formatArea(shapeArea(s), units)}</Literal></span>
     </button>
   );
 }

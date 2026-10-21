@@ -4,6 +4,9 @@ import { OBJECTS, CATEGORIES, thumbnailPath, type Category, type RefObject } fro
 import { getMap, getPad } from "../../map/mapCore";
 import { addObject } from "../actions";
 import { ViewHeader } from "./common";
+import { Literal } from "../Literal";
+import { formatLength } from "../../geo/format";
+import { useSettings } from "../../state/settings";
 
 function viewWidthMeters(): number {
   const m = getMap();
@@ -36,6 +39,7 @@ export default function ObjectsView() {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<Category | "suggested">("suggested");
   const width = useMemo(viewWidthMeters, []);
+  const units = useSettings((s) => s.units);
   const t = q.trim().toLowerCase();
   const suggested = [...OBJECTS].filter((o) => o.span > width * 0.08 && o.span < width * 0.7).sort((a, b) => Math.abs(Math.log(a.span / (width * 0.3))) - Math.abs(Math.log(b.span / (width * 0.3)))).slice(0, 8);
   const FEATURED = ["blue-whale", "soccer-pitch", "titanic", "great-pyramid", "boeing-737", "olympic-pool"];
@@ -64,11 +68,11 @@ export default function ObjectsView() {
         )}
         {!t && cat === "suggested" && (
           <p className="muted" style={{ fontSize: 12.5, marginTop: 0 }}>
-            First up: things sized for what you're looking at (about {width >= 1000 ? `${(width / 1000).toFixed(width > 10000 ? 0 : 1)} km` : `${Math.round(width)} m`} across). Zoom in or out for different suggestions.
+            First up: things sized for what you're looking at, an area about<Literal>{` ${formatLength(width, units)} `}</Literal>across. Zoom in or out for different suggestions.
           </p>
         )}
         {list.length === 0 ? (
-          <p className="muted">{t ? `Nothing called “${q}” yet.` : "Nothing in this list fits the current zoom. Try another category."}</p>
+          <p key={t ? "search" : "zoom"} className="muted">{t ? <>Nothing called<Literal>{` “${q}” `}</Literal>yet.</> : "Nothing in this list fits the current zoom. Try another category."}</p>
         ) : (
           <div className="ogrid">{list.map((o) => <Card key={o.id} o={o} />)}</div>
         )}

@@ -6,6 +6,7 @@ import { getMap, setPreview, visibleCenter, fitGeometry } from "../../map/mapCor
 import { mapClickHandler } from "../../map/modeHandlers";
 import { whatsHere, fetchOutline, ServiceError, type PlaceResult, type Outline } from "../../geo/services";
 import { formatArea } from "../../geo/format";
+import { Literal } from "../Literal";
 import { geometryArea } from "../../geo/geometry";
 import { useSettings } from "../../state/settings";
 import { addPlace } from "../actions";
@@ -112,7 +113,7 @@ export default function PickView() {
         <span className="row__ico"><ShapeIcon icon={r.icon} size={17} /></span>
         <button type="button" className="row__main" style={{ border: 0, background: "none", textAlign: "left", padding: 0 }} onClick={() => choose(r)}>
           <b>{r.name}</b>
-          <small>{r.type}{isChosen ? ` · ${formatArea(geometryArea(chosen.geometry), units)}` : ""}</small>
+          <small><span>{r.type}</span>{isChosen && <Literal>{` · ${formatArea(geometryArea(chosen.geometry), units)}`}</Literal>}</small>
         </button>
         {loadingKey === r.key ? <Loader2 size={18} className="spin" /> : isChosen ? (
           <button type="button" className="btn btn--primary btn--sm" onClick={() => { addPlace(chosen, "origin"); }}><Plus size={15} /> Add</button>
@@ -129,14 +130,14 @@ export default function PickView() {
       <div className="panel__scroll">
         {desktop ? (
           <p style={{ marginTop: 0 }} className="pick-hint">
-            <MousePointerClick size={18} /> {state === "loading" ? "Looking…" : state === "idle" ? "Click anything on the map to see what's there." : "Click somewhere else to look there instead."}
+            <MousePointerClick size={18} /> <span key={state}>{state === "loading" ? "Looking…" : state === "idle" ? "Click anything on the map to see what's there." : "Click somewhere else to look there instead."}</span>
           </p>
         ) : (
           <>
             <p style={{ marginTop: 0 }}>Move the map so the crosshair sits on what you want, or tap it.</p>
             <button type="button" className="btn btn--primary" onClick={() => lookup()} disabled={state === "loading"} style={{ width: "100%" }}>
               {state === "loading" ? <Loader2 size={18} className="spin" /> : stale && state === "done" ? <RefreshCw size={18} /> : <Crosshair size={18} />}
-              {state === "loading" ? "Looking…" : stale && state === "done" ? "Look here instead" : "What's here?"}
+              <span key={`${state}:${stale}`}>{state === "loading" ? "Looking…" : stale && state === "done" ? "Look here instead" : "What's here?"}</span>
             </button>
           </>
         )}
