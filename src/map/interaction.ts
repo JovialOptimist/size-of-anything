@@ -6,7 +6,7 @@
  */
 import { create } from "zustand";
 import { flushSync } from "react-dom";
-import { getMap, syncShapes } from "./mapCore";
+import { getMap, hideShape, syncShapes } from "./mapCore";
 import { localOf, useShapes, type Shape } from "../state/shapes";
 import type { LngLat, LocalShape } from "../geo/geometry";
 import { pinAt, pinPoint } from "./pins";
@@ -57,8 +57,7 @@ function begin(s: Shape, kind: "move" | "rotate") {
   m.touchZoomRotate.disableRotation();
   dragLocal = decimate(localOf(s));
   setLive({ id: s.id, kind, anchor: s.anchor, rotation: s.rotation, scale: s.scale });
-  const { shapes, selectedId } = useShapes.getState();
-  syncShapes(shapes, selectedId, darkMapRef, s.id);
+  hideShape(s.id);
   document.body.classList.add("is-dragging");
 }
 
@@ -67,14 +66,22 @@ function end(s: Shape, moved: boolean) {
   m?.dragPan.enable();
   const live = useLive.getState();
   if (moved) useShapes.getState().update(s.id, { anchor: live.anchor, rotation: live.rotation });
-  // Keep drawing the overlay copy until the WebGL layer has the new position, so nothing blinks.
+  // Keep drawing the overlay copy, and keep the WebGL one hidden, until the WebGL layer has the
+  // new position; then swap them in one frame.
   useLive.setState({ kind: "settling" });
   const { shapes, selectedId } = useShapes.getState();
   syncShapes(shapes, selectedId, darkMapRef);
   const done = () => {
     if (useLive.getState().kind !== "settling") return;
-    useLive.setState({ id: null, kind: null });
-    dragLocal = null;
+    hideShape(null);
+    // Drop the overlay while the map draws the frame that brings the shape back.
+    const hand = () => {
+      if (useLive.getState().kind !== "settling") return;
+      setLive({ id: null, kind: null });
+      dragLocal = null;
+    };
+    if (m) m.once("render", hand);
+    else hand();
   };
   m?.once("idle", done);
   setTimeout(done, 400);
