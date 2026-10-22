@@ -102,15 +102,19 @@ export function ensureLayers(m: maplibregl.Map, look: LayerLook) {
   const paint = { selected: shapePaint("selected", look), hovered: shapePaint("hovered", look), resting: shapePaint("resting", look) };
   const byState = (key: "fillOpacity" | "casingWidth" | "casingOpacity" | "lineWidth"): maplibregl.ExpressionSpecification =>
     ["case", ["get", "selected"], paint.selected[key], ["boolean", ["feature-state", "hover"], false], paint.hovered[key], paint.resting[key]];
+  // See hideShape().
+  const unlessHidden = (opacity: number | maplibregl.ExpressionSpecification): maplibregl.ExpressionSpecification =>
+    ["case", ["boolean", ["feature-state", "hidden"], false], 0, opacity];
   const add = (layer: maplibregl.AddLayerObject, beforeId?: string) => {
     if (!m.getLayer(layer.id)) m.addLayer(layer, beforeId);
   };
   for (const src of ["soa-shapes", "soa-drag"]) {
     const p = src === "soa-drag" ? "soa-drag" : "soa";
-    add({ id: `${p}-fill`, type: "fill", source: src, paint: { "fill-color": ["get", "color"], "fill-opacity": byState("fillOpacity") } }, before);
-    add({ id: `${p}-casing`, type: "line", source: src, paint: { "line-color": paint.resting.casingColor, "line-width": byState("casingWidth"), "line-opacity": byState("casingOpacity") }, layout: { "line-join": "round" } }, before);
-    add({ id: `${p}-line`, type: "line", source: src, paint: { "line-color": ["get", "color"], "line-width": byState("lineWidth") }, layout: { "line-join": "round" } }, before);
+    add({ id: `${p}-fill`, type: "fill", source: src, paint: { "fill-color": ["get", "color"], "fill-opacity": unlessHidden(byState("fillOpacity")) } }, before);
+    add({ id: `${p}-casing`, type: "line", source: src, paint: { "line-color": paint.resting.casingColor, "line-width": byState("casingWidth"), "line-opacity": unlessHidden(byState("casingOpacity")) }, layout: { "line-join": "round" } }, before);
+    add({ id: `${p}-line`, type: "line", source: src, paint: { "line-color": ["get", "color"], "line-width": byState("lineWidth"), "line-opacity": unlessHidden(1) }, layout: { "line-join": "round" } }, before);
   }
+  if (hiddenId && m.getSource("soa-shapes")) m.setFeatureState({ source: "soa-shapes", id: hiddenId }, { hidden: true });
   add({ id: "soa-preview-fill", type: "fill", source: "soa-preview", paint: { "fill-color": look.darkMap ? "#e8ebef" : "#1b2026", "fill-opacity": 0.1 } });
   add({ id: "soa-preview-line", type: "line", source: "soa-preview", paint: { "line-color": look.darkMap ? "#e8ebef" : "#1b2026", "line-width": 2.5, "line-dasharray": [2, 1.5] } });
   add({ id: "soa-draw-fill", type: "fill", source: "soa-draw", filter: ["==", ["geometry-type"], "Polygon"], paint: { "fill-color": "#888", "fill-opacity": 0.12 } });
@@ -122,13 +126,27 @@ function feature(s: Shape, geom: AreaGeometry, selected: boolean, darkMap: boole
   return { type: "Feature", id: undefined, geometry: geom as GeoJSON.Geometry, properties: { id: s.id, color: shapeColor(s.slot, darkMap), selected } };
 }
 
-export function syncShapes(shapes: Shape[], selectedId: string | null, darkMap: boolean, hiddenId?: string) {
+export function syncShapes(shapes: Shape[], selectedId: string | null, darkMap: boolean) {
   const m = map;
   if (!m || !m.getSource("soa-shapes")) return;
-  const visible = shapes.filter((s) => s.id !== hiddenId);
   // Selected shape last so it draws on top.
-  visible.sort((a, b) => Number(a.id === selectedId) - Number(b.id === selectedId));
-  (m.getSource("soa-shapes") as GeoJSONSource).setData({ type: "FeatureCollection", features: visible.map((s) => feature(s, placedGeometry(s), s.id === selectedId, darkMap)) });
+  const ordered = [...shapes].sort((a, b) => Number(a.id === selectedId) - Number(b.id === selectedId));
+  (m.getSource("soa-shapes") as GeoJSONSource).setData({ type: "FeatureCollection", features: ordered.map((s) => feature(s, placedGeometry(s), s.id === selectedId, darkMap)) });
+}
+
+/**
+ * Hides a shape in the WebGL layers (opacity 0) while the overlay draws it during a gesture.
+ * The two have to swap in the same frame, or for a moment the fill is drawn twice (darker) or
+ * not at all. Feature state takes effect on the map's next frame; new data or a layer filter
+ * goes through MapLibre's worker first and can take a few frames.
+ */
+let hiddenId: string | null = null;
+
+export function hideShape(id: string | null) {
+  const src = map?.getSource("soa-shapes") ? "soa-shapes" : null;
+  if (src && hiddenId) map!.setFeatureState({ source: src, id: hiddenId }, { hidden: false });
+  hiddenId = id;
+  if (src && id) map!.setFeatureState({ source: src, id }, { hidden: true });
 }
 
 export function setDragShape(s: Shape | null, geom: AreaGeometry | null, darkMap: boolean) {
