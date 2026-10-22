@@ -189,6 +189,10 @@ a.btn { text-decoration: none; color: var(--text); }
 .history button:hover:not(:disabled) { background: var(--surface-2); }
 .history button:disabled { color: var(--text-muted); opacity: 0.45; cursor: default; }
 
+/* MapLibre shows a hand over the whole map; keep the plain arrow, even while panning. */
+.map .maplibregl-canvas-container.maplibregl-interactive,
+.map .maplibregl-canvas-container.maplibregl-interactive:active { cursor: default; }
+
 /* Pick on map (desktop): click anywhere */
 body.is-picking .maplibregl-canvas { cursor: crosshair; }
 .pick-marker { width: 18px; height: 18px; border-radius: 50%; background: var(--accent); border: 3px solid #fff; box-shadow: 0 0 0 6px color-mix(in oklch, var(--accent) 30%, transparent), var(--shadow-2); }

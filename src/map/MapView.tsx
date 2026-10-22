@@ -114,6 +114,7 @@ function wireEvents(m: maplibregl.Map) {
     const shapes = useShapes.getState();
     if (id) {
       shapes.select(id);
+      m.getCanvas().style.cursor = "grab";
       ui.go({ name: "detail", id });
     } else if (shapes.selectedId || ui.stack[ui.stack.length - 1].name === "detail") {
       // Clicking empty map deselects and closes the shape's page, like its X. (Going "back"
@@ -129,11 +130,13 @@ function wireEvents(m: maplibregl.Map) {
     const id = topShapeAt(e.point);
     if (id && id === useShapes.getState().selectedId) {
       e.preventDefault();
+      m.getCanvas().style.cursor = "grabbing";
       startMove(id, e.originalEvent.clientX, e.originalEvent.clientY);
     }
   });
 
-  // Hover: cursor plus a slightly thicker outline.
+  // Hover: cursor plus a slightly thicker outline. Empty map is an arrow, a shape is a pointer,
+  // and the selected shape (which drags from its body) is an open hand.
   let hovered: string | null = null;
   const setHover = (id: string | null) => {
     if (hovered === id) return;
@@ -142,10 +145,15 @@ function wireEvents(m: maplibregl.Map) {
     if (id && m.getSource("soa-shapes")) m.setFeatureState({ source: "soa-shapes", id }, { hover: true });
   };
   m.on("mousemove", (e) => {
-    if (useUI.getState().mode !== "browse") return setHover(null);
+    if (useUI.getState().mode !== "browse") {
+      m.getCanvas().style.cursor = "";
+      return setHover(null);
+    }
     const id = topShapeAt(e.point);
     setHover(id);
-    m.getCanvas().style.cursor = id ? (id === useShapes.getState().selectedId ? "move" : "pointer") : "";
+    // Keep the closed hand while the button is held on the selected shape.
+    if (e.originalEvent.buttons & 1) return;
+    m.getCanvas().style.cursor = id ? (id === useShapes.getState().selectedId ? "grab" : "pointer") : "";
   });
   m.on("mouseout", () => setHover(null));
 
