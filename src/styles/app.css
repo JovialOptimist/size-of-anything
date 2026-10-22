@@ -189,7 +189,7 @@ a.btn { text-decoration: none; color: var(--text); }
 .history button:hover:not(:disabled) { background: var(--surface-2); }
 .history button:disabled { color: var(--text-muted); opacity: 0.45; cursor: default; }
 
-/* MapLibre shows a hand over the whole map; keep the plain arrow, even while panning. */
+/* MapLibre shows a hand over the whole map; keep the plain arrow. (Panning sets its own cursor in MapView.) */
 .map .maplibregl-canvas-container.maplibregl-interactive,
 .map .maplibregl-canvas-container.maplibregl-interactive:active { cursor: default; }
 

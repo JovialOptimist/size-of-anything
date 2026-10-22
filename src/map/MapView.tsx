@@ -156,6 +156,9 @@ function wireEvents(m: maplibregl.Map) {
     m.getCanvas().style.cursor = id ? (id === useShapes.getState().selectedId ? "grab" : "pointer") : "";
   });
   m.on("mouseout", () => setHover(null));
+  // Panning the map shows the four-way move arrow until the drag ends.
+  m.on("dragstart", () => (m.getCanvas().style.cursor = "move"));
+  m.on("dragend", () => (m.getCanvas().style.cursor = ""));
 
   // Touch: hold a shape for 400 ms to pick it up. A plain one-finger drag still pans.
   let timer: ReturnType<typeof setTimeout> | undefined;
