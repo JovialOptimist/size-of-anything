@@ -144,6 +144,36 @@ export function setDrawData(fc: GeoJSON.FeatureCollection | null) {
   (map?.getSource("soa-draw") as GeoJSONSource | undefined)?.setData(fc || EMPTY);
 }
 
+/**
+ * The map repeats the world east and west, and shapes are drawn in every copy. Pins and the
+ * other controls go on one copy per shape; this returns how many degrees to add to the pin's
+ * longitude for it. Like MapLibre's markers (its smartWrap): the copy nearest where the pin was
+ * last drawn, so it stays put when the map's center wraps or a shape is dropped on another copy,
+ * unless that copy is off screen, then the copy nearest the middle of the view.
+ */
+const lastPinPx = new Map<string, maplibregl.Point>();
+
+export function pinCopyShift(id: string, pin: LngLat) {
+  const m = map;
+  if (!m) return 0;
+  const at = (shift: number) => m.project([pin[0] + shift, pin[1]]);
+  const nearest = Math.round((m.getCenter().lng - pin[0]) / 360) * 360;
+  let shift = nearest;
+  const last = lastPinPx.get(id);
+  if (last) {
+    shift = [nearest - 360, nearest, nearest + 360].reduce((a, b) => (at(b).dist(last) < at(a).dist(last) ? b : a));
+    const p = at(shift), c = m.getCanvas();
+    if (p.x < 0 || p.y < 0 || p.x > c.clientWidth || p.y > c.clientHeight) shift = nearest;
+  }
+  lastPinPx.set(id, at(shift));
+  return shift;
+}
+
+/** Where a shape's pin is drawn while it's being moved, so it stays in that copy afterwards. */
+export function notePinPx(id: string, p: maplibregl.Point) {
+  lastPinPx.set(id, p);
+}
+
 /** The center of the part of the map not covered by panels (MapLibre padding does the work). */
 export function visibleCenter(): LngLat {
   const c = map!.getCenter();
