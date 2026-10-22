@@ -3,7 +3,8 @@
  * OSM places by id, objects by id, drawn shapes as encoded polylines in metres.
  */
 import polyline from "@mapbox/polyline";
-import { buildShape, useShapes, type Shape } from "../state/shapes";
+import { buildShape, canRemoveWater, useShapes, waterMode, type Shape } from "../state/shapes";
+import type { WaterMode } from "../geo/water";
 import { fetchOutline, type PlaceResult } from "../geo/services";
 import { getMap } from "../map/mapCore";
 import type { IconKey } from "../geo/categories";
@@ -22,13 +23,15 @@ interface Entry {
   l?: string;
   i?: IconKey;
   m?: 1;
+  w?: WaterMode;
 }
 
 const round = (n: number, d = 5) => Math.round(n * 10 ** d) / 10 ** d;
 
 function toEntry(s: Shape): Entry {
   const base = { a: [round(s.anchor[0]), round(s.anchor[1])] as [number, number], r: s.rotation ? round(s.rotation, 1) : undefined, s: s.scale !== 1 ? round(s.scale, 6) : undefined, c: s.slot, n: s.name, t: s.type, l: s.locality, i: s.icon, m: s.mirrored ? (1 as const) : undefined };
-  if (s.source.kind === "osm") return { k: "o", id: s.source.key, ...base };
+  // The water choice in effect, so the link shows what the sender saw whatever the viewer's setting.
+  if (s.source.kind === "osm") return { k: "o", id: s.source.key, ...base, w: canRemoveWater(s) ? waterMode(s) : undefined };
   if (s.source.kind === "object") return { k: "x", id: s.source.id, ...base, t: undefined, l: undefined, i: undefined };
   const ring = s.source.meters[0][0].map(([x, y]) => [Math.round(y), Math.round(x)] as [number, number]);
   return { k: s.source.kind === "drawn" ? "d" : "e", p: polyline.encode(ring, 0), ...base };
@@ -75,7 +78,7 @@ export async function loadFromUrl(): Promise<boolean> {
       if (e.k === "o" && e.id) {
         const place: PlaceResult = { key: e.id, osmType: e.id[0] as "W", osmId: Number(e.id.slice(1)), name: e.n, type: e.t ?? "", icon: e.i ?? "pin", locality: e.l ?? "", source: "nominatim" };
         const o = await fetchOutline(place);
-        shape = buildShape({ ...common, source: { kind: "osm", key: o.key }, geometry: o.geometry }, out);
+        shape = buildShape({ ...common, source: { kind: "osm", key: o.key }, geometry: o.geometry, water: e.w }, out);
       } else if (e.k === "x" && e.id) {
         shape = buildShape({ ...common, source: { kind: "object", id: e.id }, icon: "object" }, out);
         const { objectById } = await import("../objects/registry");

@@ -1,0 +1,115 @@
+/**
+ * Cuts the water out of an outline, using the water polygons in the basemap's own vector tiles
+ * (OpenMapTiles schema, served by OpenFreeMap). Those are classed, so the sea and inland water
+ * (lakes, rivers, docks) can be removed separately.
+ *
+ * Tiles are fetched at the most detailed zoom that covers the outline in at most MAX_TILES.
+ * Checked against official figures: within about 1.5% for the sea at any size; land only is as
+ * close for cities but runs high for vast countries, whose low-zoom tiles leave out small lakes.
+ */
+import { VectorTile } from "@mapbox/vector-tile";
+import { PbfReader } from "pbf";
+import area from "@turf/area";
+import union from "@turf/union";
+import difference from "@turf/difference";
+import bboxClip from "@turf/bbox-clip";
+import { featureCollection } from "@turf/helpers";
+import { WATER_TILES } from "../config";
+import { bbox, geometryArea, simplifyGeometry, type AreaGeometry, type PolygonCoords } from "./geometry";
+import type { WaterCut, Waterless } from "./water";
+
+const MAX_TILES = 64;
+const MAX_ZOOM = 12;
+/** Inland water smaller than this share of the place is left in. */
+const MIN_LAKE = 0.0005;
+
+type Poly = GeoJSON.Feature<GeoJSON.Polygon | GeoJSON.MultiPolygon>;
+
+let template: Promise<string> | undefined;
+/** The tile URL template. It names a dated build of the planet, so ask the TileJSON for it. */
+function tileTemplate() {
+  template ??= fetch(WATER_TILES).then(async (r) => {
+    if (!r.ok) throw new Error(`TileJSON ${r.status}`);
+    return ((await r.json()) as { tiles: string[] }).tiles[0];
+  });
+  return template;
+}
+
+const tileX = (lng: number, z: number) => Math.min(2 ** z - 1, Math.max(0, Math.floor(((lng + 180) / 360) * 2 ** z)));
+const tileY = (lat: number, z: number) => {
+  const r = (Math.max(-85, Math.min(85, lat)) * Math.PI) / 180;
+  return Math.min(2 ** z - 1, Math.max(0, Math.floor(((1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2) * 2 ** z)));
+};
+const tileLng = (x: number, z: number) => (x / 2 ** z) * 360 - 180;
+const tileLat = (y: number, z: number) => (Math.atan(Math.sinh(Math.PI * (1 - (2 * y) / 2 ** z))) * 180) / Math.PI;
+
+/** Rings with fewer than four points (left over from clipping) make the polygon library throw. */
+function cleanPolygons(geom: GeoJSON.Polygon | GeoJSON.MultiPolygon): PolygonCoords[] {
+  const polys = (geom.type === "Polygon" ? [geom.coordinates] : geom.coordinates) as PolygonCoords[];
+  return polys.map((p) => p.filter((r) => r.length >= 4)).filter((p) => p.length > 0 && p[0].length >= 4);
+}
+
+function asFeature(polys: PolygonCoords[]): Poly {
+  return { type: "Feature", properties: {}, geometry: { type: "MultiPolygon", coordinates: polys } };
+}
+
+async function waterIn(geom: AreaGeometry): Promise<{ sea: Poly[]; inland: Poly[] }> {
+  const [w, s, e, n] = bbox(geom);
+  let z = MAX_ZOOM;
+  const count = (z: number) => (tileX(e, z) - tileX(w, z) + 1) * (tileY(s, z) - tileY(n, z) + 1);
+  while (z > 0 && count(z) > MAX_TILES) z--;
+  const url = await tileTemplate();
+  const tiles: [number, number][] = [];
+  for (let x = tileX(w, z); x <= tileX(e, z); x++) for (let y = tileY(n, z); y <= tileY(s, z); y++) tiles.push([x, y]);
+
+  const sea: Poly[] = [];
+  const inland: Poly[] = [];
+  await Promise.all(
+    tiles.map(async ([x, y]) => {
+      const res = await fetch(url.replace("{z}", String(z)).replace("{x}", String(x)).replace("{y}", String(y)));
+      if (!res.ok) throw new Error(`tile ${z}/${x}/${y}: ${res.status}`);
+      const layer = new VectorTile(new PbfReader(new Uint8Array(await res.arrayBuffer()))).layers.water;
+      if (!layer) return;
+      // Tiles overlap a little at the edges; clip to each tile's own square so nothing counts twice.
+      const square: [number, number, number, number] = [tileLng(x, z), tileLat(y + 1, z), tileLng(x + 1, z), tileLat(y, z)];
+      for (let i = 0; i < layer.length; i++) {
+        const f = layer.feature(i).toGeoJSON(x, y, z) as GeoJSON.Feature;
+        if (f.geometry.type !== "Polygon" && f.geometry.type !== "MultiPolygon") continue;
+        if (f.properties?.class === "swimming_pool") continue;
+        const polys = cleanPolygons(bboxClip(f as Poly, square).geometry as GeoJSON.Polygon | GeoJSON.MultiPolygon);
+        if (polys.length) (f.properties?.class === "ocean" ? sea : inland).push(asFeature(polys));
+      }
+    })
+  );
+  return { sea, inland };
+}
+
+function minus(shape: Poly | null, water: Poly[]): Poly | null {
+  if (!shape || water.length === 0) return shape;
+  const merged = water.length === 1 ? water[0] : union(featureCollection(water));
+  return merged ? (difference(featureCollection([shape, merged as Poly])) as Poly | null) : shape;
+}
+
+/** Keep a cut only if it removed something, and didn't remove nearly everything (a place that's mostly water). */
+function toCut(cut: Poly | null, before: number): WaterCut | null {
+  if (!cut) return null;
+  const polys = cleanPolygons(cut.geometry);
+  if (!polys.length) return null;
+  const geometry = simplifyGeometry(polys.length === 1 ? { type: "Polygon", coordinates: polys[0] } : { type: "MultiPolygon", coordinates: polys });
+  const area = geometryArea(geometry);
+  return area < before * 0.995 && area > before * 0.05 ? { geometry, area } : null;
+}
+
+export async function cutWater(geometry: AreaGeometry): Promise<Waterless> {
+  const { sea, inland } = await waterIn(geometry);
+  const before = geometryArea(geometry);
+  const shape: Poly = { type: "Feature", properties: {}, geometry: geometry as GeoJSON.Polygon | GeoJSON.MultiPolygon };
+  const noSea = minus(shape, sea);
+  // Ponds would pepper the outline with holes for next to no area; keep lakes worth seeing.
+  // Tiles split lakes at their edges, so merge first, then judge each lake whole.
+  const merged = inland.length > 1 ? union(featureCollection(inland)) : inland[0];
+  const lakes = merged ? cleanPolygons(merged.geometry).map((p) => asFeature([p])).filter((f) => area(f) > before * MIN_LAKE) : [];
+  const landOnly = minus(noSea, lakes);
+  const seaCut = toCut(noSea, before);
+  return { sea: seaCut, all: toCut(landOnly, before) ?? seaCut };
+}

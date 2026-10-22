@@ -19,6 +19,9 @@ export const BASEMAPS = {
   dark: "https://tiles.openfreemap.org/styles/fiord",
 };
 
+/** TileJSON for the basemap's vector tiles; their water layer is used to take water out of outlines. */
+export const WATER_TILES = "https://tiles.openfreemap.org/planet";
+
 /**
  * Optional ArcGIS Location Platform key for compliant satellite imagery.
  * Without a key the legacy keyless Esri endpoint is used.
