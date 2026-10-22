@@ -6,7 +6,7 @@
 import { useEffect, useReducer, type WheelEvent as ReactWheelEvent } from "react";
 import { flushSync } from "react-dom";
 import { RotateCw, RotateCcw, Copy, Trash2, PanelLeftOpen } from "lucide-react";
-import { getMap, getPad, shapePaint } from "./mapCore";
+import { getMap, getPad, notePinPx, pinCopyShift, shapePaint } from "./mapCore";
 import { startMove, startRotate, useLive, rotateBy, getDragLocal } from "./interaction";
 import { setPinHover } from "./hover";
 import { pinAt, pinPoint, shapeBBox } from "./pins";
@@ -125,14 +125,19 @@ export default function Overlays() {
   const items = shapes
     .map((s) => {
       const isLive = live.id === s.id;
-      const pin = isLive ? pinAt(s, live.anchor, live.rotation, live.scale) : pinPoint(s);
+      const at = isLive ? pinAt(s, live.anchor, live.rotation, live.scale) : pinPoint(s);
+      // A shape being moved stays in the copy of the world it was grabbed in (its live anchor is in
+      // that copy); the rest choose a copy for their pin.
+      const shift = isLive ? 0 : pinCopyShift(s.id, at);
+      const pin: LngLat = [at[0] + shift, at[1]];
       // On the globe, skip shapes on the far side of the Earth.
       const hidden = globe && angleBetween(pin, [center.lng, center.lat]) > 82;
       const p = m.project(pin);
+      if (isLive) notePinPx(s.id, p);
       const [x0, y0, x1, y1] = shapeBBox(s);
-      const a = m.project([x0, y1]), b = m.project([x1, y0]);
+      const a = m.project([x0 + shift, y1]), b = m.project([x1 + shift, y0]);
       const size = Math.max(Math.abs(b.x - a.x), Math.abs(b.y - a.y));
-      const pinNow = isLive ? p : m.project(pinPoint(s));
+      const pinNow = isLive ? p : m.project(pin);
       return { s, p, size, hidden, top: Math.min(a.y, b.y) + (p.y - pinNow.y) };
     })
     .filter((i) => !i.hidden);

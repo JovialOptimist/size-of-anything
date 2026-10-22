@@ -6,7 +6,7 @@
  */
 import { create } from "zustand";
 import { flushSync } from "react-dom";
-import { getMap, syncShapes } from "./mapCore";
+import { getMap, pinCopyShift, syncShapes } from "./mapCore";
 import { localOf, useShapes, type Shape } from "../state/shapes";
 import type { LngLat, LocalShape } from "../geo/geometry";
 import { pinAt, pinPoint } from "./pins";
@@ -51,12 +51,18 @@ function setLive(patch: Partial<Live>) {
   flushSync(() => useLive.setState(patch));
 }
 
-function begin(s: Shape, kind: "move" | "rotate") {
+const wrapLng = (lng: number) => ((((lng + 180) % 360) + 360) % 360) - 180;
+
+/**
+ * `anchor` is the shape's anchor in the copy of the world the gesture happens in. It stays in
+ * that copy (its longitude can be past ±180°) until the change is committed.
+ */
+function begin(s: Shape, kind: "move" | "rotate", anchor: LngLat) {
   const m = getMap()!;
   m.dragPan.disable();
   m.touchZoomRotate.disableRotation();
   dragLocal = decimate(localOf(s));
-  setLive({ id: s.id, kind, anchor: s.anchor, rotation: s.rotation, scale: s.scale });
+  setLive({ id: s.id, kind, anchor, rotation: s.rotation, scale: s.scale });
   const { shapes, selectedId } = useShapes.getState();
   syncShapes(shapes, selectedId, darkMapRef, s.id);
   document.body.classList.add("is-dragging");
@@ -66,7 +72,7 @@ function end(s: Shape, moved: boolean) {
   const m = getMap();
   m?.dragPan.enable();
   const live = useLive.getState();
-  if (moved) useShapes.getState().update(s.id, { anchor: live.anchor, rotation: live.rotation });
+  if (moved) useShapes.getState().update(s.id, { anchor: [wrapLng(live.anchor[0]), live.anchor[1]], rotation: live.rotation });
   // Keep drawing the overlay copy until the WebGL layer has the new position, so nothing blinks.
   useLive.setState({ kind: "settling" });
   const { shapes, selectedId } = useShapes.getState();
@@ -101,15 +107,16 @@ export function anchorKeepingPin(s: Shape, rotation: number, scale = s.scale): L
   return anchor;
 }
 
-const wrapLng = (lng: number) => ((((lng + 180) % 360) + 360) % 360) - 180;
-
 /** Start moving a shape from a pointer position (client coordinates). */
 export function startMove(shapeId: string, clientX: number, clientY: number, onClick?: () => void) {
   const m = getMap();
   const s = useShapes.getState().shapes.find((x) => x.id === shapeId);
   if (!m || !s) return;
   const rect = m.getContainer().getBoundingClientRect();
-  const anchorPx = m.project(s.anchor);
+  // Move the copy of the shape that was grabbed: the one nearest the pointer.
+  const at = m.unproject([clientX - rect.left, clientY - rect.top]);
+  const anchor: LngLat = [s.anchor[0] + (at ? Math.round((at.lng - s.anchor[0]) / 360) * 360 : 0), s.anchor[1]];
+  const anchorPx = m.project(anchor);
   const offX = anchorPx.x - (clientX - rect.left);
   const offY = anchorPx.y - (clientY - rect.top);
   let started = false;
@@ -117,10 +124,10 @@ export function startMove(shapeId: string, clientX: number, clientY: number, onC
     if (!started) {
       if (Math.hypot(e.clientX - clientX, e.clientY - clientY) < 4) return;
       started = true;
-      begin(s, "move");
+      begin(s, "move", anchor);
     }
     const ll = m.unproject([e.clientX - rect.left + offX, e.clientY - rect.top + offY]);
-    setLive({ anchor: [wrapLng(ll.lng), Math.max(-84, Math.min(84, ll.lat))] });
+    setLive({ anchor: [ll.lng, Math.max(-84, Math.min(84, ll.lat))] });
   };
   const up = () => {
     window.removeEventListener("pointermove", move);
@@ -140,15 +147,19 @@ export function startRotate(shapeId: string, clientX: number, clientY: number) {
   const s = useShapes.getState().shapes.find((x) => x.id === shapeId);
   if (!m || !s) return;
   const rect = m.getContainer().getBoundingClientRect();
-  const c = m.project(pinPoint(s));
+  // Turn the copy whose pin is showing.
+  const pin = pinPoint(s);
+  const shift = pinCopyShift(s.id, pin);
+  const c = m.project([pin[0] + shift, pin[1]]);
   const angle = (x: number, y: number) => (Math.atan2(x - rect.left - c.x, -(y - rect.top - c.y)) * 180) / Math.PI;
   const a0 = angle(clientX, clientY);
-  begin(s, "rotate");
+  begin(s, "rotate", [s.anchor[0] + shift, s.anchor[1]]);
   const move = (e: PointerEvent) => {
     let r = s.rotation + angle(e.clientX, e.clientY) - a0;
     if (e.shiftKey) r = Math.round(r / 15) * 15;
     const rotation = ((r % 360) + 360) % 360;
-    setLive({ rotation, anchor: anchorKeepingPin(s, rotation) });
+    const a = anchorKeepingPin(s, rotation);
+    setLive({ rotation, anchor: [a[0] + shift, a[1]] });
   };
   const up = () => {
     window.removeEventListener("pointermove", move);

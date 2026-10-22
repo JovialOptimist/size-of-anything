@@ -116,14 +116,19 @@ export function place(local: LocalShape, anchor: LngLat, rotation = 0, scale = 1
         const lat = Math.atan2(z, Math.sqrt(x * x + y * y)) * DEG;
         ring[i / 3] = [lng, lat];
       }
-      return unwrapRing(ring);
+      return unwrapRing(ring, anchor[0]);
     })
   );
   return polys.length === 1 ? { type: "Polygon", coordinates: polys[0] } : { type: "MultiPolygon", coordinates: polys };
 }
 
-/** Keep consecutive longitudes continuous so shapes crossing the antimeridian don't smear across the map. */
-function unwrapRing(ring: Ring): Ring {
+/**
+ * Keep consecutive longitudes continuous so shapes crossing the antimeridian don't smear across
+ * the map, starting from the copy of the world nearest `nearLng` (the anchor's, which during a
+ * drag can be past ±180°), so a shape and its pin always land in the same copy.
+ */
+function unwrapRing(ring: Ring, nearLng: number): Ring {
+  if (ring.length) ring[0][0] += Math.round((nearLng - ring[0][0]) / 360) * 360;
   for (let i = 1; i < ring.length; i++) {
     let d = ring[i][0] - ring[i - 1][0];
     while (d > 180) {
