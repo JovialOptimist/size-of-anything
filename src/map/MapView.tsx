@@ -2,7 +2,8 @@ import { useEffect, useRef } from "react";
 import * as maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { buildStyle, ensureLayers, setMapInstance, syncShapes, type LayerLook } from "./mapCore";
-import { setDarkMapForDrag, startMove } from "./interaction";
+import { setDarkMapForDrag, startMove, useLive } from "./interaction";
+import { pinHover } from "./hover";
 import { useShapes } from "../state/shapes";
 import { FILL_OPACITY, useIsDark, useSettings } from "../state/settings";
 import { useUI } from "../state/ui";
@@ -26,6 +27,7 @@ export default function MapView({ onReady }: { onReady?: () => void }) {
   // Create the map once.
   useEffect(() => {
     let cancelled = false;
+    let unwire: (() => void) | undefined;
     (async () => {
       const style = await buildStyle(useSettings.getState().basemap, lookRef.current.darkMap);
       if (cancelled || !el.current) return;
@@ -53,11 +55,12 @@ export default function MapView({ onReady }: { onReady?: () => void }) {
       m.on("styleimagemissing", (e) => {
         if (!m.hasImage(e.id)) m.addImage(e.id, { width: 1, height: 1, data: new Uint8Array(4) });
       });
-      wireEvents(m);
+      unwire = wireEvents(m);
       m.once("load", () => onReady?.());
     })();
     return () => {
       cancelled = true;
+      unwire?.();
       mapRef.current?.remove();
       mapRef.current = null;
       setMapInstance(null);
@@ -129,25 +132,70 @@ function wireEvents(m: maplibregl.Map) {
     const id = topShapeAt(e.point);
     if (id && id === useShapes.getState().selectedId) {
       e.preventDefault();
+      holding = true;
+      refresh();
       startMove(id, e.originalEvent.clientX, e.originalEvent.clientY);
     }
   });
 
-  // Hover: cursor plus a slightly thicker outline.
+  // Hover (a slightly thicker outline) and the cursor: an arrow on empty map, a pointer over a
+  // shape, an open hand over the selected shape (it drags from its body), a closed hand while
+  // holding it, and the four-way arrow while panning. Both are worked out again from the last
+  // mouse position whenever the mouse, the map, the shapes or a drag changes, so they stay right
+  // when something moves under a still mouse.
   let hovered: string | null = null;
+  let mouse: maplibregl.Point | null = null;
+  let panning = false;
+  let holding = false;
   const setHover = (id: string | null) => {
     if (hovered === id) return;
     if (hovered && m.getSource("soa-shapes")) m.setFeatureState({ source: "soa-shapes", id: hovered }, { hover: false });
     hovered = id;
     if (id && m.getSource("soa-shapes")) m.setFeatureState({ source: "soa-shapes", id }, { hover: true });
   };
-  m.on("mousemove", (e) => {
-    if (useUI.getState().mode !== "browse") return setHover(null);
-    const id = topShapeAt(e.point);
-    setHover(id);
-    m.getCanvas().style.cursor = id ? (id === useShapes.getState().selectedId ? "move" : "pointer") : "";
+  const refresh = () => {
+    const canvas = m.getCanvas();
+    if (useUI.getState().mode !== "browse") {
+      canvas.style.cursor = "";
+      return setHover(null);
+    }
+    const under = mouse ? topShapeAt(mouse) : null;
+    // While a shape is moved or rotated, the shapes it passes over don't light up.
+    const kind = useLive.getState().kind;
+    setHover(kind === "move" || kind === "rotate" ? null : pinHover.id ?? under);
+    canvas.style.cursor = panning ? "move" : holding ? "grabbing" : under ? (under === useShapes.getState().selectedId ? "grab" : "pointer") : "";
+  };
+  // Plain DOM events, because MapLibre holds back its own "mousemove" while the map is being panned.
+  const container = m.getCanvasContainer();
+  const onMouseMove = (e: MouseEvent) => {
+    const r = container.getBoundingClientRect();
+    mouse = new maplibregl.Point(e.clientX - r.left, e.clientY - r.top);
+    pinHover.id = null;
+    refresh();
+  };
+  const onMouseLeave = () => {
+    mouse = null;
+    refresh();
+  };
+  container.addEventListener("mousemove", onMouseMove);
+  container.addEventListener("mouseleave", onMouseLeave);
+  m.on("mouseup", () => {
+    holding = false;
+    refresh();
   });
-  m.on("mouseout", () => setHover(null));
+  m.on("dragstart", () => {
+    panning = true;
+    refresh();
+  });
+  m.on("dragend", () => {
+    panning = false;
+    refresh();
+  });
+  m.on("move", refresh);
+  // After new shape data has drawn (a drop, an edit), so the query sees it.
+  m.on("idle", refresh);
+  pinHover.changed = refresh;
+  const unsubscribe = [useShapes.subscribe(refresh), useLive.subscribe(refresh), useUI.subscribe(refresh)];
 
   // Touch: hold a shape for 400 ms to pick it up. A plain one-finger drag still pans.
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -179,4 +227,11 @@ function wireEvents(m: maplibregl.Map) {
   });
   m.on("touchend", cancel);
   m.on("dragstart", cancel);
+
+  return () => {
+    container.removeEventListener("mousemove", onMouseMove);
+    container.removeEventListener("mouseleave", onMouseLeave);
+    unsubscribe.forEach((u) => u());
+    pinHover.changed = () => {};
+  };
 }
