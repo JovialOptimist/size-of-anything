@@ -6,12 +6,13 @@
 import { useEffect, useReducer, type WheelEvent as ReactWheelEvent } from "react";
 import { flushSync } from "react-dom";
 import { RotateCw, RotateCcw, Copy, Trash2, PanelLeftOpen } from "lucide-react";
-import { getMap, getPad } from "./mapCore";
+import { getMap, getPad, shapePaint } from "./mapCore";
 import { startMove, startRotate, useLive, rotateBy, getDragLocal } from "./interaction";
+import { setPinHover } from "./hover";
 import { pinAt, pinPoint, shapeBBox } from "./pins";
 import { shapeColor } from "./palette";
 import { useShapes, type Shape } from "../state/shapes";
-import { useIsDark, useSettings } from "../state/settings";
+import { FILL_OPACITY, useIsDark, useSettings } from "../state/settings";
 import { useUI } from "../state/ui";
 import { ShapeIcon } from "../ui/icons";
 import { duplicateShape, deleteShape } from "../ui/actions";
@@ -104,6 +105,7 @@ export default function Overlays() {
   const basemap = useSettings((s) => s.basemap);
   const showToolbar = useSettings((s) => s.showToolbar);
   const labels = useSettings((s) => s.labels);
+  const fill = useSettings((s) => s.fill);
   const seenDragHint = useSettings((s) => s.seenDragHint);
   const isDark = useIsDark();
   const darkMap = basemap === "satellite" || isDark;
@@ -167,12 +169,16 @@ export default function Overlays() {
       }).join("L") + "Z")
       .join("");
   }
+  // Drawn like the WebGL shape in its state: selected, or hovered when an unselected shape is dragged by its pin.
+  const dragPaint = shapePaint(live.id === selectedId ? "selected" : "hovered", { darkMap, satellite: basemap === "satellite", fillOpacity: FILL_OPACITY[fill] });
 
   return (
     <div className="overlays" onWheel={forwardWheel} aria-hidden={mode !== "browse" ? true : undefined}>
       {dragPath && dragShape && (
         <svg className="drag-shape" width={W} height={H} aria-hidden="true" style={{ ["--c" as string]: shapeColor(dragShape.slot, darkMap) }}>
-          <path d={dragPath} className={basemap === "satellite" ? "is-sat" : undefined} />
+          <path d={dragPath} className="drag-shape__fill" fillOpacity={dragPaint.fillOpacity} />
+          {dragPaint.casingWidth > 0 && <path d={dragPath} className="drag-shape__line" style={{ stroke: dragPaint.casingColor }} strokeWidth={dragPaint.casingWidth} strokeOpacity={dragPaint.casingOpacity} />}
+          <path d={dragPath} className="drag-shape__line" strokeWidth={dragPaint.lineWidth} />
         </svg>
       )}
       {items.map(({ s, p }) => {
@@ -188,6 +194,8 @@ export default function Overlays() {
               type="button"
               className="pin"
               aria-label={selected ? `Move ${s.name}. Drag, or use the arrow keys.` : `Select ${s.name}`}
+              onPointerEnter={(e) => e.pointerType === "mouse" && setPinHover(s.id)}
+              onPointerLeave={(e) => e.pointerType === "mouse" && setPinHover(null)}
               onPointerDown={(e) => {
                 if (e.button !== 0) return;
                 e.preventDefault();

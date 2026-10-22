@@ -80,20 +80,36 @@ function firstSymbolLayer(m: maplibregl.Map) {
   return layers[lastShape + 1]?.id;
 }
 
+export type ShapeState = "resting" | "hovered" | "selected";
+
+/** How a shape is drawn in each state. The WebGL layers and the drag overlay both use this. */
+export function shapePaint(state: ShapeState, look: LayerLook) {
+  const selected = state === "selected";
+  return {
+    fillOpacity: selected ? look.fillOpacity + 0.1 : look.fillOpacity,
+    casingColor: look.satellite ? "rgba(16,20,24,0.75)" : look.darkMap ? "#0c0c0c" : "#ffffff",
+    casingWidth: selected ? 7 : look.satellite ? 4.5 : 0,
+    casingOpacity: selected ? 0.9 : look.satellite ? 1 : 0,
+    lineWidth: selected ? 3.5 : state === "hovered" ? 3.2 : look.satellite ? 2.5 : 2,
+  };
+}
+
 export function ensureLayers(m: maplibregl.Map, look: LayerLook) {
   for (const id of ["soa-shapes", "soa-drag", "soa-preview", "soa-draw"]) {
     if (!m.getSource(id)) m.addSource(id, { type: "geojson", data: EMPTY, tolerance: id === "soa-drag" ? 0.6 : 0.375, promoteId: "id" });
   }
   const before = firstSymbolLayer(m);
-  const casing = look.satellite ? "rgba(16,20,24,0.75)" : look.darkMap ? "#0c0c0c" : "#ffffff";
+  const paint = { selected: shapePaint("selected", look), hovered: shapePaint("hovered", look), resting: shapePaint("resting", look) };
+  const byState = (key: "fillOpacity" | "casingWidth" | "casingOpacity" | "lineWidth"): maplibregl.ExpressionSpecification =>
+    ["case", ["get", "selected"], paint.selected[key], ["boolean", ["feature-state", "hover"], false], paint.hovered[key], paint.resting[key]];
   const add = (layer: maplibregl.AddLayerObject, beforeId?: string) => {
     if (!m.getLayer(layer.id)) m.addLayer(layer, beforeId);
   };
   for (const src of ["soa-shapes", "soa-drag"]) {
     const p = src === "soa-drag" ? "soa-drag" : "soa";
-    add({ id: `${p}-fill`, type: "fill", source: src, paint: { "fill-color": ["get", "color"], "fill-opacity": ["case", ["get", "selected"], look.fillOpacity + 0.1, look.fillOpacity] } }, before);
-    add({ id: `${p}-casing`, type: "line", source: src, paint: { "line-color": casing, "line-width": ["case", ["get", "selected"], 7, look.satellite ? 4.5 : 0], "line-opacity": ["case", ["get", "selected"], 0.9, look.satellite ? 1 : 0] }, layout: { "line-join": "round" } }, before);
-    add({ id: `${p}-line`, type: "line", source: src, paint: { "line-color": ["get", "color"], "line-width": ["case", ["get", "selected"], 3.5, ["boolean", ["feature-state", "hover"], false], 3.2, look.satellite ? 2.5 : 2] }, layout: { "line-join": "round" } }, before);
+    add({ id: `${p}-fill`, type: "fill", source: src, paint: { "fill-color": ["get", "color"], "fill-opacity": byState("fillOpacity") } }, before);
+    add({ id: `${p}-casing`, type: "line", source: src, paint: { "line-color": paint.resting.casingColor, "line-width": byState("casingWidth"), "line-opacity": byState("casingOpacity") }, layout: { "line-join": "round" } }, before);
+    add({ id: `${p}-line`, type: "line", source: src, paint: { "line-color": ["get", "color"], "line-width": byState("lineWidth") }, layout: { "line-join": "round" } }, before);
   }
   add({ id: "soa-preview-fill", type: "fill", source: "soa-preview", paint: { "fill-color": look.darkMap ? "#e8ebef" : "#1b2026", "fill-opacity": 0.1 } });
   add({ id: "soa-preview-line", type: "line", source: "soa-preview", paint: { "line-color": look.darkMap ? "#e8ebef" : "#1b2026", "line-width": 2.5, "line-dasharray": [2, 1.5] } });
