@@ -81,23 +81,43 @@ function firstSymbolLayer(m: maplibregl.Map) {
   return layers[lastShape + 1]?.id;
 }
 
+export type ShapeState = "resting" | "hovered" | "selected";
+
+/** How a shape is drawn in each state. The WebGL layers and the drag overlay both use this. */
+export function shapePaint(state: ShapeState, look: LayerLook) {
+  const selected = state === "selected";
+  return {
+    fillOpacity: selected ? look.fillOpacity + 0.1 : look.fillOpacity,
+    casingColor: look.satellite ? "rgba(16,20,24,0.75)" : look.darkMap ? "#0c0c0c" : "#ffffff",
+    casingWidth: selected ? 7 : look.satellite ? 4.5 : 0,
+    casingOpacity: selected ? 0.9 : look.satellite ? 1 : 0,
+    lineWidth: selected ? 3.5 : state === "hovered" ? 3.2 : look.satellite ? 2.5 : 2,
+  };
+}
+
 export function ensureLayers(m: maplibregl.Map, look: LayerLook) {
   for (const id of ["soa-shapes", "soa-borders", "soa-drag", "soa-preview", "soa-draw"]) {
     if (!m.getSource(id)) m.addSource(id, { type: "geojson", data: EMPTY, tolerance: id === "soa-drag" ? 0.6 : 0.375, promoteId: "id" });
   }
   const before = firstSymbolLayer(m);
-  const casing = look.satellite ? "rgba(16,20,24,0.75)" : look.darkMap ? "#0c0c0c" : "#ffffff";
+  const paint = { selected: shapePaint("selected", look), hovered: shapePaint("hovered", look), resting: shapePaint("resting", look) };
+  const byState = (key: "fillOpacity" | "casingWidth" | "casingOpacity" | "lineWidth"): maplibregl.ExpressionSpecification =>
+    ["case", ["get", "selected"], paint.selected[key], ["boolean", ["feature-state", "hover"], false], paint.hovered[key], paint.resting[key]];
+  // See hideShape().
+  const unlessHidden = (opacity: number | maplibregl.ExpressionSpecification): maplibregl.ExpressionSpecification =>
+    ["case", ["boolean", ["feature-state", "hidden"], false], 0, opacity];
   const add = (layer: maplibregl.AddLayerObject, beforeId?: string) => {
     if (!m.getLayer(layer.id)) m.addLayer(layer, beforeId);
   };
   // The border as mapped, where water was taken out: faint and dashed, under the shapes.
-  add({ id: "soa-border", type: "line", source: "soa-borders", paint: { "line-color": ["get", "color"], "line-width": 1.25, "line-opacity": 0.7, "line-dasharray": [2, 2] } }, before);
+  add({ id: "soa-border", type: "line", source: "soa-borders", paint: { "line-color": ["get", "color"], "line-width": 1.25, "line-opacity": unlessHidden(0.7), "line-dasharray": [2, 2] } }, before);
   for (const src of ["soa-shapes", "soa-drag"]) {
     const p = src === "soa-drag" ? "soa-drag" : "soa";
-    add({ id: `${p}-fill`, type: "fill", source: src, paint: { "fill-color": ["get", "color"], "fill-opacity": ["case", ["get", "selected"], look.fillOpacity + 0.1, look.fillOpacity] } }, before);
-    add({ id: `${p}-casing`, type: "line", source: src, paint: { "line-color": casing, "line-width": ["case", ["get", "selected"], 7, look.satellite ? 4.5 : 0], "line-opacity": ["case", ["get", "selected"], 0.9, look.satellite ? 1 : 0] }, layout: { "line-join": "round" } }, before);
-    add({ id: `${p}-line`, type: "line", source: src, paint: { "line-color": ["get", "color"], "line-width": ["case", ["get", "selected"], 3.5, ["boolean", ["feature-state", "hover"], false], 3.2, look.satellite ? 2.5 : 2] }, layout: { "line-join": "round" } }, before);
+    add({ id: `${p}-fill`, type: "fill", source: src, paint: { "fill-color": ["get", "color"], "fill-opacity": unlessHidden(byState("fillOpacity")) } }, before);
+    add({ id: `${p}-casing`, type: "line", source: src, paint: { "line-color": paint.resting.casingColor, "line-width": byState("casingWidth"), "line-opacity": unlessHidden(byState("casingOpacity")) }, layout: { "line-join": "round" } }, before);
+    add({ id: `${p}-line`, type: "line", source: src, paint: { "line-color": ["get", "color"], "line-width": byState("lineWidth"), "line-opacity": unlessHidden(1) }, layout: { "line-join": "round" } }, before);
   }
+  if (hiddenId) for (const src of ["soa-shapes", "soa-borders"]) if (m.getSource(src)) m.setFeatureState({ source: src, id: hiddenId }, { hidden: true });
   const notBorder: maplibregl.FilterSpecification = ["!", ["boolean", ["get", "border"], false]];
   add({ id: "soa-preview-fill", type: "fill", source: "soa-preview", filter: notBorder, paint: { "fill-color": look.darkMap ? "#e8ebef" : "#1b2026", "fill-opacity": 0.1 } });
   add({ id: "soa-preview-line", type: "line", source: "soa-preview", filter: notBorder, paint: { "line-color": look.darkMap ? "#e8ebef" : "#1b2026", "line-width": 2.5, "line-dasharray": [2, 1.5] } });
@@ -111,20 +131,37 @@ function feature(s: Shape, geom: AreaGeometry, selected: boolean, darkMap: boole
   return { type: "Feature", id: undefined, geometry: geom as GeoJSON.Geometry, properties: { id: s.id, color: shapeColor(s.slot, darkMap), selected } };
 }
 
-export function syncShapes(shapes: Shape[], selectedId: string | null, darkMap: boolean, hiddenId?: string) {
+export function syncShapes(shapes: Shape[], selectedId: string | null, darkMap: boolean) {
   const m = map;
   if (!m || !m.getSource("soa-shapes")) return;
-  const visible = shapes.filter((s) => s.id !== hiddenId);
   // Selected shape last so it draws on top.
-  visible.sort((a, b) => Number(a.id === selectedId) - Number(b.id === selectedId));
-  (m.getSource("soa-shapes") as GeoJSONSource).setData({ type: "FeatureCollection", features: visible.map((s) => feature(s, placedGeometry(s), s.id === selectedId, darkMap)) });
+  const ordered = [...shapes].sort((a, b) => Number(a.id === selectedId) - Number(b.id === selectedId));
+  (m.getSource("soa-shapes") as GeoJSONSource).setData({ type: "FeatureCollection", features: ordered.map((s) => feature(s, placedGeometry(s), s.id === selectedId, darkMap)) });
   const borders = useSettings.getState().showOriginalBorder
-    ? visible.flatMap((s) => {
+    ? ordered.flatMap((s) => {
         const g = placedOriginal(s);
         return g ? [feature(s, g, s.id === selectedId, darkMap)] : [];
       })
     : [];
   (m.getSource("soa-borders") as GeoJSONSource).setData({ type: "FeatureCollection", features: borders });
+}
+
+/**
+ * Hides a shape in the WebGL layers (opacity 0) while the overlay draws it during a gesture.
+ * The two have to swap in the same frame, or for a moment the fill is drawn twice (darker) or
+ * not at all. Feature state takes effect on the map's next frame; new data or a layer filter
+ * goes through MapLibre's worker first and can take a few frames.
+ * Its original border (where water was taken out) is hidden with it.
+ */
+let hiddenId: string | null = null;
+
+export function hideShape(id: string | null) {
+  for (const src of ["soa-shapes", "soa-borders"]) {
+    if (!map?.getSource(src)) continue;
+    if (hiddenId) map.setFeatureState({ source: src, id: hiddenId }, { hidden: false });
+    if (id) map.setFeatureState({ source: src, id }, { hidden: true });
+  }
+  hiddenId = id;
 }
 
 export function setDragShape(s: Shape | null, geom: AreaGeometry | null, darkMap: boolean) {
