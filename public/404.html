@@ -4,6 +4,7 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="color-scheme" content="light dark" />
+        <meta name="theme-color" content="#ffffff" />
         <meta name="robots" content="noindex" />
         <link rel="icon" type="image/png" href="/favicon.png" />
         <title>Page not found – The Size of Anything</title>
@@ -13,6 +14,8 @@
                 var t = (JSON.parse(localStorage.getItem("soa-settings-v2") || "{}").state || {}).theme || "system";
                 var d = t === "dark" || (t === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
                 document.documentElement.dataset.theme = d ? "dark" : "light";
+                // Same colours as App.tsx uses for the browser toolbar.
+                if (d) document.querySelector('meta[name="theme-color"]').setAttribute("content", "#171b20");
             } catch (e) {}
         </script>
         <style>
