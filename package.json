@@ -3,11 +3,10 @@
   "private": true,
   "version": "0.5.0",
   "type": "module",
-  "homepage": "https://jovialoptimist.github.io/size-of-anything",
+  "homepage": "https://thesizeofanything.com",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "build:netlify": "tsc -b && vite build --base=/",
     "lint": "eslint .",
     "preview": "vite preview"
   },

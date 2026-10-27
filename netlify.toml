@@ -1,14 +1,6 @@
 [build]
   publish = "dist"
-  command = "npm run build:netlify"
+  command = "npm run build"
 
-[context.production]
-  environment = { VITE_BASE_PATH = "/" }
-
-[context.deploy-preview]
-  environment = { VITE_BASE_PATH = "/" }
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+# No catch-all rewrite: the app lives at / (share links are /?c=…), so unknown
+# paths get public/404.html instead of the app.
