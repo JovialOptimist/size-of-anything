@@ -78,7 +78,8 @@ export async function loadFromUrl(): Promise<boolean> {
       if (e.k === "o" && e.id) {
         const place: PlaceResult = { key: e.id, osmType: e.id[0] as "W", osmId: Number(e.id.slice(1)), name: e.n, type: e.t ?? "", icon: e.i ?? "pin", locality: e.l ?? "", source: "nominatim" };
         const o = await fetchOutline(place);
-        shape = buildShape({ ...common, source: { kind: "osm", key: o.key }, geometry: o.geometry, water: e.w }, out);
+        // Links from before water removal have no `w`: they showed borders as mapped, so keep that.
+        shape = buildShape({ ...common, source: { kind: "osm", key: o.key }, geometry: o.geometry, water: e.w ?? "keep" }, out);
       } else if (e.k === "x" && e.id) {
         shape = buildShape({ ...common, source: { kind: "object", id: e.id }, icon: "object" }, out);
         const { objectById } = await import("../objects/registry");

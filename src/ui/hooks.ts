@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useIsDark, useMediaQuery, useSettings } from "../state/settings";
 import { shapeColor } from "../map/palette";
 import { geometryArea, type AreaGeometry } from "../geo/geometry";
-import { removesWater, waterlessFor, type Waterless } from "../geo/water";
+import { hasLakes, removesWater, waterlessFor, type Waterless } from "../geo/water";
 import type { Outline } from "../geo/services";
 
 export interface WaterOutline {
@@ -44,7 +44,7 @@ export function useWaterOutline(o: Outline | undefined | null): WaterOutline | u
     const dry = w.all ?? w.sea;
     return mode === "keep" && dry ? { ...base, waterIn: asMapped - dry.area } : base;
   }
-  const lakes = mode === "all" && !!w.all && (!w.sea || w.all.area < w.sea.area * 0.999);
+  const lakes = mode === "all" && hasLakes(w);
   return { ...base, geometry: cut.geometry, area: cut.area, original: o.geometry, removed: w.sea && lakes ? "sea and lakes" : lakes ? "lakes" : "sea" };
 }
 

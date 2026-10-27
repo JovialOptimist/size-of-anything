@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Search, Loader2, X, Plus, MapPinned } from "lucide-react";
-import { useUI, announce } from "../../state/ui";
+import { useUI, announce, type RecentItem } from "../../state/ui";
+import { cachedWaterless, dryAreas, removesWater, type WaterMode } from "../../geo/water";
 import { useSearch } from "../../state/search";
 import { useSettings } from "../../state/settings";
 import { fetchOutline, searchPlaces, suggestPlaces, ServiceError, type Outline, type PlaceResult } from "../../geo/services";
@@ -16,8 +17,11 @@ import { useSwatch } from "../hooks";
 
 type Item =
   | { kind: "object"; obj: RefObject }
-  | { kind: "place"; place: PlaceResult & { area?: number }; recent?: boolean }
+  | { kind: "place"; place: PlaceResult & Pick<RecentItem, "area" | "dry">; recent?: boolean }
   | { kind: "osm" };
+
+/** A recent place's area with the water setting applied, once it was measured. */
+const recentArea = (p: Pick<RecentItem, "area" | "dry">, mode: WaterMode) => (mode === "keep" ? undefined : p.dry?.[mode]) ?? p.area;
 
 function highlight(text: string, q: string) {
   const i = text.toLowerCase().indexOf(q.toLowerCase());
@@ -41,11 +45,21 @@ export default function SearchView() {
   const recent = useUI((s) => s.recent);
   const rememberRecent = useSettings((s) => s.rememberRecent);
   const units = useSettings((s) => s.units);
+  const water = useSettings((s) => s.water);
   const swatch = useSwatch();
   const input = useRef<HTMLInputElement>(null);
   const abort = useRef<AbortController | null>(null);
 
   useEffect(() => input.current?.focus(), []);
+
+  // Recent places saved before water removal only know their area as mapped; fill in the rest
+  // from the water cache, where they were measured when added.
+  useEffect(() => {
+    for (const r of recent) {
+      if (r.dry || !removesWater(r.icon)) continue;
+      cachedWaterless(r.key).then((w) => w && useUI.getState().patchRecent(r.key, { dry: dryAreas(w) }));
+    }
+  }, [recent]);
 
   // Photon suggestions while typing.
   useEffect(() => {
@@ -213,7 +227,7 @@ export default function SearchView() {
                 <button id={`opt-${i}`} role="option" aria-selected={i === active} aria-expanded={isOpen} type="button" className="row" onClick={() => toggle(p)} onMouseEnter={() => setActive(i)}>
                   <span className="row__ico"><ShapeIcon icon={p.icon} size={17} /></span>
                   <span className="row__main"><b>{highlight(p.name, q.trim())}</b><small>{[it.recent ? "Recent" : p.type, p.locality].filter(Boolean).join(" · ")}</small></span>
-                  <span className="row__end">{loadingKey === p.key ? <Loader2 size={16} className="spin" /> : o ? <OutlineArea o={o} /> : p.area ? <Literal>{formatArea(p.area, units)}</Literal> : null}</span>
+                  <span className="row__end">{loadingKey === p.key ? <Loader2 size={16} className="spin" /> : o ? <OutlineArea o={o} /> : p.area ? <Literal>{formatArea(recentArea(p, water)!, units)}</Literal> : null}</span>
                 </button>
                 {isOpen && o && (
                   <div className="result__body">

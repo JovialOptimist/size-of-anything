@@ -25,13 +25,35 @@ const MIN_LAKE = 0.0005;
 
 type Poly = GeoJSON.Feature<GeoJSON.Polygon | GeoJSON.MultiPolygon>;
 
+/**
+ * fetch, tried up to three times on a network error, 429 or 5xx: a place needs up to MAX_TILES
+ * requests, and losing any one of them loses the whole measurement.
+ */
+async function fetchRetrying(url: string): Promise<Response> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const res = await fetch(url);
+      if (attempt === 3 || (res.status !== 429 && res.status < 500)) return res;
+    } catch (e) {
+      if (attempt === 3) throw e;
+    }
+    await new Promise((r) => setTimeout(r, 400 * attempt));
+  }
+}
+
 let template: Promise<string> | undefined;
 /** The tile URL template. It names a dated build of the planet, so ask the TileJSON for it. */
 function tileTemplate() {
-  template ??= fetch(WATER_TILES).then(async (r) => {
-    if (!r.ok) throw new Error(`TileJSON ${r.status}`);
-    return ((await r.json()) as { tiles: string[] }).tiles[0];
-  });
+  template ??= fetchRetrying(WATER_TILES)
+    .then(async (r) => {
+      if (!r.ok) throw new Error(`TileJSON ${r.status}`);
+      return ((await r.json()) as { tiles: string[] }).tiles[0];
+    })
+    .catch((e) => {
+      // Ask again next time rather than failing every place for the rest of the session.
+      template = undefined;
+      throw e;
+    });
   return template;
 }
 
@@ -66,7 +88,7 @@ async function waterIn(geom: AreaGeometry): Promise<{ sea: Poly[]; inland: Poly[
   const inland: Poly[] = [];
   await Promise.all(
     tiles.map(async ([x, y]) => {
-      const res = await fetch(url.replace("{z}", String(z)).replace("{x}", String(x)).replace("{y}", String(y)));
+      const res = await fetchRetrying(url.replace("{z}", String(z)).replace("{x}", String(x)).replace("{y}", String(y)));
       if (!res.ok) throw new Error(`tile ${z}/${x}/${y}: ${res.status}`);
       const layer = new VectorTile(new PbfReader(new Uint8Array(await res.arrayBuffer()))).layers.water;
       if (!layer) return;

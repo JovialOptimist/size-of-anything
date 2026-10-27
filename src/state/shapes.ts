@@ -21,7 +21,7 @@ import {
   type LocalShape,
 } from "../geo/geometry";
 import type { IconKey } from "../geo/categories";
-import { removesWater, waterlessFor, type WaterCut, type WaterMode, type Waterless } from "../geo/water";
+import { removesWater, waterlessFor, WATER_VERSION, type WaterCut, type WaterMode, type Waterless } from "../geo/water";
 import { idbGet, idbSet } from "./idb";
 import { useSettings } from "./settings";
 import { objectById, type MetersPolys } from "../objects/registry";
@@ -266,7 +266,9 @@ export async function restoreSession(): Promise<boolean> {
   const saved = await idbGet<Shape[]>(SESSION_KEY);
   useShapes.setState({ hydrated: true });
   if (saved?.length && !useShapes.getState().shapes.length) {
-    useShapes.setState({ shapes: saved });
+    // Measure water again where it failed last time or was measured by an older version.
+    const fresh = (s: Shape) => s.waterless === undefined || s.waterless?.v === WATER_VERSION;
+    useShapes.setState({ shapes: saved.map((s) => (fresh(s) ? s : { ...s, waterless: undefined })) });
     return true;
   }
   return false;
@@ -281,19 +283,29 @@ useShapes.subscribe((st, prev) => {
 
 // ---------- measuring water ----------
 const sameOsm = (s: Shape, key: string) => s.source.kind === "osm" && s.source.key === key;
+const unmeasured = (s: Shape, key: string) => sameOsm(s, key) && s.waterless === undefined;
+const withWaterless = (list: Shape[], key: string, waterless: Waterless | null) =>
+  list.some((x) => unmeasured(x, key)) ? list.map((x) => (unmeasured(x, key) ? { ...x, waterless } : x)) : list;
+const measuring = new Set<string>();
 
 // Any border whose water isn't measured yet (new, restored, shared or brought back by undo) gets
 // measured, once per place, and every shape of that place gets the result. It's data, not an
-// edit, so it doesn't go into the undo history.
+// edit, so it doesn't become an undo step; but it goes into the undo history too, or undoing would
+// bring back an unmeasured copy that draws as mapped until it's measured again.
 useShapes.subscribe((st, prev) => {
   if (st.shapes === prev.shapes) return;
   for (const s of st.shapes) {
-    if (!measuringWater(s) || s.source.kind !== "osm" || !s.geometry) continue;
+    if (!measuringWater(s) || s.source.kind !== "osm" || !s.geometry || measuring.has(s.source.key)) continue;
     const key = s.source.key;
+    measuring.add(key);
     waterlessFor(key, s.geometry).then((waterless) => {
-      const { shapes } = useShapes.getState();
-      if (!shapes.some((x) => sameOsm(x, key) && x.waterless === undefined)) return;
-      useShapes.setState({ shapes: shapes.map((x) => (sameOsm(x, key) && x.waterless === undefined ? { ...x, waterless } : x)) });
+      measuring.delete(key);
+      const { shapes, past, future } = useShapes.getState();
+      useShapes.setState({
+        shapes: withWaterless(shapes, key, waterless),
+        past: past.map((l) => withWaterless(l, key, waterless)),
+        future: future.map((l) => withWaterless(l, key, waterless)),
+      });
     });
   }
 });

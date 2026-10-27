@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { RotateCcw, Copy, Trash2, ExternalLink, Scaling, X, ChevronLeft, ChevronRight, ChevronDown, Check, Globe, TrianglesCenterlineDashedHorizontal, TrianglesCenterlineDashedVertical } from "lucide-react";
 import { useShapes, shapeArea, baseArea, canRemoveWater, measuringWater, waterMode } from "../../state/shapes";
-import { WATER_OPTIONS, type WaterMode } from "../../geo/water";
+import { WATER_OPTIONS, hasLakes, type WaterMode } from "../../geo/water";
 import { useSettings } from "../../state/settings";
 import { useUI, announce } from "../../state/ui";
 import { toast } from "../../state/toasts";
@@ -130,7 +130,6 @@ export default function DetailView({ id }: { id: string }) {
   );
 }
 
-/** Water inside a border: keep it, drop the sea, or keep only land. Hidden where there's none. */
 /**
  * Water inside a border, as a chip in the area line: it takes no room at the top of the page and
  * sits next to the number it changes. Its menu lists each choice with the area it gives. Nothing
@@ -155,7 +154,7 @@ function WaterChip({ s, separator }: { s: Shape; separator: boolean }) {
   const w = s.waterless;
   if (!canRemoveWater(s) || measuringWater(s) || (!w?.sea && !w?.all)) return null;
   // Offer only choices that change something: a lake city has no sea, an island country may have no lakes.
-  const lakes = !!w.all && (!w.sea || w.all.area < w.sea.area * 0.999);
+  const lakes = hasLakes(w);
   const k = s.scale * s.scale;
   const areaOf: Record<WaterMode, number | undefined> = { keep: s.area * k, sea: w.sea ? w.sea.area * k : undefined, all: lakes ? w.all!.area * k : undefined };
   const options = WATER_OPTIONS.filter(([m]) => areaOf[m] !== undefined);
@@ -172,6 +171,8 @@ function WaterChip({ s, separator }: { s: Shape; separator: boolean }) {
     const items = [...(menu.current?.querySelectorAll<HTMLElement>('[role="menuitemradio"]') ?? [])];
     const i = items.indexOf(document.activeElement as HTMLElement);
     if (e.key === "Escape") {
+      // With the menu closed, Escape is the app's (deselect and go home).
+      if (!open) return;
       e.stopPropagation();
       setOpen(false);
       chip.current?.focus();
