@@ -7,7 +7,16 @@
         <meta name="robots" content="noindex" />
         <link rel="icon" type="image/png" href="/favicon.png" />
         <title>Page not found – The Size of Anything</title>
+        <script>
+            // Same as index.html: use the theme picked in the app's settings.
+            try {
+                var t = (JSON.parse(localStorage.getItem("soa-settings-v2") || "{}").state || {}).theme || "system";
+                var d = t === "dark" || (t === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
+                document.documentElement.dataset.theme = d ? "dark" : "light";
+            } catch (e) {}
+        </script>
         <style>
+            /* Copied from src/styles/app.css and the purple preset in src/config.ts; update them together. */
             :root {
                 --bg: oklch(0.975 0.004 255);
                 --text: #1b2026;
@@ -15,8 +24,15 @@
                 --accent: #6d4ae0;
                 --on-accent: #ffffff;
             }
+            :root[data-theme="dark"] {
+                --bg: #0e1217;
+                --text: #e8ebef;
+                --text-muted: #a6abb2;
+                --accent: #b39cff;
+                --on-accent: #120d24;
+            }
             @media (prefers-color-scheme: dark) {
-                :root {
+                :root:not([data-theme]) {
                     --bg: #0e1217;
                     --text: #e8ebef;
                     --text-muted: #a6abb2;
