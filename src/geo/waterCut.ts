@@ -65,10 +65,41 @@ const tileY = (lat: number, z: number) => {
 const tileLng = (x: number, z: number) => (x / 2 ** z) * 360 - 180;
 const tileLat = (y: number, z: number) => (Math.atan(Math.sinh(Math.PI * (1 - (2 * y) / 2 ** z))) * 180) / Math.PI;
 
+type Ring = PolygonCoords[number];
+
+/** Corners sharper than about half a degree. */
+const SPIKE = 0.01;
+
+/**
+ * Close the hairline cracks in the tiles' sea. It's built from pieces, and some joins leave a
+ * needle of not-sea running dead straight along a tile line (one goes 166 km out from Hokkaido's
+ * coast); cutting a border along it leaves a sliver of "land" in the sea. Only needles with a
+ * side due north-south or east-west go, so real ones, like the ditches of a polder, stay.
+ */
+function closeCracks(ring: Ring): Ring {
+  const pts = ring.slice(0, -1);
+  for (let changed = true; changed && pts.length > 3; ) {
+    changed = false;
+    for (let i = 0; i < pts.length && pts.length > 3; ) {
+      const [bx, by] = pts[i];
+      const [ax, ay] = pts[(i + pts.length - 1) % pts.length];
+      const [cx, cy] = pts[(i + 1) % pts.length];
+      const k = Math.cos((by * Math.PI) / 180); // so a degree of longitude counts for what it covers
+      const ux = (ax - bx) * k, uy = ay - by, vx = (cx - bx) * k, vy = cy - by;
+      const straight = ax === bx || ay === by || cx === bx || cy === by;
+      if (straight && ux * vx + uy * vy > 0 && Math.abs(ux * vy - uy * vx) < SPIKE * Math.hypot(ux, uy) * Math.hypot(vx, vy)) {
+        pts.splice(i, 1);
+        changed = true;
+      } else i++;
+    }
+  }
+  return [...pts, pts[0]];
+}
+
 /** Rings with fewer than four points (left over from clipping) make the polygon library throw. */
-function cleanPolygons(geom: GeoJSON.Polygon | GeoJSON.MultiPolygon): PolygonCoords[] {
+function cleanPolygons(geom: GeoJSON.Polygon | GeoJSON.MultiPolygon, cracks = false): PolygonCoords[] {
   const polys = (geom.type === "Polygon" ? [geom.coordinates] : geom.coordinates) as PolygonCoords[];
-  return polys.map((p) => p.filter((r) => r.length >= 4)).filter((p) => p.length > 0 && p[0].length >= 4);
+  return polys.map((p) => (cracks ? p.map(closeCracks) : p).filter((r) => r.length >= 4)).filter((p) => p.length > 0 && p[0].length >= 4);
 }
 
 function asFeature(polys: PolygonCoords[]): Poly {
@@ -98,8 +129,9 @@ async function waterIn(geom: AreaGeometry): Promise<{ sea: Poly[]; inland: Poly[
         const f = layer.feature(i).toGeoJSON(x, y, z) as GeoJSON.Feature;
         if (f.geometry.type !== "Polygon" && f.geometry.type !== "MultiPolygon") continue;
         if (f.properties?.class === "swimming_pool") continue;
-        const polys = cleanPolygons(bboxClip(f as Poly, square).geometry as GeoJSON.Polygon | GeoJSON.MultiPolygon);
-        if (polys.length) (f.properties?.class === "ocean" ? sea : inland).push(asFeature(polys));
+        const ocean = f.properties?.class === "ocean";
+        const polys = cleanPolygons(bboxClip(f as Poly, square).geometry as GeoJSON.Polygon | GeoJSON.MultiPolygon, ocean);
+        if (polys.length) (ocean ? sea : inland).push(asFeature(polys));
       }
     })
   );
