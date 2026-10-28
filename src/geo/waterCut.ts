@@ -112,12 +112,23 @@ function minus(shape: Poly | null, water: Poly[]): Poly | null {
   return merged ? (difference(featureCollection([shape, merged as Poly])) as Poly | null) : shape;
 }
 
+/**
+ * Simplifying thins each ring on its own, so a ring can end up crossing itself or a neighbour,
+ * and the map then fills that part twice. A union with itself redraws the outline without crossings.
+ */
+function untangle(geom: AreaGeometry): AreaGeometry {
+  const f: Poly = { type: "Feature", properties: {}, geometry: geom };
+  return (union(featureCollection([f, f]))?.geometry as AreaGeometry | undefined) ?? geom;
+}
+
 /** Keep a cut only if it removed something, and didn't remove nearly everything (a place that's mostly water). */
 function toCut(cut: Poly | null, before: number): WaterCut | null {
   if (!cut) return null;
   const polys = cleanPolygons(cut.geometry);
   if (!polys.length) return null;
-  const geometry = simplifyGeometry(polys.length === 1 ? { type: "Polygon", coordinates: polys[0] } : { type: "MultiPolygon", coordinates: polys });
+  const outline: AreaGeometry = polys.length === 1 ? { type: "Polygon", coordinates: polys[0] } : { type: "MultiPolygon", coordinates: polys };
+  const thinned = simplifyGeometry(outline);
+  const geometry = thinned === outline ? outline : untangle(thinned);
   const area = geometryArea(geometry);
   return area < before * 0.995 && area > before * 0.05 ? { geometry, area } : null;
 }

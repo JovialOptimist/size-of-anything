@@ -38,7 +38,7 @@ const LAND_ICONS: IconKey[] = ["globe", "map", "city", "village", "island", "par
 export const removesWater = (icon: IconKey) => LAND_ICONS.includes(icon);
 
 // Bump when the cutting changes, so places get measured again (saved shapes too, see restoreSession).
-export const WATER_VERSION = "v2";
+export const WATER_VERSION = "v3";
 const CACHE = `water:${WATER_VERSION}:`;
 const pending = new Map<string, Promise<Waterless | null>>();
 
