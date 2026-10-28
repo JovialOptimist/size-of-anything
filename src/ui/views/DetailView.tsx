@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
-import { RotateCcw, Copy, Trash2, ExternalLink, Scaling, X, ChevronLeft, ChevronRight, Globe, TrianglesCenterlineDashedHorizontal, TrianglesCenterlineDashedVertical } from "lucide-react";
-import { useShapes, shapeArea } from "../../state/shapes";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { RotateCcw, Copy, Trash2, ExternalLink, Scaling, X, ChevronLeft, ChevronRight, ChevronDown, Check, Globe, TrianglesCenterlineDashedHorizontal, TrianglesCenterlineDashedVertical } from "lucide-react";
+import { useShapes, shapeArea, baseArea, canRemoveWater, measuringWater, waterMode } from "../../state/shapes";
+import { WATER_OPTIONS, hasLakes, type WaterMode } from "../../geo/water";
 import { useSettings } from "../../state/settings";
 import { useUI, announce } from "../../state/ui";
 import { toast } from "../../state/toasts";
@@ -86,6 +87,7 @@ export default function DetailView({ id }: { id: string }) {
           <Literal>{formatArea(area, units)}</Literal>
           <small>
             {showBoth && <Literal>{formatAreaSecondary(area, units)}</Literal>}
+            <WaterChip s={s} separator={showBoth} />
             {s.scale !== 1 && <span> · scaled to {Math.round(s.scale * s.scale * 100)}% of its area</span>}
           </small>
         </div>
@@ -128,6 +130,91 @@ export default function DetailView({ id }: { id: string }) {
   );
 }
 
+/**
+ * Water inside a border, as a chip in the area line: it takes no room at the top of the page and
+ * sits next to the number it changes. Its menu lists each choice with the area it gives. Nothing
+ * shows while measuring, or where there's no water to take out.
+ */
+function WaterChip({ s, separator }: { s: Shape; separator: boolean }) {
+  const units = useSettings((st) => st.units);
+  const [open, setOpen] = useState(false);
+  const wrap = useRef<HTMLSpanElement>(null);
+  const chip = useRef<HTMLButtonElement>(null);
+  const menu = useRef<HTMLDivElement>(null);
+
+  // Close on a click outside, and put focus on the current choice when it opens.
+  useEffect(() => {
+    if (!open) return;
+    menu.current?.querySelector<HTMLElement>('[aria-checked="true"]')?.focus();
+    const outside = (e: PointerEvent) => !wrap.current?.contains(e.target as Node) && setOpen(false);
+    document.addEventListener("pointerdown", outside);
+    return () => document.removeEventListener("pointerdown", outside);
+  }, [open]);
+
+  const w = s.waterless;
+  if (!canRemoveWater(s) || measuringWater(s) || (!w?.sea && !w?.all)) return null;
+  // Offer only choices that change something: a lake city has no sea, an island country may have no lakes.
+  const lakes = hasLakes(w);
+  const k = s.scale * s.scale;
+  const areaOf: Record<WaterMode, number | undefined> = { keep: s.area * k, sea: w.sea ? w.sea.area * k : undefined, all: lakes ? w.all!.area * k : undefined };
+  const options = WATER_OPTIONS.filter(([m]) => areaOf[m] !== undefined);
+  const mode = waterMode(s);
+  const shown: WaterMode = baseArea(s) === s.area ? "keep" : mode === "all" && lakes ? "all" : "sea";
+  const label = WATER_OPTIONS.find(([m]) => m === shown)![1];
+
+  const pick = (water: WaterMode) => {
+    useShapes.getState().update(s.id, { water });
+    setOpen(false);
+    chip.current?.focus();
+  };
+  const onKey = (e: React.KeyboardEvent) => {
+    const items = [...(menu.current?.querySelectorAll<HTMLElement>('[role="menuitemradio"]') ?? [])];
+    const i = items.indexOf(document.activeElement as HTMLElement);
+    if (e.key === "Escape") {
+      // With the menu closed, Escape is the app's (deselect and go home).
+      if (!open) return;
+      e.stopPropagation();
+      setOpen(false);
+      chip.current?.focus();
+    } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      items[(i + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length]?.focus();
+    } else if (e.key === "Tab") setOpen(false);
+  };
+
+  return (
+    <>
+      {/* Outside the wrapper: an inline-block drops a leading space. */}
+      {separator && <Literal>{" · "}</Literal>}
+      <span className="wchip-wrap" ref={wrap} onKeyDown={onKey}>
+        <button
+          ref={chip}
+          type="button"
+          className="wchip"
+          aria-haspopup="menu"
+          aria-expanded={open}
+          aria-label={`Water inside the border: ${label}`}
+          onClick={() => setOpen((v) => !v)}
+        >
+          <span key={shown}>{label}</span>
+          <ChevronDown size={13} aria-hidden="true" />
+        </button>
+        {open && (
+          <div ref={menu} className="wmenu" role="menu" aria-label="Water inside the border">
+            {options.map(([m, l]) => (
+              <button key={m} type="button" role="menuitemradio" aria-checked={m === shown} className="wmenu__item" onClick={() => pick(m)}>
+                <span className="wmenu__check" aria-hidden="true">{m === shown && <Check size={14} />}</span>
+                <span className="wmenu__label">{l}</span>
+                <Literal>{formatArea(areaOf[m]!, units)}</Literal>
+              </button>
+            ))}
+          </div>
+        )}
+      </span>
+    </>
+  );
+}
+
 function ExactArea({ id, onDone }: { id: string; onDone: () => void }) {
   const s = useShapes((st) => st.shapes.find((x) => x.id === id))!;
   const units = useSettings((st) => st.units);
@@ -138,7 +225,7 @@ function ExactArea({ id, onDone }: { id: string; onDone: () => void }) {
   const valid = Number.isFinite(n) && n > 0;
   const apply = () => {
     if (!valid) return;
-    const scale = Math.sqrt((n * u.m2) / s.area);
+    const scale = Math.sqrt((n * u.m2) / baseArea(s));
     if (scale > 3000 || scale < 1 / 3000) return toast({ text: "That's a bit too extreme. Try a size closer to the original.", tone: "error" });
     setScale(s.id, scale);
     announce(`${s.name} is now exactly ${val} ${u.label}`);

@@ -8,6 +8,7 @@ import { CONTACT_EMAIL, SUPPORT_URL } from "../../config";
 import MercatorExplainer from "../MercatorExplainer";
 import { Literal } from "../Literal";
 import { formatArea } from "../../geo/format";
+import { WATER_OPTIONS, type WaterMode } from "../../geo/water";
 
 /** Central Park, as an example of showing both units. */
 const EXAMPLE_M2 = 3_410_000;
@@ -64,6 +65,15 @@ export function SettingsBody() {
         <Row title="Fill"><Seg label="Fill" value={s.fill} onChange={set("fill")} options={[["light", "Light"], ["medium", "Medium"], ["strong", "Strong"]]} /></Row>
         <Row title="Show shape toolbar" sub="A small toolbar floats above the selected shape, as well as its page">
           <Switch label="Show shape toolbar" checked={s.showToolbar} onChange={set("showToolbar")} />
+        </Row>
+        <Row title="Water inside borders" sub="Borders often run out to sea. Each shape can change it.">
+          {/* A dropdown, not segments: three choices would squeeze the explanation into a sliver. */}
+          <select className="srow__select" aria-label="Water inside borders" value={s.water} onChange={(e) => set("water")(e.target.value as WaterMode)}>
+            {WATER_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+          </select>
+        </Row>
+        <Row title="Show original border" sub="A faint dashed line where water was taken out">
+          <Switch label="Show original border" checked={s.showOriginalBorder} onChange={set("showOriginalBorder")} />
         </Row>
       </div>
 

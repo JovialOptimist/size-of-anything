@@ -15,7 +15,10 @@ export type HelpPage = "help" | "about" | "feedback";
 export type Mode = "browse" | "pick" | "draw-lasso" | "draw-points" | "move-to";
 
 export interface RecentItem extends PlaceResult {
+  /** As mapped. */
   area?: number;
+  /** Without the sea, and without any water, once measured (see geo/water.ts). */
+  dry?: { sea?: number; all?: number };
 }
 
 interface UIState {
@@ -36,8 +39,10 @@ interface UIState {
   back: () => void;
   home: () => void;
   setMode: (m: Mode) => void;
-  set: (patch: Partial<Omit<UIState, "go" | "back" | "home" | "setMode" | "set" | "pushRecent">>) => void;
+  set: (patch: Partial<Omit<UIState, "go" | "back" | "home" | "setMode" | "set" | "pushRecent" | "patchRecent">>) => void;
   pushRecent: (r: RecentItem) => void;
+  /** Add to a recent place in the list, without moving it. */
+  patchRecent: (key: string, patch: Partial<RecentItem>) => void;
 }
 
 const loadRecent = (): RecentItem[] => {
@@ -45,6 +50,14 @@ const loadRecent = (): RecentItem[] => {
     return JSON.parse(localStorage.getItem("soa-recent") || "[]");
   } catch {
     return [];
+  }
+};
+
+const saveRecent = (recent: RecentItem[]) => {
+  try {
+    localStorage.setItem("soa-recent", JSON.stringify(recent));
+  } catch {
+    /* storage unavailable */
   }
 };
 
@@ -67,11 +80,13 @@ export const useUI = create<UIState>((set, get) => ({
   pushRecent: (r) => {
     const next = [r, ...get().recent.filter((x) => x.key !== r.key)].slice(0, 12);
     set({ recent: next });
-    try {
-      localStorage.setItem("soa-recent", JSON.stringify(next));
-    } catch {
-      /* storage unavailable */
-    }
+    saveRecent(next);
+  },
+  patchRecent: (key, patch) => {
+    if (!get().recent.some((x) => x.key === key)) return;
+    const next = get().recent.map((x) => (x.key === key ? { ...x, ...patch } : x));
+    set({ recent: next });
+    saveRecent(next);
   },
 }));
 

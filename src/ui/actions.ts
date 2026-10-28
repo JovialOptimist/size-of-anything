@@ -4,6 +4,7 @@ import { useUI, announce } from "../state/ui";
 import { fitGeometry, getMap, getPad, visibleCenter } from "../map/mapCore";
 import { objectById } from "../objects/registry";
 import type { Outline } from "../geo/services";
+import { dryAreas, removesWater, waterlessFor } from "../geo/water";
 import type { LngLat } from "../geo/geometry";
 import { geometryCenter } from "../geo/geometry";
 
@@ -48,6 +49,8 @@ export function addPlace(o: Outline, requested: "center" | "origin") {
     source: { kind: "osm", key: o.key }, geometry: o.geometry, anchor,
   });
   useUI.getState().pushRecent({ ...o, area: shape.area });
+  // So the recent list can show the area without water, like everywhere else.
+  if (removesWater(o.icon)) waterlessFor(o.key, o.geometry).then((w) => w && useUI.getState().patchRecent(o.key, { dry: dryAreas(w) }));
   if (where === "origin") {
     useUI.getState().go({ name: "detail", id: shape.id });
     fitGeometry(placedGeometry(shape));
