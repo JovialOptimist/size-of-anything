@@ -279,10 +279,13 @@ function StatsPrompt() {
   if (!waiting || !ready || dialogOpen) return null;
   const { choose } = useStats.getState();
   return (
-    <div className="toast toast--prompt" role="region" aria-label="Usage stats">
-      <span><b>Count your visit?</b> Google Analytics shows me how the site gets used, never what you search for. It sets a cookie and is never used for ads.</span>
-      {/* Closing counts as No thanks, as EU regulators and consent tools treat it. */}
-      <button type="button" aria-label="Close (no thanks)" title="No thanks" onClick={() => choose("no")}><X size={16} /></button>
+    <div className="toast toast--prompt" role="region" aria-labelledby="stats-h">
+      <div className="toast__head">
+        <h2 id="stats-h">Count your visit?</h2>
+        {/* Closing counts as No thanks, as EU regulators and consent tools treat it. */}
+        <button type="button" aria-label="Close (no thanks)" title="No thanks" onClick={() => choose("no")}><X size={16} /></button>
+      </div>
+      <p>Google Analytics shows me how the site gets used, never what you search for. It sets a cookie and is never used for ads.</p>
       <div className="toast__actions">
         <button type="button" onClick={() => choose("no")}>No thanks</button>
         <button type="button" onClick={() => choose("yes")}>Allow</button>
