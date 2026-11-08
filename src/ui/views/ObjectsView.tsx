@@ -27,7 +27,7 @@ function Thumb({ o }: { o: RefObject }) {
 
 function Card({ o }: { o: RefObject }) {
   return (
-    <button type="button" className="ocard" onClick={() => addObject(o.id)} title={o.fact}>
+    <button type="button" className="ocard" onClick={() => addObject(o.id, "object")} title={o.fact}>
       <Thumb o={o} />
       <b>{o.name}</b>
       <small>{o.dims}</small>

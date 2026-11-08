@@ -133,10 +133,10 @@ export default function SearchView() {
 
   function choose(item: Item) {
     if (item.kind === "osm") return runFullSearch();
-    if (item.kind === "object") return addObject(item.obj.id);
+    if (item.kind === "object") return addObject(item.obj.id, "object");
     // Enter on an open place adds it; otherwise it opens.
     const o = outlines[item.place.key];
-    if (openKey === item.place.key && o) addPlace(o, "center");
+    if (openKey === item.place.key && o) addPlace(o, "center", "search");
     else if (openKey !== item.place.key) toggle(item.place);
   }
 
@@ -221,8 +221,8 @@ export default function SearchView() {
                     <OutlinePreview geometry={o.geometry} height={120} />
                     <div className="result__area"><Literal>{formatArea(geometryArea(o.geometry), units)}</Literal><small><Literal>{formatAreaSecondary(geometryArea(o.geometry), units)}</Literal></small></div>
                     <div className="btnrow">
-                      <button type="button" className="btn btn--primary btn--sm" onClick={() => addPlace(o, "center")}><Plus size={16} /> Add to map</button>
-                      <button type="button" className="btn btn--sm" onClick={() => addPlace(o, "origin")}><MapPinned size={16} /> Show where it is</button>
+                      <button type="button" className="btn btn--primary btn--sm" onClick={() => addPlace(o, "center", "search")}><Plus size={16} /> Add to map</button>
+                      <button type="button" className="btn btn--sm" onClick={() => addPlace(o, "origin", "search")}><MapPinned size={16} /> Show where it is</button>
                     </div>
                     <p className="muted result__hint">“Add to map” drops it in the middle of your view, ready to drag.</p>
                   </div>
@@ -251,7 +251,7 @@ export default function SearchView() {
             <div className="chips">
               {["blue-whale", "soccer-pitch", "titanic", "great-pyramid", "acre"].map((id) => {
                 const o = OBJECTS.find((x) => x.id === id)!;
-                return <button key={id} type="button" className="chip" onClick={() => addObject(id)}><ShapeIcon icon={o.icon} size={15} /> {o.name}</button>;
+                return <button key={id} type="button" className="chip" onClick={() => addObject(id, "object")}><ShapeIcon icon={o.icon} size={15} /> {o.name}</button>;
               })}
             </div>
           </>

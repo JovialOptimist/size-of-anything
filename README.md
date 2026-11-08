@@ -42,7 +42,7 @@ This project was written and developed by Jac Chambers (that's me!), a student a
 
 ## Configuration
 
-Developer settings live in `src/config.ts`: the UI accent color preset (`blue`, `purple`, `teal`, `rose`, `ink`), basemap style URLs, and an optional ArcGIS key for compliant satellite tiles.
+Developer settings live in `src/config.ts`: the UI accent color preset (`blue`, `purple`, `teal`, `rose`, `ink`), basemap style URLs, an optional ArcGIS key for compliant satellite tiles, and an optional Google Analytics measurement ID (`GA_MEASUREMENT_ID`). Analytics stays off when the ID is empty. When it's set, it only sends from the live site, and it asks visitors in Europe first; `src/analytics.ts` has the details.
 
 ## Known Issues
 

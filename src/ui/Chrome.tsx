@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { Undo2, Redo2, Share2, CircleHelp, LocateFixed, Plus, Minus, Link, Check, X, Settings, ArrowLeft } from "lucide-react";
 import { useUI } from "../state/ui";
-import { useSettings, useIsDark } from "../state/settings";
+import { useSettings, useIsDark, type Basemap } from "../state/settings";
 import { useShapes } from "../state/shapes";
 import { useToasts, holdToast, releaseToast, toast } from "../state/toasts";
 import { getMap } from "../map/mapCore";
@@ -11,6 +11,7 @@ import { useIsDesktop } from "./hooks";
 import { undo, redo } from "./actions";
 import { Seg, US, SettingsBody, HelpBody, AboutBody, FeedbackBody } from "./views/InfoViews";
 import { OLD_VERSION_URL } from "../config";
+import { track, useStats } from "../analytics";
 
 export function MapControls() {
   const desktop = useIsDesktop();
@@ -68,6 +69,15 @@ function LayersPopover() {
     window.addEventListener("keydown", close);
     return () => window.removeEventListener("keydown", close);
   }, []);
+  // Tracked here, where people pick layers, so "Reset settings" isn't counted as a layer change.
+  const pickBasemap = (b: Basemap) => {
+    if (s.basemap !== b) track("change_layer", { layer: b });
+    s.set("basemap", b);
+  };
+  const toggleGlobe = () => {
+    track("change_layer", { layer: s.globe ? "globe_off" : "globe_on" });
+    s.set("globe", !s.globe);
+  };
   return (
     <div className="layers-pop" role="dialog" aria-label="Map layers">
       <div className="inline" style={{ justifyContent: "space-between" }}>
@@ -75,13 +85,13 @@ function LayersPopover() {
         <button type="button" className="iconbtn" aria-label="Close" onClick={() => useUI.getState().set({ layersOpen: false })}><X size={18} /></button>
       </div>
       <div className="layer-opts">
-        <button type="button" className="layer-opt" aria-pressed={s.basemap === "map"} onClick={() => s.set("basemap", "map")}>
+        <button type="button" className="layer-opt" aria-pressed={s.basemap === "map"} onClick={() => pickBasemap("map")}>
           <span className={`layers-btn__thumb ${isDark ? "thumb-dark" : "thumb-map"}`} />Map
         </button>
-        <button type="button" className="layer-opt" aria-pressed={s.basemap === "satellite"} onClick={() => s.set("basemap", "satellite")}>
+        <button type="button" className="layer-opt" aria-pressed={s.basemap === "satellite"} onClick={() => pickBasemap("satellite")}>
           <span className="layers-btn__thumb thumb-sat" />Satellite
         </button>
-        <button type="button" className="layer-opt" aria-pressed={s.globe} onClick={() => s.set("globe", !s.globe)}>
+        <button type="button" className="layer-opt" aria-pressed={s.globe} onClick={toggleGlobe}>
           <span className="layers-btn__thumb thumb-globe" />Globe
         </button>
       </div>
@@ -220,6 +230,8 @@ export function ShareDialog() {
               <button type="button" className="btn btn--primary" onClick={async () => {
                 try {
                   await navigator.clipboard.writeText(url);
+                  // Once per opening: copying the same link again isn't another share.
+                  if (!copied) track("share", { method: "copy_link", shape_count: shapes.length });
                   setCopied(true);
                   toast({ text: "Link copied" });
                 } catch {
@@ -228,7 +240,7 @@ export function ShareDialog() {
               }}>{copied ? <Check size={18} /> : <Link size={18} />} <span key={copied ? "copied" : "copy"}>{copied ? "Copied" : "Copy link"}</span></button>
             </div>
             {"share" in navigator && (
-              <button type="button" className="btn" onClick={() => navigator.share({ title, text: `${title} on The Size of Anything`, url }).catch(() => {})}>
+              <button type="button" className="btn" onClick={() => navigator.share({ title, text: `${title} on The Size of Anything`, url }).then(() => track("share", { method: "share_sheet", shape_count: shapes.length })).catch(() => {})}>
                 <Share2 size={18} /> Share with an app…
               </button>
             )}
@@ -245,6 +257,7 @@ export function Toasts() {
   const desktop = useIsDesktop();
   return (
     <div className="toasts" style={{ bottom: desktop ? 28 : "calc(var(--sheet-h, 196px) + 14px)" }}>
+      <StatsPrompt />
       {toasts.map((t) => (
         <div key={t.id} className={`toast${t.tone === "error" ? " toast--error" : ""}`} onMouseEnter={() => holdToast(t.id)} onMouseLeave={() => releaseToast(t.id)} onFocus={() => holdToast(t.id)} onBlur={() => releaseToast(t.id)}>
           <span>{t.text}</span>
@@ -257,6 +270,54 @@ export function Toasts() {
           <button type="button" aria-label="Dismiss" onClick={() => useToasts.getState().dismiss(t.id)}><X size={16} /></button>
         </div>
       ))}
+    </div>
+  );
+}
+
+/** Open Settings with the usage-stats switch in view and focused. */
+function openStatsSetting() {
+  useUI.getState().set({ settingsOpen: true });
+  // After the dialog renders (and its own autofocus on Close).
+  requestAnimationFrame(() => {
+    const el = document.getElementById("stats-switch");
+    el?.scrollIntoView({ block: "nearest" });
+    el?.focus();
+  });
+}
+
+/**
+ * The one-time "Count your visit?" for people in Europe (see src/analytics.ts).
+ * Waits a moment after load, and steps aside while a dialog is open.
+ */
+function StatsPrompt() {
+  const waiting = useStats((s) => s.prompt);
+  const dialogOpen = useUI((s) => s.versionOpen || s.shareOpen || s.settingsOpen || s.helpPage !== null);
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setReady(true), 1500);
+    return () => clearTimeout(t);
+  }, []);
+  if (!waiting || !ready || dialogOpen) return null;
+  // The card vanishes on any answer, so a toast confirms it and points to where it can be changed.
+  const choose = (c: "yes" | "no") => {
+    useStats.getState().choose(c);
+    toast({
+      text: c === "yes" ? "Thanks! You can change this in Settings any time." : "Got it, your visit won't be counted.",
+      action: { label: "Settings", run: openStatsSetting },
+    });
+  };
+  return (
+    <div className="toast toast--prompt" role="region" aria-labelledby="stats-h">
+      <div className="toast__head">
+        <h2 id="stats-h">Count your visit?</h2>
+        {/* Closing counts as No thanks, as EU regulators and consent tools treat it. */}
+        <button type="button" aria-label="Close (no thanks)" title="No thanks" onClick={() => choose("no")}><X size={16} /></button>
+      </div>
+      <p>Google Analytics shows me how the site gets used, never what you search for. It sets a cookie and is never used for ads.</p>
+      <div className="toast__actions">
+        <button type="button" onClick={() => choose("no")}>No thanks</button>
+        <button type="button" onClick={() => choose("yes")}>Allow</button>
+      </div>
     </div>
   );
 }

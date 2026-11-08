@@ -9,7 +9,8 @@ import Shell from "./ui/Shell";
 import { HelpDialog, SettingsDialog, VersionDialog, LiveRegion, MapControls, ShareDialog, Toasts } from "./ui/Chrome";
 import { useKeyboard } from "./ui/keyboard";
 import { useIsDark } from "./state/settings";
-import { restoreSession } from "./state/shapes";
+import { restoreSession, useShapes } from "./state/shapes";
+import { track } from "./analytics";
 import { loadFromUrl } from "./share/url";
 import { ACCENT, ACCENT_PRESETS } from "./config";
 import { toast } from "./state/toasts";
@@ -31,6 +32,7 @@ export default function App() {
     if (!ready) return;
     (async () => {
       if (await loadFromUrl()) {
+        track("open_shared_link", { shape_count: useShapes.getState().shapes.length });
         toast({ text: "Here's the comparison someone shared with you." });
         return;
       }

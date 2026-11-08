@@ -390,6 +390,12 @@ button.srow:hover { background: var(--surface-2); }
 .toast span { flex: 1; }
 .toast button { border: 0; background: transparent; color: var(--accent-strong); font-weight: 750; padding: 8px 10px; border-radius: 10px; }
 .toast button:hover { background: var(--surface-2); }
+/* Laid out like the dialogs: title and × on one row, then the text, then the choices. */
+.toast--prompt { display: grid; gap: 2px; padding-top: 6px; font-weight: 500; line-height: 1.4; }
+.toast__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.toast__head h2 { margin: 0; font-family: var(--display); font-size: 17px; font-weight: 700; }
+.toast--prompt p { margin: 0 6px 0 0; text-wrap: pretty; }
+.toast__actions { display: flex; gap: 2px; justify-content: flex-end; }
 .toast--error { border-color: var(--danger); box-shadow: inset 4px 0 0 var(--danger), var(--shadow-3); }
 .scrim { position: absolute; inset: 0; z-index: 50; background: var(--scrim); animation: fade 150ms; }
 @keyframes fade { from { opacity: 0; } }

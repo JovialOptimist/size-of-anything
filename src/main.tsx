@@ -5,8 +5,10 @@ import "@fontsource-variable/bricolage-grotesque";
 import "./styles/app.css";
 import App from "./App.tsx";
 import { installTranslationGuard } from "./translationGuard";
+import { initStats } from "./analytics";
 
 installTranslationGuard();
+initStats();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

@@ -1,5 +1,6 @@
 /** User-level actions shared by panels, overlays and keyboard shortcuts. */
-import { useShapes, placedGeometry, type NewShape } from "../state/shapes";
+import { useShapes, placedGeometry, type NewShape, type ShapeSource } from "../state/shapes";
+import { trackAdd } from "../analytics";
 import { useUI, announce } from "../state/ui";
 import { fitGeometry, getMap, getPad, visibleCenter } from "../map/mapCore";
 import { objectById } from "../objects/registry";
@@ -38,8 +39,11 @@ function added(id: string, name: string) {
   announce(`${name} added to the map`);
 }
 
+// Each add is tracked here, so every way of adding a shape is counted. `method` is required,
+// so a new caller has to say how the shape was added.
+
 /** Add a searched place, either at the visible center or where it really is. */
-export function addPlace(o: Outline, requested: "center" | "origin") {
+export function addPlace(o: Outline, requested: "center" | "origin", method: "search" | "pick" | "example") {
   // From a whole-world view the "middle of the map" is usually open ocean; show it where it really is instead.
   const where = requested === "center" && (getMap()?.getZoom() ?? 10) < 4 ? "origin" : requested;
   const anchor: LngLat = where === "center" ? visibleCenter() : geometryCenter(o.geometry);
@@ -53,10 +57,11 @@ export function addPlace(o: Outline, requested: "center" | "origin") {
     fitGeometry(placedGeometry(shape));
     announce(`${o.name} added where it really is`);
   } else added(shape.id, o.name);
+  trackAdd(method);
   return shape;
 }
 
-export function addObject(id: string, at?: LngLat) {
+export function addObject(id: string, method: "object" | "example", at?: LngLat) {
   const obj = objectById(id);
   if (!obj) return;
   const shape = useShapes.getState().add({
@@ -64,11 +69,14 @@ export function addObject(id: string, at?: LngLat) {
     source: { kind: "object", id }, anchor: at ?? visibleCenter(),
   });
   added(shape.id, obj.name);
+  trackAdd(method, id);
 }
 
-export function addGenerated(input: Omit<NewShape, "anchor"> & { anchor?: LngLat }) {
+/** A drawn or exact-size shape; which one it is says how it was made. */
+export function addGenerated(input: Omit<NewShape, "anchor" | "source"> & { source: Extract<ShapeSource, { kind: "drawn" | "exact" }>; anchor?: LngLat }) {
   const shape = useShapes.getState().add({ ...input, anchor: input.anchor ?? visibleCenter() });
   added(shape.id, input.name);
+  trackAdd(input.source.kind === "drawn" ? "draw" : "create");
 }
 
 export function deleteShape(id: string) {
