@@ -5,6 +5,7 @@ import { useUI, announce, type HelpPage } from "../../state/ui";
 import { useShapes } from "../../state/shapes";
 import { toast } from "../../state/toasts";
 import { CONTACT_EMAIL, SUPPORT_URL } from "../../config";
+import { STATS_CONFIGURED, isCounted, useStats } from "../../analytics";
 import MercatorExplainer from "../MercatorExplainer";
 import { Literal } from "../Literal";
 import { formatArea } from "../../geo/format";
@@ -44,6 +45,7 @@ export function SettingsBody() {
   const s = useSettings();
   const set = <K extends keyof Omit<Settings, "set" | "reset">>(k: K) => (v: Settings[K]) => s.set(k, v);
   const shapeCount = useShapes((st) => st.shapes.length);
+  const counted = useStats((st) => isCounted(st.choice));
   return (
     <div className="settings-cols">
       <section>
@@ -71,6 +73,11 @@ export function SettingsBody() {
       <section>
       <div className="sgroup-title" style={{ marginTop: 0 }}>Data &amp; privacy</div>
       <div className="sgroup">
+        {STATS_CONFIGURED && (
+          <Row title="Share usage stats" sub="Counted with Google Analytics, never used for ads">
+            <Switch label="Share usage stats" checked={counted} onChange={(v) => useStats.getState().choose(v ? "yes" : "no")} />
+          </Row>
+        )}
         <Row title="Remember recent searches" sub="Saved only in this browser"><Switch label="Remember recent searches" checked={s.rememberRecent} onChange={set("rememberRecent")} /></Row>
         <button type="button" className="srow" onClick={() => {
           const prev = useUI.getState().recent;
@@ -220,7 +227,11 @@ export function AboutBody() {
         </ul>
 
         <h3>Privacy</h3>
-        <p>There are no accounts or tracking, and your shapes, settings and recent searches stay in this browser.</p>
+        {STATS_CONFIGURED ? (
+          <p>There are no accounts. Google Analytics counts visits and a few actions, like adding a shape or sharing a link, using a cookie. It never gets what you search for or what you name your shapes, it's never used for ads, and you can turn it off in Settings. Your shapes, settings and recent searches stay in this browser.</p>
+        ) : (
+          <p>There are no accounts or tracking, and your shapes, settings and recent searches stay in this browser.</p>
+        )}
           <p>Do note that what you type into search is sent to the search services above, so don't go typing your passwords into the search box just for fun.</p>
         </section>
       </div>

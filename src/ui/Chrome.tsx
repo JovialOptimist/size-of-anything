@@ -11,6 +11,7 @@ import { useIsDesktop } from "./hooks";
 import { undo, redo } from "./actions";
 import { Seg, US, SettingsBody, HelpBody, AboutBody, FeedbackBody } from "./views/InfoViews";
 import { OLD_VERSION_URL } from "../config";
+import { track, useStats } from "../analytics";
 
 export function MapControls() {
   const desktop = useIsDesktop();
@@ -221,6 +222,7 @@ export function ShareDialog() {
                 try {
                   await navigator.clipboard.writeText(url);
                   setCopied(true);
+                  track("share", { method: "copy_link", shape_count: shapes.length });
                   toast({ text: "Link copied" });
                 } catch {
                   toast({ text: "Couldn't copy. Select the link and copy it yourself.", tone: "error" });
@@ -228,7 +230,7 @@ export function ShareDialog() {
               }}>{copied ? <Check size={18} /> : <Link size={18} />} <span key={copied ? "copied" : "copy"}>{copied ? "Copied" : "Copy link"}</span></button>
             </div>
             {"share" in navigator && (
-              <button type="button" className="btn" onClick={() => navigator.share({ title, text: `${title} on The Size of Anything`, url }).catch(() => {})}>
+              <button type="button" className="btn" onClick={() => navigator.share({ title, text: `${title} on The Size of Anything`, url }).then(() => track("share", { method: "share_sheet", shape_count: shapes.length })).catch(() => {})}>
                 <Share2 size={18} /> Share with an app…
               </button>
             )}
@@ -245,6 +247,7 @@ export function Toasts() {
   const desktop = useIsDesktop();
   return (
     <div className="toasts" style={{ bottom: desktop ? 28 : "calc(var(--sheet-h, 196px) + 14px)" }}>
+      <StatsPrompt />
       {toasts.map((t) => (
         <div key={t.id} className={`toast${t.tone === "error" ? " toast--error" : ""}`} onMouseEnter={() => holdToast(t.id)} onMouseLeave={() => releaseToast(t.id)} onFocus={() => holdToast(t.id)} onBlur={() => releaseToast(t.id)}>
           <span>{t.text}</span>
@@ -257,6 +260,31 @@ export function Toasts() {
           <button type="button" aria-label="Dismiss" onClick={() => useToasts.getState().dismiss(t.id)}><X size={16} /></button>
         </div>
       ))}
+    </div>
+  );
+}
+
+/**
+ * The one-time "Count your visit?" for people in Europe (see src/analytics.ts).
+ * Waits a moment after load, and steps aside while a dialog is open.
+ */
+function StatsPrompt() {
+  const waiting = useStats((s) => s.prompt);
+  const dialogOpen = useUI((s) => s.versionOpen || s.shareOpen || s.settingsOpen || s.helpPage !== null);
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setReady(true), 1500);
+    return () => clearTimeout(t);
+  }, []);
+  if (!waiting || !ready || dialogOpen) return null;
+  const { choose } = useStats.getState();
+  return (
+    <div className="toast toast--prompt" role="region" aria-label="Usage stats">
+      <span><b>Count your visit?</b> Google Analytics shows me how the site gets used, never what you search for. It sets a cookie and is never used for ads.</span>
+      <div className="toast__actions">
+        <button type="button" onClick={() => choose("no")}>No thanks</button>
+        <button type="button" onClick={() => choose("yes")}>Allow</button>
+      </div>
     </div>
   );
 }

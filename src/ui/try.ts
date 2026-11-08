@@ -6,6 +6,7 @@ import { getMap, fitGeometry } from "../map/mapCore";
 import { placedGeometry } from "../state/shapes";
 import { toast } from "../state/toasts";
 import { pinPoint } from "../map/pins";
+import { track } from "../analytics";
 
 /** Anchor that puts a shape's pin on `target`, given where its pin is now. */
 function shiftAnchor(anchor: [number, number], pin: [number, number], target: [number, number]): [number, number] {
@@ -77,6 +78,7 @@ export const TRY: { label: string; tint: number; run: () => Promise<void> }[] = 
 export async function runTry(i: number) {
   try {
     await TRY[i].run();
+    track("try_example", { example: TRY[i].label });
   } catch {
     toast({ text: "Couldn't load that example right now. Try again in a moment.", tone: "error" });
   }

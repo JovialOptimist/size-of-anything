@@ -37,6 +37,15 @@ export const OVERPASS_SERVERS = [
   "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
 ];
 
+/**
+ * Google Analytics 4 measurement ID ("G-XXXXXXXXXX"), from GA's Admin > Data streams.
+ * Empty turns analytics off: no script, no consent prompt, no Settings switch.
+ * See src/analytics.ts for how consent works.
+ */
+export const GA_MEASUREMENT_ID = "";
+/** The live site. Analytics only sends from here, so local and preview builds aren't counted. */
+export const SITE_HOST = "thesizeofanything.com";
+
 /** The previous version of the site, kept for anyone who prefers it. */
 export const OLD_VERSION_URL = "https://old.thesizeofanything.com";
 
