@@ -26,8 +26,8 @@ export function Seg<T extends string>({ value, options, onChange, label }: { val
   );
 }
 
-export function Switch({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
-  return <button type="button" role="switch" aria-checked={checked} aria-label={label} className="switch" onClick={() => onChange(!checked)} />;
+export function Switch({ checked, onChange, label, id }: { checked: boolean; onChange: (v: boolean) => void; label: string; id?: string }) {
+  return <button id={id} type="button" role="switch" aria-checked={checked} aria-label={label} className="switch" onClick={() => onChange(!checked)} />;
 }
 
 export function Row({ title, sub, children }: { title: string; sub?: ReactNode; children: ReactNode }) {
@@ -75,7 +75,7 @@ export function SettingsBody() {
       <div className="sgroup">
         {STATS_CONFIGURED && (
           <Row title="Share usage stats" sub="Counted with Google Analytics, never used for ads">
-            <Switch label="Share usage stats" checked={counted} onChange={(v) => useStats.getState().choose(v ? "yes" : "no")} />
+            <Switch id="stats-switch" label="Share usage stats" checked={counted} onChange={(v) => useStats.getState().choose(v ? "yes" : "no")} />
           </Row>
         )}
         <Row title="Remember recent searches" sub="Saved only in this browser"><Switch label="Remember recent searches" checked={s.rememberRecent} onChange={set("rememberRecent")} /></Row>

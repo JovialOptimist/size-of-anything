@@ -264,6 +264,17 @@ export function Toasts() {
   );
 }
 
+/** Open Settings with the usage-stats switch in view and focused. */
+function openStatsSetting() {
+  useUI.getState().set({ settingsOpen: true });
+  // After the dialog renders (and its own autofocus on Close).
+  requestAnimationFrame(() => {
+    const el = document.getElementById("stats-switch");
+    el?.scrollIntoView({ block: "nearest" });
+    el?.focus();
+  });
+}
+
 /**
  * The one-time "Count your visit?" for people in Europe (see src/analytics.ts).
  * Waits a moment after load, and steps aside while a dialog is open.
@@ -277,7 +288,14 @@ function StatsPrompt() {
     return () => clearTimeout(t);
   }, []);
   if (!waiting || !ready || dialogOpen) return null;
-  const { choose } = useStats.getState();
+  // The card vanishes on any answer, so a toast confirms it and points to where it can be changed.
+  const choose = (c: "yes" | "no") => {
+    useStats.getState().choose(c);
+    toast({
+      text: c === "yes" ? "Thanks! You can change this in Settings any time." : "Got it, your visit won't be counted.",
+      action: { label: "Settings", run: openStatsSetting },
+    });
+  };
   return (
     <div className="toast toast--prompt" role="region" aria-labelledby="stats-h">
       <div className="toast__head">
