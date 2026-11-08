@@ -45,7 +45,7 @@ export function SettingsBody() {
   const s = useSettings();
   const set = <K extends keyof Omit<Settings, "set" | "reset">>(k: K) => (v: Settings[K]) => s.set(k, v);
   const shapeCount = useShapes((st) => st.shapes.length);
-  const counted = useStats((st) => isCounted(st.choice));
+  const counted = useStats(isCounted);
   return (
     <div className="settings-cols">
       <section>

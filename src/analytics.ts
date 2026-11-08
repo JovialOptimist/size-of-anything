@@ -49,6 +49,11 @@ interface StatsState {
   choice: Choice;
   /** The one-time "Count your visit?" prompt is waiting. */
   prompt: boolean;
+  /**
+   * Google is holding back cookies for this visit by IP address (an EU, UK or Swiss visitor whose
+   * time zone isn't European), so they aren't counted until they say yes. Found out each visit.
+   */
+  regionDenied: boolean;
   /** Remembered for good: "no" (No thanks, or closing the prompt) is never asked again. */
   choose: (c: "yes" | "no") => void;
 }
@@ -56,13 +61,14 @@ interface StatsState {
 // Kept apart from settings, so "Reset settings" never quietly turns stats back on.
 export const useStats = create<StatsState>()(
   persist(
-    (set) => ({ choice: null, prompt: false, choose: (choice) => set({ choice, prompt: false }) }),
+    (set) => ({ choice: null, prompt: false, regionDenied: false, choose: (choice) => set({ choice, prompt: false }) }),
     { name: "soa-stats", partialize: (s) => ({ choice: s.choice }) }
   )
 );
 
+type Consent = Pick<StatsState, "choice" | "regionDenied">;
 /** Whether this visit is counted (or would be, on the live site). */
-export const isCounted = (choice: Choice) => choice === "yes" || (choice === null && countByDefault);
+export const isCounted = (s: Consent) => s.choice === "yes" || (s.choice === null && countByDefault && !s.regionDenied);
 
 const debug = (() => {
   try {
@@ -93,9 +99,13 @@ function load(granted: boolean) {
   // Before config, so the first page view already counts.
   if (granted) gtag("consent", "update", { analytics_storage: "granted" });
   gtag("js", new Date());
+  // Share links hold the whole comparison in ?c=…, which would swamp the page reports. Only that
+  // goes: campaign tags (utm_*, gclid) stay, since GA reads them from this URL.
+  const page = new URL(location.href);
+  page.searchParams.delete("c");
+  page.hash = "";
   gtag("config", GA_MEASUREMENT_ID, {
-    // Share links hold the whole comparison in ?c=…, which would swamp the page reports.
-    page_location: location.origin + location.pathname,
+    page_location: page.toString(),
     allow_google_signals: false,
     allow_ad_personalization_signals: false,
     ...(debug && { debug_mode: true }),
@@ -103,7 +113,25 @@ function load(granted: boolean) {
   const s = document.createElement("script");
   s.async = true;
   s.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
+  if (!granted) s.onload = watchRegionDefault;
   document.head.appendChild(s);
+}
+
+const hasGaCookie = () => document.cookie.split("; ").some((c) => c.startsWith("_ga="));
+
+/**
+ * Counted by default, but Google may still hold back cookies by IP address (see CONSENT_REGIONS).
+ * Its tag only writes _ga when cookies are allowed, so if none turns up a few seconds after it loads,
+ * Google treats this visitor as needing consent: stop counting and ask them, like other Europeans.
+ */
+function watchRegionDefault() {
+  let tries = 0;
+  const check = () => {
+    if (useStats.getState().choice !== null || hasGaCookie()) return;
+    if (++tries < 8) setTimeout(check, 500);
+    else useStats.setState({ regionDenied: true, prompt: true });
+  };
+  setTimeout(check, 500);
 }
 
 function clearCookies() {
@@ -114,8 +142,8 @@ function clearCookies() {
   }
 }
 
-function sync(choice: Choice) {
-  if (!isCounted(choice)) {
+function sync({ choice, regionDenied }: Consent) {
+  if (!isCounted({ choice, regionDenied })) {
     w[DISABLE] = true;
     if (loaded) gtag("consent", "update", { analytics_storage: "denied" });
     clearCookies();
@@ -129,7 +157,7 @@ function sync(choice: Choice) {
 /** Send an event, if this visit is counted. */
 export function track(event: string, params: Record<string, string | number> = {}) {
   if (import.meta.env.DEV) console.debug("[stats]", event, params);
-  if (loaded && isCounted(useStats.getState().choice)) gtag("event", event, params);
+  if (loaded && isCounted(useStats.getState())) gtag("event", event, params);
 }
 
 export type AddMethod = "search" | "pick" | "object" | "create" | "draw" | "example";
@@ -154,8 +182,8 @@ export function initStats() {
     if (useStats.getState().choice !== null) useStats.setState({ prompt: false });
   });
   if (!live) return;
-  sync(choice);
+  sync(useStats.getState());
   useStats.subscribe((s, p) => {
-    if (s.choice !== p.choice) sync(s.choice);
+    if (s.choice !== p.choice || s.regionDenied !== p.regionDenied) sync(s);
   });
 }
