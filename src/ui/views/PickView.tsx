@@ -10,7 +10,6 @@ import { Literal } from "../Literal";
 import { geometryArea } from "../../geo/geometry";
 import { useSettings } from "../../state/settings";
 import { addPlace } from "../actions";
-import { trackAdd } from "../../analytics";
 import { ShapeIcon } from "../icons";
 import { ViewHeader } from "./common";
 import { useIsDesktop } from "../hooks";
@@ -117,7 +116,7 @@ export default function PickView() {
           <small><span>{r.type}</span>{isChosen && <Literal>{` · ${formatArea(geometryArea(chosen.geometry), units)}`}</Literal>}</small>
         </button>
         {loadingKey === r.key ? <Loader2 size={18} className="spin" /> : isChosen ? (
-          <button type="button" className="btn btn--primary btn--sm" onClick={() => { addPlace(chosen, "origin"); trackAdd("pick"); }}><Plus size={15} /> Add</button>
+          <button type="button" className="btn btn--primary btn--sm" onClick={() => addPlace(chosen, "origin", "pick")}><Plus size={15} /> Add</button>
         ) : (
           <button type="button" className="btn btn--sm" onClick={() => choose(r)}>Show</button>
         )}

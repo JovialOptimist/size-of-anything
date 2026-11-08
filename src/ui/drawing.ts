@@ -2,7 +2,6 @@ import { useDraft } from "../state/draft";
 import { useDrawing } from "../state/drawing";
 import { closeRing, geometryArea, geometryCenter, localToMeters, toLocal, type AreaGeometry, type LngLat } from "../geo/geometry";
 import { addGenerated } from "./actions";
-import { trackAdd } from "../analytics";
 
 export function finishDrawing(ring: LngLat[]) {
   if (ring.length < 3) return false;
@@ -21,7 +20,6 @@ export function finishDrawing(ring: LngLat[]) {
     anchor: center,
     slot: d.slot ?? undefined,
   });
-  trackAdd("draw");
   useDraft.getState().set({ name: "", slot: null });
   useDrawing.getState().set({ points: [], stroke: [] });
   return true;

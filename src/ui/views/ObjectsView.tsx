@@ -3,7 +3,6 @@ import { Search } from "lucide-react";
 import { OBJECTS, CATEGORIES, thumbnailPath, type Category, type RefObject } from "../../objects/registry";
 import { getMap, getPad } from "../../map/mapCore";
 import { addObject } from "../actions";
-import { trackAdd } from "../../analytics";
 import { ViewHeader } from "./common";
 import { Literal } from "../Literal";
 import { formatLength } from "../../geo/format";
@@ -28,7 +27,7 @@ function Thumb({ o }: { o: RefObject }) {
 
 function Card({ o }: { o: RefObject }) {
   return (
-    <button type="button" className="ocard" onClick={() => { addObject(o.id); trackAdd("object", o.id); }} title={o.fact}>
+    <button type="button" className="ocard" onClick={() => addObject(o.id, "object")} title={o.fact}>
       <Thumb o={o} />
       <b>{o.name}</b>
       <small>{o.dims}</small>

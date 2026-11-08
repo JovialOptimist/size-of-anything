@@ -25,7 +25,7 @@ export const TRY: { label: string; tint: number; run: () => Promise<void> }[] = 
     tint: 0,
     run: async () => {
       const g = await first("Greenland");
-      const s = addPlace(g, "origin");
+      const s = addPlace(g, "origin", "example");
       useShapes.getState().update(s.id, { anchor: [20, 2] });
       const moved = useShapes.getState().shapes.find((x) => x.id === s.id)!;
       fitGeometry(placedGeometry(moved));
@@ -36,9 +36,9 @@ export const TRY: { label: string; tint: number; run: () => Promise<void> }[] = 
     label: "Texas on top of France",
     tint: 1,
     run: async () => {
-      const fr = addPlace(await first("France"), "origin");
+      const fr = addPlace(await first("France"), "origin", "example");
       const tx = await first("Texas");
-      const s = addPlace(tx, "origin");
+      const s = addPlace(tx, "origin", "example");
       // Center Texas on mainland France (France's outline includes overseas territories).
       useShapes.getState().update(s.id, { anchor: shiftAnchor(s.anchor, pinPoint(s), pinPoint(fr)) });
       const moved = useShapes.getState().shapes.find((x) => x.id === s.id)!;
@@ -50,8 +50,8 @@ export const TRY: { label: string; tint: number; run: () => Promise<void> }[] = 
     tint: 2,
     run: async () => {
       if ((getMap()?.getZoom() ?? 0) < 17) getMap()?.jumpTo({ zoom: 18.5 });
-      addObject("tennis-court");
-      addObject("blue-whale");
+      addObject("tennis-court", "example");
+      addObject("blue-whale", "example");
     },
   },
   {
@@ -59,17 +59,17 @@ export const TRY: { label: string; tint: number; run: () => Promise<void> }[] = 
     tint: 3,
     run: async () => {
       if ((getMap()?.getZoom() ?? 0) < 14) getMap()?.jumpTo({ zoom: 16 });
-      addObject("eiffel-base");
-      addObject("titanic");
+      addObject("eiffel-base", "example");
+      addObject("titanic", "example");
     },
   },
   {
     label: "Central Park vs Disneyland",
     tint: 4,
     run: async () => {
-      const cp = addPlace(await first("Central Park, New York"), "origin");
+      const cp = addPlace(await first("Central Park, New York"), "origin", "example");
       const dl = await first("Disneyland Park, Anaheim");
-      const s = addPlace(dl, "origin");
+      const s = addPlace(dl, "origin", "example");
       useShapes.getState().update(s.id, { anchor: shiftAnchor(s.anchor, pinPoint(s), pinPoint(cp)) });
     },
   },

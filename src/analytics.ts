@@ -132,9 +132,15 @@ export function track(event: string, params: Record<string, string | number> = {
   if (loaded && isCounted(useStats.getState().choice)) gtag("event", event, params);
 }
 
-export type AddMethod = "search" | "pick" | "object" | "create" | "draw";
-/** A shape went on the map. `object` is the reference object's id (never a place or shape name). */
-export const trackAdd = (method: AddMethod, object?: string) => track("add_shape", object ? { method, object } : { method });
+export type AddMethod = "search" | "pick" | "object" | "create" | "draw" | "example";
+/**
+ * A shape went on the map (called from the add actions in src/ui/actions.ts). `object` is the
+ * reference object's id, never a place or shape name. Try examples aren't sent: try_example covers them.
+ */
+export function trackAdd(method: AddMethod, object?: string) {
+  if (method === "example") return;
+  track("add_shape", object ? { method, object } : { method });
+}
 
 export function initStats() {
   if (!STATS_CONFIGURED) return;

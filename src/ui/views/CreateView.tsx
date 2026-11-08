@@ -10,7 +10,6 @@ import { geometryArea, localFromMeters, place } from "../../geo/geometry";
 import { formatArea, formatAreaSecondary, formatLength, parseNumber } from "../../geo/format";
 import { Literal } from "../Literal";
 import { addGenerated } from "../actions";
-import { trackAdd } from "../../analytics";
 import { ViewHeader } from "./common";
 import type { MetersPolys } from "../../objects/registry";
 
@@ -134,7 +133,6 @@ export default function CreateView() {
       source: { kind: "exact", meters: result.meters },
       slot,
     });
-    trackAdd("create");
     useDraft.getState().set({ name: "", slot: null });
   };
 
