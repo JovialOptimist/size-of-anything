@@ -42,7 +42,7 @@ export const OVERPASS_SERVERS = [
  * Empty turns analytics off: no script, no consent prompt, no Settings switch.
  * See src/analytics.ts for how consent works.
  */
-export const GA_MEASUREMENT_ID = "";
+export const GA_MEASUREMENT_ID: string = "G-CHVRMLE550";
 /** The live site. Analytics only sends from here, so local and preview builds aren't counted. */
 export const SITE_HOST = "thesizeofanything.com";
 
