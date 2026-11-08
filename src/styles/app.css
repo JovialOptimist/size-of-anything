@@ -391,8 +391,9 @@ button.srow:hover { background: var(--surface-2); }
 .toast button { border: 0; background: transparent; color: var(--accent-strong); font-weight: 750; padding: 8px 10px; border-radius: 10px; }
 .toast button:hover { background: var(--surface-2); }
 .toast--prompt { flex-wrap: wrap; row-gap: 4px; font-weight: 500; line-height: 1.4; }
-.toast--prompt span { flex: 1 1 240px; padding: 4px 0; }
-.toast__actions { display: flex; gap: 2px; margin-left: auto; }
+.toast--prompt span { flex: 1; padding: 4px 0; }
+.toast--prompt > button { align-self: flex-start; }
+.toast__actions { display: flex; gap: 2px; flex-basis: 100%; justify-content: flex-end; }
 .toast--error { border-color: var(--danger); box-shadow: inset 4px 0 0 var(--danger), var(--shadow-3); }
 .scrim { position: absolute; inset: 0; z-index: 50; background: var(--scrim); animation: fade 150ms; }
 @keyframes fade { from { opacity: 0; } }

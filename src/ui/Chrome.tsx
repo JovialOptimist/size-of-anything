@@ -277,10 +277,11 @@ function StatsPrompt() {
     return () => clearTimeout(t);
   }, []);
   if (!waiting || !ready || dialogOpen) return null;
-  const { choose } = useStats.getState();
+  const { choose, dismiss } = useStats.getState();
   return (
     <div className="toast toast--prompt" role="region" aria-label="Usage stats">
       <span><b>Count your visit?</b> Google Analytics shows me how the site gets used, never what you search for. It sets a cookie and is never used for ads.</span>
+      <button type="button" aria-label="Not now" title="Not now" onClick={dismiss}><X size={16} /></button>
       <div className="toast__actions">
         <button type="button" onClick={() => choose("no")}>No thanks</button>
         <button type="button" onClick={() => choose("yes")}>Allow</button>
