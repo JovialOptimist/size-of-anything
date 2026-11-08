@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { Undo2, Redo2, Share2, CircleHelp, LocateFixed, Plus, Minus, Link, Check, X, Settings, ArrowLeft } from "lucide-react";
 import { useUI } from "../state/ui";
-import { useSettings, useIsDark } from "../state/settings";
+import { useSettings, useIsDark, type Basemap } from "../state/settings";
 import { useShapes } from "../state/shapes";
 import { useToasts, holdToast, releaseToast, toast } from "../state/toasts";
 import { getMap } from "../map/mapCore";
@@ -69,6 +69,15 @@ function LayersPopover() {
     window.addEventListener("keydown", close);
     return () => window.removeEventListener("keydown", close);
   }, []);
+  // Tracked here, where people pick layers, so "Reset settings" isn't counted as a layer change.
+  const pickBasemap = (b: Basemap) => {
+    if (s.basemap !== b) track("change_layer", { layer: b });
+    s.set("basemap", b);
+  };
+  const toggleGlobe = () => {
+    track("change_layer", { layer: s.globe ? "globe_off" : "globe_on" });
+    s.set("globe", !s.globe);
+  };
   return (
     <div className="layers-pop" role="dialog" aria-label="Map layers">
       <div className="inline" style={{ justifyContent: "space-between" }}>
@@ -76,13 +85,13 @@ function LayersPopover() {
         <button type="button" className="iconbtn" aria-label="Close" onClick={() => useUI.getState().set({ layersOpen: false })}><X size={18} /></button>
       </div>
       <div className="layer-opts">
-        <button type="button" className="layer-opt" aria-pressed={s.basemap === "map"} onClick={() => s.set("basemap", "map")}>
+        <button type="button" className="layer-opt" aria-pressed={s.basemap === "map"} onClick={() => pickBasemap("map")}>
           <span className={`layers-btn__thumb ${isDark ? "thumb-dark" : "thumb-map"}`} />Map
         </button>
-        <button type="button" className="layer-opt" aria-pressed={s.basemap === "satellite"} onClick={() => s.set("basemap", "satellite")}>
+        <button type="button" className="layer-opt" aria-pressed={s.basemap === "satellite"} onClick={() => pickBasemap("satellite")}>
           <span className="layers-btn__thumb thumb-sat" />Satellite
         </button>
-        <button type="button" className="layer-opt" aria-pressed={s.globe} onClick={() => s.set("globe", !s.globe)}>
+        <button type="button" className="layer-opt" aria-pressed={s.globe} onClick={toggleGlobe}>
           <span className="layers-btn__thumb thumb-globe" />Globe
         </button>
       </div>
@@ -221,8 +230,9 @@ export function ShareDialog() {
               <button type="button" className="btn btn--primary" onClick={async () => {
                 try {
                   await navigator.clipboard.writeText(url);
+                  // Once per opening: copying the same link again isn't another share.
+                  if (!copied) track("share", { method: "copy_link", shape_count: shapes.length });
                   setCopied(true);
-                  track("share", { method: "copy_link", shape_count: shapes.length });
                   toast({ text: "Link copied" });
                 } catch {
                   toast({ text: "Couldn't copy. Select the link and copy it yourself.", tone: "error" });

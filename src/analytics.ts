@@ -15,7 +15,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { GA_MEASUREMENT_ID, SITE_HOST } from "./config";
-import { useSettings } from "./state/settings";
 
 export const STATS_CONFIGURED = GA_MEASUREMENT_ID !== "";
 
@@ -23,6 +22,7 @@ export const STATS_CONFIGURED = GA_MEASUREMENT_ID !== "";
 const CONSENT_REGIONS = [
   "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR", "HU", "IE", "IT", "LV", "LT", "LU", "MT",
   "NL", "PL", "PT", "RO", "SK", "SI", "ES", "SE", "IS", "LI", "NO", "GB", "CH", "GF", "GP", "MQ", "RE", "YT", "MF",
+  "AX",
 ];
 
 /** Time zones in those places, plus some neighbours: asking a few extra people is fine, missing some isn't. */
@@ -141,9 +141,11 @@ export function initStats() {
   if (import.meta.env.DEV) (window as unknown as { __soaStats: unknown }).__soaStats = useStats;
   const { choice } = useStats.getState();
   if (choice === null && europe && !gpc) useStats.setState({ prompt: true });
-  useSettings.subscribe((s, p) => {
-    if (s.basemap !== p.basemap) track("change_layer", { layer: s.basemap });
-    if (s.globe !== p.globe) track("change_layer", { layer: s.globe ? "globe_on" : "globe_off" });
+  // A choice made in another tab applies here too (persist doesn't watch other tabs itself).
+  window.addEventListener("storage", async (e) => {
+    if (e.key !== "soa-stats") return;
+    await useStats.persist.rehydrate();
+    if (useStats.getState().choice !== null) useStats.setState({ prompt: false });
   });
   if (!live) return;
   sync(choice);
