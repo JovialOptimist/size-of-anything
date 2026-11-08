@@ -49,20 +49,14 @@ interface StatsState {
   choice: Choice;
   /** The one-time "Count your visit?" prompt is waiting. */
   prompt: boolean;
+  /** Remembered for good: "no" (No thanks, or closing the prompt) is never asked again. */
   choose: (c: "yes" | "no") => void;
-  /** The prompt was closed without an answer: not counted, and asked again next visit. */
-  dismiss: () => void;
 }
 
 // Kept apart from settings, so "Reset settings" never quietly turns stats back on.
 export const useStats = create<StatsState>()(
   persist(
-    (set) => ({
-      choice: null,
-      prompt: false,
-      choose: (choice) => set({ choice, prompt: false }),
-      dismiss: () => set({ prompt: false }),
-    }),
+    (set) => ({ choice: null, prompt: false, choose: (choice) => set({ choice, prompt: false }) }),
     { name: "soa-stats", partialize: (s) => ({ choice: s.choice }) }
   )
 );
