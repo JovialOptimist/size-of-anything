@@ -115,7 +115,6 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select:
 .ph__title { font-family: var(--display); font-weight: 800; font-size: 20px; letter-spacing: -0.01em; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .iconbtn { width: 40px; height: 40px; border-radius: 50%; border: 0; background: transparent; display: inline-grid; place-items: center; color: var(--text); flex: none; }
 .iconbtn:hover { background: var(--surface-2); }
-.iconbtn--filled { background: var(--surface); box-shadow: var(--shadow-2); }
 
 .omni { display: flex; align-items: center; gap: 4px; margin: 12px 12px 8px; padding: 4px 6px 4px 4px; border-radius: 99px; background: var(--surface-2); border: 2px solid transparent; flex: none; }
 .omni:focus-within { border-color: var(--accent); background: var(--surface); }
@@ -157,7 +156,6 @@ mark { background: color-mix(in oklch, var(--accent) 22%, transparent); color: i
 a.btn { text-decoration: none; color: var(--text); }
 .btn--primary, a.btn--primary { background: var(--accent); color: var(--on-accent); }
 .btn--primary:hover { background: var(--accent-strong); color: var(--on-accent); }
-.btn--danger { color: var(--danger); }
 .btn--sm { min-height: 36px; padding: 6px 14px; font-size: 13px; }
 .btn[disabled] { opacity: 0.5; cursor: default; }
 .btnrow { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -200,11 +198,8 @@ body.is-picking .maplibregl-canvas { cursor: crosshair; }
 
 .preview { border-radius: var(--r-card); background: var(--surface-2); padding: 12px; display: grid; gap: 10px; margin: 6px 0 4px; }
 .preview > svg { width: 100%; height: 150px; display: block; border-radius: 10px; background: var(--surface); }
-.preview__name { font-family: var(--display); font-weight: 800; font-size: 18px; }
 
 /* Detail page */
-.detail-hero { display: grid; gap: 6px; padding: 4px 4px 12px; }
-.detail-hero__top { display: flex; align-items: center; gap: 12px; }
 .detail-icon { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; background: color-mix(in oklch, var(--c) 22%, var(--surface)); color: color-mix(in oklch, var(--c) 70%, var(--text)); flex: none; }
 .name-input { font-family: var(--display); font-weight: 800; font-size: 22px; border: 2px solid transparent; border-radius: 10px; background: transparent; padding: 2px 6px; margin-left: -8px; width: 100%; min-width: 0; letter-spacing: -0.01em; }
 .name-input:hover { border-color: var(--border); }
@@ -378,8 +373,6 @@ button.srow:hover { background: var(--surface-2); }
 .crosshair circle, .crosshair path { stroke: var(--text); stroke-width: 2.5; fill: none; }
 .crosshair .halo { stroke: var(--surface); stroke-width: 6; }
 .crosshair .dot { fill: var(--accent); stroke: none; }
-.modebar { position: absolute; z-index: 25; left: 50%; transform: translateX(-50%); top: calc(14px + var(--safe-t)); background: var(--surface); box-shadow: var(--shadow-3); border-radius: 18px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; max-width: calc(100% - 28px); flex-wrap: wrap; justify-content: center; }
-.modebar__text { font-weight: 650; }
 .lasso-layer { position: absolute; inset: 0; z-index: 11; touch-action: none; cursor: crosshair; }
 .lasso-layer path { fill: color-mix(in oklch, var(--accent) 15%, transparent); stroke: var(--accent); stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
 .readout { font-variant-numeric: tabular-nums; font-weight: 700; }

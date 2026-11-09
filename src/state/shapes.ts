@@ -215,11 +215,6 @@ export const useShapes = create<ShapesState>((set, get) => {
   };
 });
 
-export const selectedShape = () => {
-  const { shapes, selectedId } = useShapes.getState();
-  return shapes.find((s) => s.id === selectedId);
-};
-
 // ---------- session persistence (IndexedDB) ----------
 const SESSION_KEY = "session:shapes";
 

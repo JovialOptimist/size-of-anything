@@ -12,7 +12,7 @@ export type Route =
 
 export type HelpPage = "help" | "about" | "feedback";
 
-export type Mode = "browse" | "pick" | "draw-lasso" | "draw-points" | "move-to";
+export type Mode = "browse" | "pick" | "draw-lasso" | "draw-points";
 
 export interface RecentItem extends PlaceResult {
   area?: number;

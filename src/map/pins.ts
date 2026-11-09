@@ -1,5 +1,5 @@
 /** Pin positions and on-screen extents for shapes, cached per shape version. */
-import { bbox, labelPoint, place, toLocal, type LngLat, type AreaGeometry } from "../geo/geometry";
+import { bbox, labelPoint, place, toLocal, type LngLat } from "../geo/geometry";
 import { localKey, localOf, placedGeometry, type Shape } from "../state/shapes";
 
 const pinLocalCache = new Map<string, Float64Array>();
@@ -41,8 +41,4 @@ export function shapeBBox(s: Shape) {
     bboxCache.set(s, b);
   }
   return b;
-}
-
-export function bboxOf(geom: AreaGeometry) {
-  return bbox(geom);
 }

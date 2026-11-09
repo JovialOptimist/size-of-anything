@@ -47,18 +47,3 @@ export async function idbSet(key: string, value: unknown): Promise<void> {
     }
   });
 }
-
-export async function idbDel(key: string): Promise<void> {
-  const db = await open();
-  if (!db) return;
-  return new Promise((resolve) => {
-    try {
-      const tx = db.transaction(STORE, "readwrite");
-      tx.objectStore(STORE).delete(key);
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => resolve();
-    } catch {
-      resolve();
-    }
-  });
-}

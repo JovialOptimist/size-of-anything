@@ -95,8 +95,8 @@ export function shapePaint(state: ShapeState, look: LayerLook) {
 }
 
 export function ensureLayers(m: maplibregl.Map, look: LayerLook) {
-  for (const id of ["soa-shapes", "soa-drag", "soa-preview", "soa-draw"]) {
-    if (!m.getSource(id)) m.addSource(id, { type: "geojson", data: EMPTY, tolerance: id === "soa-drag" ? 0.6 : 0.375, promoteId: "id" });
+  for (const id of ["soa-shapes", "soa-preview", "soa-draw"]) {
+    if (!m.getSource(id)) m.addSource(id, { type: "geojson", data: EMPTY, tolerance: 0.375, promoteId: "id" });
   }
   const before = firstSymbolLayer(m);
   const paint = { selected: shapePaint("selected", look), hovered: shapePaint("hovered", look), resting: shapePaint("resting", look) };
@@ -108,12 +108,9 @@ export function ensureLayers(m: maplibregl.Map, look: LayerLook) {
   const add = (layer: maplibregl.AddLayerObject, beforeId?: string) => {
     if (!m.getLayer(layer.id)) m.addLayer(layer, beforeId);
   };
-  for (const src of ["soa-shapes", "soa-drag"]) {
-    const p = src === "soa-drag" ? "soa-drag" : "soa";
-    add({ id: `${p}-fill`, type: "fill", source: src, paint: { "fill-color": ["get", "color"], "fill-opacity": unlessHidden(byState("fillOpacity")) } }, before);
-    add({ id: `${p}-casing`, type: "line", source: src, paint: { "line-color": paint.resting.casingColor, "line-width": byState("casingWidth"), "line-opacity": unlessHidden(byState("casingOpacity")) }, layout: { "line-join": "round" } }, before);
-    add({ id: `${p}-line`, type: "line", source: src, paint: { "line-color": ["get", "color"], "line-width": byState("lineWidth"), "line-opacity": unlessHidden(1) }, layout: { "line-join": "round" } }, before);
-  }
+  add({ id: "soa-fill", type: "fill", source: "soa-shapes", paint: { "fill-color": ["get", "color"], "fill-opacity": unlessHidden(byState("fillOpacity")) } }, before);
+  add({ id: "soa-casing", type: "line", source: "soa-shapes", paint: { "line-color": paint.resting.casingColor, "line-width": byState("casingWidth"), "line-opacity": unlessHidden(byState("casingOpacity")) }, layout: { "line-join": "round" } }, before);
+  add({ id: "soa-line", type: "line", source: "soa-shapes", paint: { "line-color": ["get", "color"], "line-width": byState("lineWidth"), "line-opacity": unlessHidden(1) }, layout: { "line-join": "round" } }, before);
   if (hiddenId && m.getSource("soa-shapes")) m.setFeatureState({ source: "soa-shapes", id: hiddenId }, { hidden: true });
   add({ id: "soa-preview-fill", type: "fill", source: "soa-preview", paint: { "fill-color": look.darkMap ? "#e8ebef" : "#1b2026", "fill-opacity": 0.1 } });
   add({ id: "soa-preview-line", type: "line", source: "soa-preview", paint: { "line-color": look.darkMap ? "#e8ebef" : "#1b2026", "line-width": 2.5, "line-dasharray": [2, 1.5] } });
@@ -149,11 +146,6 @@ export function hideShape(id: string | null) {
   if (src && id) map!.setFeatureState({ source: src, id }, { hidden: true });
 }
 
-export function setDragShape(s: Shape | null, geom: AreaGeometry | null, darkMap: boolean) {
-  const src = map?.getSource("soa-drag") as GeoJSONSource | undefined;
-  src?.setData(s && geom ? { type: "FeatureCollection", features: [feature(s, geom, true, darkMap)] } : EMPTY);
-}
-
 export function setPreview(geom: AreaGeometry | null) {
   (map?.getSource("soa-preview") as GeoJSONSource | undefined)?.setData(geom ? { type: "Feature", geometry: geom as GeoJSON.Geometry, properties: {} } : EMPTY);
 }
@@ -178,19 +170,6 @@ export function fitGeometry(geom: AreaGeometry, opts: { maxZoom?: number; animat
     }
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   map.fitBounds([[minX, minY], [maxX, maxY]], { padding: 60, maxZoom: opts.maxZoom ?? 18, animate: opts.animate !== false && !reduce, duration: 900 });
-}
-
-/** True when a shape at the current view would be smaller than `px` on screen. */
-export function isTinyOnScreen(geom: AreaGeometry, px = 24) {
-  if (!map) return false;
-  const polys = geom.type === "Polygon" ? [geom.coordinates] : geom.coordinates;
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  for (const p of polys)
-    for (const pt of p[0]) {
-      const s = map.project(pt as [number, number]);
-      minX = Math.min(minX, s.x); minY = Math.min(minY, s.y); maxX = Math.max(maxX, s.x); maxY = Math.max(maxY, s.y);
-    }
-  return Math.max(maxX - minX, maxY - minY) < px;
 }
 
 /** Current map padding with every side defined. */
