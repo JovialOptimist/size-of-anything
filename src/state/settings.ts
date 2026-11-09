@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { useSyncExternalStore } from "react";
 import { persist } from "zustand/middleware";
 import { defaultUnits, type UnitSystem } from "../geo/format";
+import type { WaterMode } from "../geo/water";
 
 export type Theme = "system" | "light" | "dark";
 export type Basemap = "map" | "satellite";
@@ -12,6 +13,10 @@ export interface Settings {
   showBothUnits: boolean;
   labels: "off" | "auto" | "always";
   fill: "light" | "medium" | "strong";
+  /** What to do with water inside a place's border; each shape can override it. */
+  water: WaterMode;
+  /** Draw a faint outline of the border as mapped, where water was taken out. */
+  showOriginalBorder: boolean;
   /** Also float a small toolbar above the selected shape. */
   showToolbar: boolean;
   basemap: Basemap;
@@ -28,6 +33,8 @@ const defaults = () => ({
   showBothUnits: true,
   labels: "auto" as const,
   fill: "light" as const,
+  water: "sea" as WaterMode,
+  showOriginalBorder: false,
   showToolbar: false,
   basemap: "map" as Basemap,
   globe: false,

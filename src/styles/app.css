@@ -211,6 +211,17 @@ body.is-picking .maplibregl-canvas { cursor: crosshair; }
 .name-input:focus { border-color: var(--accent); outline: none; background: var(--surface); }
 .bigarea { font-family: var(--display); font-weight: 800; font-size: 40px; line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; margin-top: 6px; }
 .bigarea small { display: block; font: 500 13px var(--font); color: var(--text-muted); margin-top: 6px; letter-spacing: 0; }
+.wchip-wrap { position: relative; display: inline-block; }
+.wchip { display: inline-flex; align-items: center; gap: 3px; border: 1px solid var(--border-strong); background: transparent; color: var(--text); border-radius: 99px; padding: 1px 6px 1px 9px; font: 650 12.5px var(--font); vertical-align: 1px; cursor: pointer; }
+.wchip:hover, .wchip[aria-expanded="true"] { background: var(--surface-2); }
+.wmenu { position: absolute; left: 0; top: calc(100% + 6px); z-index: 30; min-width: 230px; background: var(--surface); box-shadow: var(--shadow-3); border-radius: 14px; padding: 6px; display: grid; gap: 2px; }
+.wmenu__item { display: grid; grid-template-columns: 16px 1fr auto; align-items: center; gap: 8px; border: 0; background: transparent; color: var(--text); border-radius: 9px; padding: 9px 10px; font: 500 13.5px var(--font); text-align: left; cursor: pointer; }
+.wmenu__item:hover, .wmenu__item:focus-visible { background: var(--surface-2); outline: none; }
+.wmenu__item[aria-checked="true"] { font-weight: 700; }
+.wmenu__item > :last-child { color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.opreview__fade { animation: fade 0.45s ease-out; }
+@media (prefers-reduced-motion: reduce) { .opreview__fade { animation: none; } }
+.water__note { display: block; font-size: 12.5px; margin: 6px 0 0; }
 .fact { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: var(--r-ctl); background: var(--surface-2); margin-bottom: 6px; font-size: 14px; }
 .fact b { font-weight: 700; }
 .fact .sw { width: 14px; height: 14px; border-radius: 4px; background: var(--c); flex: none; margin-top: 3px; }
@@ -257,6 +268,7 @@ textarea.input::placeholder, .input input::placeholder { color: var(--text-muted
 .srow:last-child { border-bottom: 0; }
 .srow small { display: block; color: var(--text-muted); font-size: 12.5px; }
 .srow .seg { min-width: 160px; }
+.srow__select { border: 0; background: var(--surface-2); color: var(--text); border-radius: 99px; padding: 8px 12px; min-height: 38px; font-size: 13.5px; font-weight: 650; }
 .switch { width: 46px; height: 28px; border-radius: 99px; border: 0; background: var(--surface-3); position: relative; flex: none; }
 .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: var(--shadow-1); transition: left 150ms; }
 .switch[aria-checked="true"] { background: var(--accent); }
