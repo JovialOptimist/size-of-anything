@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useUI, currentRoute } from "../state/ui";
 import { useShapes } from "../state/shapes";
 import { nudge, rotateBy } from "../map/interaction";
-import { deleteShape, duplicateShape, undo } from "./actions";
+import { deleteShape, duplicateShape, redo, undo } from "./actions";
 
 export function useKeyboard() {
   useEffect(() => {
@@ -14,7 +14,7 @@ export function useKeyboard() {
       const mod = e.ctrlKey || e.metaKey;
       if (mod && e.key.toLowerCase() === "z") {
         e.preventDefault();
-        if (e.shiftKey) useShapes.getState().redo();
+        if (e.shiftKey) redo();
         else undo();
         return;
       }
