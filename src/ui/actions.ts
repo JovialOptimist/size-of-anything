@@ -100,15 +100,6 @@ export function duplicateShape(id: string) {
   }
 }
 
-export function moveShapeTo(id: string, anchor: LngLat) {
-  useShapes.getState().update(id, { anchor });
-  const s = useShapes.getState().shapes.find((x) => x.id === id);
-  if (s) {
-    fitGeometry(placedGeometry(s), { maxZoom: 17 });
-    announce(`${s.name} moved`);
-  }
-}
-
 export function undo() {
   const before = useShapes.getState().past.length;
   useShapes.getState().undo();
