@@ -15,18 +15,27 @@ interface ToastState {
 
 let n = 0;
 const timers = new Map<number, ReturnType<typeof setTimeout>>();
+/** How long each toast stays up, so it gets its full time again after a hover. */
+const lives = new Map<number, number>();
+
+/** (Re)start a toast's countdown, replacing any that's running. */
+function startTimer(id: number) {
+  clearTimeout(timers.get(id));
+  timers.set(id, setTimeout(() => useToasts.getState().dismiss(id), lives.get(id)));
+}
 
 export const useToasts = create<ToastState>((set, get) => ({
   toasts: [],
   show: (t, ms) => {
     const id = ++n;
     set({ toasts: [...get().toasts.slice(-2), { ...t, id }] });
-    const life = ms ?? (t.action ? 10000 : 4000);
-    timers.set(id, setTimeout(() => get().dismiss(id), life));
+    lives.set(id, ms ?? (t.action ? 10000 : 4000));
+    startTimer(id);
   },
   dismiss: (id) => {
     clearTimeout(timers.get(id));
     timers.delete(id);
+    lives.delete(id);
     set({ toasts: get().toasts.filter((t) => t.id !== id) });
   },
 }));
@@ -36,7 +45,7 @@ export function holdToast(id: number) {
   clearTimeout(timers.get(id));
 }
 export function releaseToast(id: number) {
-  timers.set(id, setTimeout(() => useToasts.getState().dismiss(id), 4000));
+  if (lives.has(id)) startTimer(id);
 }
 
 export const toast = (t: Omit<Toast, "id">, ms?: number) => useToasts.getState().show(t, ms);
