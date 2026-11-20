@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
-import * as maplibregl from "maplibre-gl";
+import type * as maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { buildStyle, ensureLayers, setMapInstance, syncShapes, type LayerLook } from "./mapCore";
+import { buildStyle, ensureLayers, getMapLibre, loadMapLibre, setMapInstance, syncShapes, type LayerLook } from "./mapCore";
 import { setDarkMapForDrag, startMove, useLive } from "./interaction";
 import { pinHover } from "./hover";
 import { useShapes } from "../state/shapes";
@@ -29,14 +29,15 @@ export default function MapView({ onReady }: { onReady?: () => void }) {
     let cancelled = false;
     let unwire: (() => void) | undefined;
     (async () => {
-      const style = await buildStyle(useSettings.getState().basemap, lookRef.current.darkMap);
+      const [style, ml] = await Promise.all([buildStyle(useSettings.getState().basemap, lookRef.current.darkMap), loadMapLibre()]);
       if (cancelled || !el.current) return;
-      const m = new maplibregl.Map({
+      const m = new ml.Map({
         container: el.current,
         style,
         center: [10, 25],
         zoom: 1.4,
-        attributionControl: { compact: true },
+        // MapCredit draws the credits, so they show before MapLibre has loaded.
+        attributionControl: false,
         dragRotate: false,
         pitchWithRotate: false,
         renderWorldCopies: true,
@@ -169,7 +170,7 @@ function wireEvents(m: maplibregl.Map) {
   const container = m.getCanvasContainer();
   const onMouseMove = (e: MouseEvent) => {
     const r = container.getBoundingClientRect();
-    mouse = new maplibregl.Point(e.clientX - r.left, e.clientY - r.top);
+    mouse = new (getMapLibre().Point)(e.clientX - r.left, e.clientY - r.top);
     pinHover.id = null;
     refresh();
   };

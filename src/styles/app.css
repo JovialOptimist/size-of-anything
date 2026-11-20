@@ -65,6 +65,12 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select:
 /* ============ Layout ============ */
 .app { position: fixed; inset: 0; }
 .map, .map.maplibregl-map { position: absolute; inset: 0; background: radial-gradient(circle at 50% 45%, #1b2a4a, #070b16 70%); }
+/* MapCredit sits outside the map element, so it doesn't get the map's font from .maplibregl-map. */
+.map-credit { font: 12px/20px "Helvetica Neue", Arial, Helvetica, sans-serif; }
+/* Two classes, to win over MapLibre's own bottom: 0 (its stylesheet loads after this one). */
+.map-credit.maplibregl-ctrl-bottom-left, .map-credit.maplibregl-ctrl-bottom-right { bottom: var(--sheet-h, 0px); transition: bottom 260ms cubic-bezier(.2,.8,.2,1); }
+/* On phones: wrap before the Go to my location button, at the same height on the right. */
+.map-credit.maplibregl-ctrl-bottom-left { right: 64px; }
 .maplibregl-ctrl-attrib { font-size: 11px; }
 .maplibregl-ctrl-bottom-left, .maplibregl-ctrl-bottom-right { z-index: 1; }
 

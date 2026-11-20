@@ -29,6 +29,9 @@ export const SATELLITE_TILES = ARCGIS_KEY
   ? `https://ibasemaps-api.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}?token=${ARCGIS_KEY}`
   : "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
 
+/** Credits shown in the map's corner (src/ui/MapCredit.tsx). */
+export const SATELLITE_ATTRIBUTION = "Imagery © Esri, Maxar, Earthstar Geographics, and the GIS User Community";
+
 export const NOMINATIM = "https://nominatim.openstreetmap.org";
 export const PHOTON = "https://photon.komoot.io/api/";
 export const OVERPASS_SERVERS = [

@@ -6,6 +6,7 @@ import MapView from "./map/MapView";
 import Overlays from "./map/Overlays";
 import ModeLayers from "./map/ModeLayers";
 import Shell from "./ui/Shell";
+import MapCredit from "./ui/MapCredit";
 import { HelpDialog, SettingsDialog, VersionDialog, LiveRegion, MapControls, ShareDialog, Toasts } from "./ui/Chrome";
 import { useKeyboard } from "./ui/keyboard";
 import { useIsDark } from "./state/settings";
@@ -45,6 +46,7 @@ export default function App() {
       <h1 className="sr-only">The Size of Anything</h1>
       <main>
         <MapView onReady={() => setReady(true)} />
+        <MapCredit mapReady={ready} />
         {ready && <Overlays />}
         {ready && <ModeLayers />}
         <MapControls />

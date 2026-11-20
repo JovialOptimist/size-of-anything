@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Crosshair, Loader2, Plus, RefreshCw, MousePointerClick } from "lucide-react";
-import * as maplibregl from "maplibre-gl";
+import type * as maplibregl from "maplibre-gl";
 import { useUI } from "../../state/ui";
-import { getMap, setPreview, visibleCenter, fitGeometry } from "../../map/mapCore";
+import { getMap, getMapLibre, setPreview, visibleCenter, fitGeometry } from "../../map/mapCore";
 import { mapClickHandler } from "../../map/modeHandlers";
 import { whatsHere, fetchOutline, ServiceError, type PlaceResult, type Outline } from "../../geo/services";
 import { formatArea } from "../../geo/format";
@@ -41,7 +41,7 @@ export default function PickView() {
       if (!marker.current) {
         const el = document.createElement("div");
         el.className = "pick-marker";
-        marker.current = new maplibregl.Marker({ element: el });
+        marker.current = new (getMapLibre().Marker)({ element: el });
       }
       marker.current.setLngLat(at).addTo(m);
     }
