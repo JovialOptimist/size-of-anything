@@ -2,15 +2,28 @@
  * MapLibre setup and the layers that draw shapes. React components reach the
  * map through getMap(); geometry for every shape is pushed with syncShapes().
  */
-import * as maplibregl from "maplibre-gl";
+import type * as maplibregl from "maplibre-gl";
 import type { StyleSpecification, GeoJSONSource } from "maplibre-gl";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
-import { BASEMAPS, SATELLITE_TILES } from "../config";
+import { BASEMAPS, SATELLITE_ATTRIBUTION, SATELLITE_TILES } from "../config";
 import { shapeColor } from "./palette";
 import { placedGeometry, type Shape } from "../state/shapes";
 import type { AreaGeometry, LngLat } from "../geo/geometry";
 
-maplibregl.setWorkerUrl(workerUrl);
+/**
+ * MapLibre is most of the app's JavaScript, so it loads as a separate file. MapView starts it
+ * once the panels have been drawn, so it doesn't hold them up or compete with the fonts.
+ */
+let mapLibre: typeof maplibregl | null = null;
+let mapLibreLoad: Promise<typeof maplibregl> | null = null;
+export const loadMapLibre = () =>
+  (mapLibreLoad ??= import("maplibre-gl").then((ml) => {
+    ml.setWorkerUrl(workerUrl);
+    mapLibre = ml;
+    return ml;
+  }));
+/** The MapLibre module, once loaded. Anything that has a map from getMap() can use it. */
+export const getMapLibre = () => mapLibre!;
 
 let map: maplibregl.Map | null = null;
 export const getMap = () => map;
@@ -48,7 +61,7 @@ export async function buildStyle(basemap: "map" | "satellite", dark: boolean): P
   });
   return {
     ...base,
-    sources: { ...base.sources, satellite: { type: "raster", tiles: [SATELLITE_TILES], tileSize: 256, maxzoom: 19, attribution: "Imagery © Esri, Maxar, Earthstar Geographics, and the GIS User Community" } },
+    sources: { ...base.sources, satellite: { type: "raster", tiles: [SATELLITE_TILES], tileSize: 256, maxzoom: 19, attribution: SATELLITE_ATTRIBUTION } },
     layers: [
       { id: "satellite", type: "raster", source: "satellite", paint: { "raster-saturation": -0.2, "raster-brightness-max": 0.92 } },
       ...labelLayers,

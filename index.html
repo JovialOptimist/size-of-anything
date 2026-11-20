@@ -49,11 +49,28 @@
         </form>
 
         <script>
-            try {
-                var t = (JSON.parse(localStorage.getItem("soa-settings-v2") || "{}").state || {}).theme || "system";
-                var d = t === "dark" || (t === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
-                document.documentElement.dataset.theme = d ? "dark" : "light";
-            } catch (e) {}
+            (function () {
+                var dark = false, basemap = "map";
+                try {
+                    var s = JSON.parse(localStorage.getItem("soa-settings-v2") || "{}").state || {};
+                    var t = s.theme || "system";
+                    dark = t === "dark" || (t === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
+                    basemap = s.basemap || "map";
+                    document.documentElement.dataset.theme = dark ? "dark" : "light";
+                } catch (e) {}
+                // Fetch the map style and its tile index now, not after the app's JavaScript has loaded:
+                // the map can't start without them. Same URLs as BASEMAPS in src/config.ts and buildStyle()
+                // in src/map/mapCore.ts (satellite uses the light style for its labels).
+                var style = basemap === "map" && dark ? "fiord" : "liberty";
+                ["https://tiles.openfreemap.org/styles/" + style, "https://tiles.openfreemap.org/planet"].forEach(function (href) {
+                    var l = document.createElement("link");
+                    l.rel = "preload";
+                    l.as = "fetch";
+                    l.crossOrigin = "anonymous";
+                    l.href = href;
+                    document.head.appendChild(l);
+                });
+            })();
         </script>
         <script>
             // Share links from the old version (#share=…) only work there, so open them there.
